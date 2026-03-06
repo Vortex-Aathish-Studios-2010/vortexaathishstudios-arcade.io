@@ -1,16 +1,26 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { MemoryGame } from "@/components/games/MemoryGame";
-import { Game2048 } from "@/components/games/Game2048";
 import { SlidingPuzzle } from "@/components/games/SlidingPuzzle";
+import { BlockStack } from "@/components/games/BlockStack";
+import { SudokuGame } from "@/components/games/SudokuGame";
+import { KonoodleGame } from "@/components/games/KonoodleGame";
+import { WordSearchGame } from "@/components/games/WordSearchGame";
+import { SnakeGame } from "@/components/games/SnakeGame";
+import { GameTutorial } from "@/components/GameTutorial";
 import { StatsBar } from "@/components/StatsBar";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, HelpCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 const gameComponents: Record<string, React.FC> = {
   memory: MemoryGame,
-  "2048": Game2048,
   sliding: SlidingPuzzle,
+  tetris: BlockStack,
+  sudoku: SudokuGame,
+  konoodle: KonoodleGame,
+  wordsearch: WordSearchGame,
+  snake: SnakeGame,
 };
 
 const GamePage = () => {
@@ -18,6 +28,7 @@ const GamePage = () => {
   const navigate = useNavigate();
   const game = games.find((g) => g.id === id);
   const GameComponent = id ? gameComponents[id] : null;
+  const [showTutorial, setShowTutorial] = useState(false);
 
   if (!game || !GameComponent) {
     navigate("/");
@@ -32,7 +43,12 @@ const GamePage = () => {
             <ArrowLeft className="h-5 w-5" />
             <span className="font-display text-sm">BACK</span>
           </button>
-          <StatsBar />
+          <div className="flex items-center gap-3">
+            <button onClick={() => setShowTutorial(true)} className="text-muted-foreground hover:text-foreground transition-colors">
+              <HelpCircle className="h-5 w-5" />
+            </button>
+            <StatsBar />
+          </div>
         </div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
@@ -44,6 +60,8 @@ const GamePage = () => {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
           <GameComponent />
         </motion.div>
+
+        <GameTutorial game={game} open={showTutorial} onClose={() => setShowTutorial(false)} />
       </div>
     </div>
   );
