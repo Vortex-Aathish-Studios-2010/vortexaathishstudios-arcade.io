@@ -1,9 +1,15 @@
-const STREAK_KEY = "brainpuzzle_streak";
 const POINTS_KEY = "brainpuzzle_points";
-const LAST_PLAY_KEY = "brainpuzzle_last_play";
 
-export const getStreak = (): number => {
-  return parseInt(localStorage.getItem(STREAK_KEY) || "0", 10);
+const streakKey = (gameId: string) => `brainpuzzle_streak_${gameId}`;
+const lastPlayKey = (gameId: string) => `brainpuzzle_last_play_${gameId}`;
+
+export const getStreak = (gameId?: string): number => {
+  if (!gameId) {
+    // Sum all game streaks for total display
+    const allKeys = Object.keys(localStorage).filter(k => k.startsWith("brainpuzzle_streak_"));
+    return allKeys.reduce((sum, k) => sum + parseInt(localStorage.getItem(k) || "0", 10), 0);
+  }
+  return parseInt(localStorage.getItem(streakKey(gameId)) || "0", 10);
 };
 
 export const getPoints = (): number => {
@@ -15,21 +21,32 @@ export const addPoints = (pts: number) => {
   localStorage.setItem(POINTS_KEY, String(current + pts));
 };
 
-export const updateStreak = () => {
-  const lastPlay = localStorage.getItem(LAST_PLAY_KEY);
+export const updateStreak = (gameId: string) => {
+  const key = streakKey(gameId);
+  const lpKey = lastPlayKey(gameId);
+  const lastPlay = localStorage.getItem(lpKey);
   const today = new Date().toDateString();
-  
+
   if (lastPlay === today) return;
-  
+
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  
+
   if (lastPlay === yesterday.toDateString()) {
-    const streak = getStreak() + 1;
-    localStorage.setItem(STREAK_KEY, String(streak));
-  } else if (lastPlay !== today) {
-    localStorage.setItem(STREAK_KEY, "1");
+    const streak = parseInt(localStorage.getItem(key) || "0", 10) + 1;
+    localStorage.setItem(key, String(streak));
+  } else {
+    localStorage.setItem(key, "1");
   }
-  
-  localStorage.setItem(LAST_PLAY_KEY, today);
+
+  localStorage.setItem(lpKey, today);
+};
+
+export const getAllGameStreaks = (): Record<string, number> => {
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake"];
+  const streaks: Record<string, number> = {};
+  for (const id of gameIds) {
+    streaks[id] = getStreak(id);
+  }
+  return streaks;
 };

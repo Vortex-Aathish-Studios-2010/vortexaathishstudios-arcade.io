@@ -4,7 +4,6 @@ import { addPoints, updateStreak } from "@/lib/streaks";
 import { toast } from "sonner";
 
 const SIZE = 4;
-
 const createSolved = () => [...Array(SIZE * SIZE - 1).keys()].map((i) => i + 1).concat(0);
 
 const shuffle = (arr: number[]): number[] => {
@@ -14,11 +13,9 @@ const shuffle = (arr: number[]): number[] => {
     [a[i], a[j]] = [a[j], a[i]];
   }
   let inversions = 0;
-  for (let i = 0; i < a.length; i++) {
-    for (let j = i + 1; j < a.length; j++) {
+  for (let i = 0; i < a.length; i++)
+    for (let j = i + 1; j < a.length; j++)
       if (a[i] && a[j] && a[i] > a[j]) inversions++;
-    }
-  }
   const blankRow = Math.floor(a.indexOf(0) / SIZE);
   const solvable = SIZE % 2 === 1 ? inversions % 2 === 0 : (inversions + blankRow) % 2 === 1;
   if (!solvable) {
@@ -42,18 +39,16 @@ export const SlidingPuzzle = () => {
     const blankIdx = tiles.indexOf(0);
     const row = Math.floor(index / SIZE), col = index % SIZE;
     const bRow = Math.floor(blankIdx / SIZE), bCol = blankIdx % SIZE;
-
     if ((Math.abs(row - bRow) === 1 && col === bCol) || (Math.abs(col - bCol) === 1 && row === bRow)) {
       const newTiles = [...tiles];
       [newTiles[index], newTiles[blankIdx]] = [newTiles[blankIdx], newTiles[index]];
       setTiles(newTiles);
       setMoves((m) => m + 1);
-
       if (isSolved(newTiles)) {
         setWon(true);
         const pts = Math.max(200 - moves * 2, 30);
         addPoints(pts);
-        updateStreak();
+        updateStreak("sliding");
         toast.success(`Puzzle solved! +${pts} points`);
       }
     }
@@ -70,30 +65,15 @@ export const SlidingPuzzle = () => {
     const dy = e.clientY - dragStart.current.y;
     const { index } = dragStart.current;
     dragStart.current = null;
-
-    // If small movement, treat as click
-    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-      tryMove(index);
-      return;
-    }
-
-    // Determine drag direction and find target
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) { tryMove(index); return; }
     const blankIdx = tiles.indexOf(0);
     const row = Math.floor(index / SIZE), col = index % SIZE;
     const bRow = Math.floor(blankIdx / SIZE), bCol = blankIdx % SIZE;
-
-    // Check if dragging toward the blank
     const dirToBlank = { dr: bRow - row, dc: bCol - col };
     if (Math.abs(dx) > Math.abs(dy)) {
-      // horizontal drag
-      if ((dx > 0 && dirToBlank.dc === 1) || (dx < 0 && dirToBlank.dc === -1)) {
-        tryMove(index);
-      }
+      if ((dx > 0 && dirToBlank.dc === 1) || (dx < 0 && dirToBlank.dc === -1)) tryMove(index);
     } else {
-      // vertical drag
-      if ((dy > 0 && dirToBlank.dr === 1) || (dy < 0 && dirToBlank.dr === -1)) {
-        tryMove(index);
-      }
+      if ((dy > 0 && dirToBlank.dr === 1) || (dy < 0 && dirToBlank.dr === -1)) tryMove(index);
     }
   };
 
@@ -110,17 +90,11 @@ export const SlidingPuzzle = () => {
     const dy = t.clientY - dragStart.current.y;
     const { index } = dragStart.current;
     dragStart.current = null;
-
-    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-      tryMove(index);
-      return;
-    }
-
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) { tryMove(index); return; }
     const blankIdx = tiles.indexOf(0);
     const row = Math.floor(index / SIZE), col = index % SIZE;
     const bRow = Math.floor(blankIdx / SIZE), bCol = blankIdx % SIZE;
     const dirToBlank = { dr: bRow - row, dc: bCol - col };
-
     if (Math.abs(dx) > Math.abs(dy)) {
       if ((dx > 0 && dirToBlank.dc === 1) || (dx < 0 && dirToBlank.dc === -1)) tryMove(index);
     } else {
@@ -134,26 +108,31 @@ export const SlidingPuzzle = () => {
     <div className="flex flex-col items-center gap-4">
       <div className="text-sm text-muted-foreground">Moves: <span className="font-display text-foreground">{moves}</span></div>
       <div
-        className="grid grid-cols-4 gap-1.5 bg-muted/30 p-3 rounded-xl select-none"
+        className="grid grid-cols-4 gap-2 bg-card p-3 rounded-xl border border-border select-none"
         onMouseUp={handleMouseUp}
         onMouseLeave={() => { dragStart.current = null; }}
       >
         {tiles.map((val, i) => (
           <motion.div
             key={i}
+            layout
             whileTap={val !== 0 ? { scale: 0.9 } : {}}
             onMouseDown={(e) => handleMouseDown(i, e)}
             onTouchStart={(e) => handleTouchStart(i, e)}
             onTouchEnd={handleTouchEnd}
-            className={`w-14 h-14 rounded-lg flex items-center justify-center font-display font-bold cursor-pointer transition-colors ${
-              val === 0 ? "bg-transparent" : "bg-accent/20 border border-accent/40 text-accent hover:bg-accent/30"
+            className={`w-14 h-14 rounded-lg flex items-center justify-center font-display font-bold cursor-pointer transition-all ${
+              val === 0
+                ? "bg-transparent"
+                : won
+                ? "bg-primary/20 border-2 border-primary text-primary glow-primary"
+                : "bg-card border-2 border-accent/40 text-accent hover:border-accent hover:glow-accent"
             }`}
           >
             {val > 0 ? val : ""}
           </motion.div>
         ))}
       </div>
-      <button onClick={reset} className="px-6 py-2 bg-muted text-foreground rounded-lg font-display text-sm hover:bg-muted/80">
+      <button onClick={reset} className="px-6 py-2 bg-card border border-border text-foreground rounded-xl font-display text-sm hover:border-primary/50 hover:glow-primary transition-all">
         {won ? "PLAY AGAIN" : "SHUFFLE"}
       </button>
     </div>

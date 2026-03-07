@@ -9,14 +9,11 @@ const WORD_LISTS = [
   ["LOGIC", "THINK", "SOLVE", "GRID", "FIND", "WORD"],
 ];
 
-const DIRECTIONS = [
-  [0, 1], [1, 0], [1, 1], [0, -1], [1, -1],
-];
+const DIRECTIONS = [[0, 1], [1, 0], [1, 1], [0, -1], [1, -1]];
 
-const generateGrid = (words: string[]): { grid: string[][]; placements: Map<string, [number, number][]> } => {
+const generateGrid = (words: string[]) => {
   const grid: string[][] = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(""));
   const placements = new Map<string, [number, number][]>();
-
   for (const word of words) {
     let placed = false;
     for (let attempt = 0; attempt < 100 && !placed; attempt++) {
@@ -25,27 +22,18 @@ const generateGrid = (words: string[]): { grid: string[][]; placements: Map<stri
       const c = Math.floor(Math.random() * GRID_SIZE);
       const cells: [number, number][] = [];
       let valid = true;
-
       for (let i = 0; i < word.length; i++) {
         const nr = r + dr * i, nc = c + dc * i;
         if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) { valid = false; break; }
         if (grid[nr][nc] !== "" && grid[nr][nc] !== word[i]) { valid = false; break; }
         cells.push([nr, nc]);
       }
-
-      if (valid) {
-        cells.forEach(([cr, cc], i) => { grid[cr][cc] = word[i]; });
-        placements.set(word, cells);
-        placed = true;
-      }
+      if (valid) { cells.forEach(([cr, cc], i) => { grid[cr][cc] = word[i]; }); placements.set(word, cells); placed = true; }
     }
   }
-
-  // Fill remaining
   for (let r = 0; r < GRID_SIZE; r++)
     for (let c = 0; c < GRID_SIZE; c++)
       if (grid[r][c] === "") grid[r][c] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-
   return { grid, placements };
 };
 
@@ -57,15 +45,11 @@ export const WordSearchGame = () => {
   const [isMouseDown, setIsMouseDown] = useState(false);
 
   const cellKey = (r: number, c: number) => `${r},${c}`;
-
   const foundCells = useMemo(() => {
     const s = new Set<string>();
-    found.forEach((word) => {
-      placements.get(word)?.forEach(([r, c]) => s.add(cellKey(r, c)));
-    });
+    found.forEach((word) => { placements.get(word)?.forEach(([r, c]) => s.add(cellKey(r, c))); });
     return s;
   }, [found, placements]);
-
   const selectingSet = useMemo(() => new Set(selecting.map(([r, c]) => cellKey(r, c))), [selecting]);
 
   const checkSelection = () => {
@@ -77,33 +61,19 @@ export const WordSearchGame = () => {
         setFound(newFound);
         if (newFound.size === words.length) {
           addPoints(100);
-          updateStreak();
+          updateStreak("wordsearch");
           toast.success("All words found! +100 points");
-        } else {
-          toast.success(`Found "${word}"!`);
-        }
+        } else toast.success(`Found "${word}"!`);
       }
     }
     setSelecting([]);
     setIsMouseDown(false);
   };
 
-  const handleCellDown = (r: number, c: number) => {
-    setIsMouseDown(true);
-    setSelecting([[r, c]]);
-  };
-
-  const handleCellEnter = (r: number, c: number) => {
-    if (!isMouseDown) return;
-    if (!selectingSet.has(cellKey(r, c))) {
-      setSelecting((prev) => [...prev, [r, c]]);
-    }
-  };
-
   return (
     <div className="flex flex-col items-center gap-4">
       <div
-        className="bg-muted/30 p-2 rounded-xl select-none"
+        className="bg-card border border-border p-2 rounded-xl select-none"
         onMouseUp={checkSelection}
         onMouseLeave={() => { if (isMouseDown) checkSelection(); }}
         onTouchEnd={checkSelection}
@@ -113,21 +83,18 @@ export const WordSearchGame = () => {
             {row.map((letter, c) => (
               <div
                 key={c}
-                onMouseDown={() => handleCellDown(r, c)}
-                onMouseEnter={() => handleCellEnter(r, c)}
-                onTouchStart={() => handleCellDown(r, c)}
+                onMouseDown={() => { setIsMouseDown(true); setSelecting([[r, c]]); }}
+                onMouseEnter={() => { if (isMouseDown && !selectingSet.has(cellKey(r, c))) setSelecting((prev) => [...prev, [r, c]]); }}
+                onTouchStart={() => { setIsMouseDown(true); setSelecting([[r, c]]); }}
                 onTouchMove={(e) => {
                   const touch = e.touches[0];
                   const el = document.elementFromPoint(touch.clientX, touch.clientY);
                   const rc = el?.getAttribute("data-rc");
-                  if (rc) {
-                    const [rr, cc] = rc.split(",").map(Number);
-                    handleCellEnter(rr, cc);
-                  }
+                  if (rc) { const [rr, cc] = rc.split(",").map(Number); if (!selectingSet.has(cellKey(rr, cc))) setSelecting((prev) => [...prev, [rr, cc]]); }
                 }}
                 data-rc={`${r},${c}`}
-                className={`w-8 h-8 flex items-center justify-center font-display text-sm font-bold cursor-pointer transition-colors rounded-sm
-                  ${foundCells.has(cellKey(r, c)) ? "bg-primary/30 text-primary" : selectingSet.has(cellKey(r, c)) ? "bg-accent/30 text-accent" : "text-foreground hover:bg-muted/50"}
+                className={`w-8 h-8 flex items-center justify-center font-display text-sm font-bold cursor-pointer transition-all rounded-sm
+                  ${foundCells.has(cellKey(r, c)) ? "bg-primary/30 text-primary text-glow-primary" : selectingSet.has(cellKey(r, c)) ? "bg-accent/30 text-accent" : "text-foreground/80 hover:bg-muted/50"}
                 `}
               >
                 {letter}
@@ -136,10 +103,9 @@ export const WordSearchGame = () => {
           </div>
         ))}
       </div>
-
       <div className="flex flex-wrap gap-2 justify-center">
         {words.map((word) => (
-          <span key={word} className={`font-display text-xs px-2 py-1 rounded-full ${found.has(word) ? "bg-primary/20 text-primary line-through" : "bg-muted text-foreground"}`}>
+          <span key={word} className={`font-display text-xs px-3 py-1 rounded-full border transition-all ${found.has(word) ? "bg-primary/20 border-primary/40 text-primary line-through glow-primary" : "bg-card border-border text-foreground"}`}>
             {word}
           </span>
         ))}
