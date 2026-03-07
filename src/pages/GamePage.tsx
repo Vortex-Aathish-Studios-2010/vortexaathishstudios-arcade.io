@@ -12,6 +12,8 @@ import { GameTutorial } from "@/components/GameTutorial";
 import { StatsBar } from "@/components/StatsBar";
 import { ArrowLeft, HelpCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { getStreak } from "@/lib/streaks";
+import { Flame } from "lucide-react";
 
 const gameComponents: Record<string, React.FC> = {
   memory: MemoryGame,
@@ -28,12 +30,14 @@ const GamePage = () => {
   const navigate = useNavigate();
   const game = games.find((g) => g.id === id);
   const GameComponent = id ? gameComponents[id] : null;
-  const [showTutorial, setShowTutorial] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(true); // Auto-show tutorial
 
   if (!game || !GameComponent) {
     navigate("/");
     return null;
   }
+
+  const gameStreak = id ? getStreak(id) : 0;
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -44,6 +48,10 @@ const GamePage = () => {
             <span className="font-display text-sm">BACK</span>
           </button>
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 bg-card border border-border rounded-lg px-3 py-1.5">
+              <Flame className="h-4 w-4 text-accent" />
+              <span className="font-display text-sm font-bold text-foreground">{gameStreak}</span>
+            </div>
             <button onClick={() => setShowTutorial(true)} className="text-muted-foreground hover:text-foreground transition-colors">
               <HelpCircle className="h-5 w-5" />
             </button>

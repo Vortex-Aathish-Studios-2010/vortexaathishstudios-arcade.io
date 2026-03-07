@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { addPoints, updateStreak } from "@/lib/streaks";
 import { toast } from "sonner";
 
@@ -18,13 +18,12 @@ const PIECES = [
 
 type PieceDef = typeof PIECES[number];
 
-const rotateCells = (cells: number[][]): number[][] => {
-  return cells.map(([r, c]) => [c, -r]).map(([r, c]) => {
-    const minR = Math.min(...cells.map(([r2, c2]) => c2));
-    const minC = Math.min(...cells.map(([r2, c2]) => -r2));
-    return [r - minR, c - minC];
+const rotateCells = (cells: number[][]): number[][] =>
+  cells.map(([r, c]) => [c, -r]).map(([r, c]) => {
+    const minR = Math.min(...cells.map(([r2]) => r2));
+    const minC = Math.min(...cells.map(([, c2]) => c2));
+    return [r - Math.min(...cells.map(([, c2]) => c2)), c - Math.min(...cells.map(([r2]) => -r2))];
   });
-};
 
 const normalizeCells = (cells: number[][]): number[][] => {
   const minR = Math.min(...cells.map(([r]) => r));
@@ -42,42 +41,35 @@ export const KonoodleGame = () => {
 
   const getRotatedCells = (piece: PieceDef, rot: number) => {
     let cells = piece.cells.map(c => [...c]);
-    for (let i = 0; i < rot % 4; i++) {
-      cells = normalizeCells(rotateCells(cells));
-    }
+    for (let i = 0; i < rot % 4; i++) cells = normalizeCells(rotateCells(cells));
     return cells;
   };
 
-  const canPlace = (cells: number[][], r: number, c: number) => {
-    return cells.every(([dr, dc]) => {
+  const canPlace = (cells: number[][], r: number, c: number) =>
+    cells.every(([dr, dc]) => {
       const nr = r + dr, nc = c + dc;
       return nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS && !board[nr][nc];
     });
-  };
 
   const placePiece = (r: number, c: number) => {
     if (!selectedPiece || placed.has(selectedPiece.id)) return;
     const cells = getRotatedCells(selectedPiece, rotation);
     if (!canPlace(cells, r, c)) return;
-
     const newBoard = board.map((row) => [...row]);
     cells.forEach(([dr, dc]) => { newBoard[r + dr][c + dc] = selectedPiece.id; });
     setBoard(newBoard);
     setPlaced(new Set([...placed, selectedPiece.id]));
     setSelectedPiece(null);
     setRotation(0);
-
-    // Check win
     if (newBoard.every((row) => row.every((cell) => cell !== null))) {
       addPoints(200);
-      updateStreak();
+      updateStreak("konoodle");
       toast.success("Konoodle solved! +200 points");
     }
   };
 
   const removePiece = (id: string) => {
-    const newBoard = board.map((row) => row.map((cell) => (cell === id ? null : cell)));
-    setBoard(newBoard);
+    setBoard(board.map((row) => row.map((cell) => (cell === id ? null : cell))));
     const newPlaced = new Set(placed);
     newPlaced.delete(id);
     setPlaced(newPlaced);
@@ -94,15 +86,15 @@ export const KonoodleGame = () => {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="bg-muted/30 p-2 rounded-xl">
+      <div className="bg-card border border-border p-2 rounded-xl">
         {board.map((row, r) => (
           <div key={r} className="flex">
             {row.map((cell, c) => (
               <div
                 key={c}
                 onClick={() => cell ? removePiece(cell) : placePiece(r, c)}
-                className={`w-7 h-7 border border-border/20 rounded-sm cursor-pointer transition-colors ${
-                  cell ? pieceColor(cell) : "bg-background/50 hover:bg-muted/50"
+                className={`w-7 h-7 border border-border/20 rounded-sm cursor-pointer transition-all ${
+                  cell ? `${pieceColor(cell)} shadow-[0_0_6px_hsl(var(--primary)/0.2)]` : "bg-background/30 hover:bg-muted/50"
                 }`}
               />
             ))}
@@ -115,8 +107,10 @@ export const KonoodleGame = () => {
           <button
             key={piece.id}
             onClick={() => { setSelectedPiece(piece); setRotation(0); }}
-            className={`px-3 py-1.5 rounded-lg font-display text-xs transition-colors ${
-              selectedPiece?.id === piece.id ? `${piece.color} text-foreground ring-2 ring-primary` : "bg-muted text-foreground"
+            className={`px-3 py-1.5 rounded-lg font-display text-xs transition-all border ${
+              selectedPiece?.id === piece.id
+                ? `${piece.color} border-primary ring-2 ring-primary/50 glow-primary`
+                : "bg-card border-border text-foreground hover:border-primary/40"
             }`}
           >
             {piece.id}
@@ -125,12 +119,12 @@ export const KonoodleGame = () => {
       </div>
 
       {selectedPiece && (
-        <button onClick={() => setRotation((r) => r + 1)} className="px-4 py-1.5 bg-muted text-foreground rounded-lg font-display text-xs">
+        <button onClick={() => setRotation((r) => r + 1)} className="px-4 py-1.5 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-secondary/50 transition-all">
           ROTATE (R)
         </button>
       )}
 
-      <button onClick={reset} className="px-6 py-2 bg-muted text-foreground rounded-lg font-display text-sm hover:bg-muted/80">
+      <button onClick={reset} className="px-6 py-2 bg-card border border-border text-foreground rounded-xl font-display text-sm hover:border-primary/50 transition-all">
         RESET
       </button>
     </div>

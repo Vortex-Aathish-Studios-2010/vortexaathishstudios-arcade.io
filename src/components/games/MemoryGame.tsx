@@ -54,7 +54,7 @@ export const MemoryGame = () => {
           setGameWon(true);
           const pts = Math.max(100 - moves * 3, 20);
           addPoints(pts);
-          updateStreak();
+          updateStreak("memory");
           toast.success(`You won! +${pts} points`);
         }
       } else {
@@ -79,20 +79,32 @@ export const MemoryGame = () => {
             key={card.id}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleFlip(card.id)}
-            className={`w-16 h-16 rounded-lg flex items-center justify-center text-2xl cursor-pointer transition-all duration-300 border-2 ${
-              card.flipped || card.matched
-                ? "bg-primary/20 border-primary/50"
-                : "bg-muted border-border hover:border-primary/30"
+            className={`w-16 h-16 rounded-xl flex items-center justify-center text-2xl cursor-pointer transition-all duration-300 border-2 ${
+              card.matched
+                ? "bg-primary/20 border-primary glow-primary"
+                : card.flipped
+                ? "bg-accent/20 border-accent/50"
+                : "bg-card border-border hover:border-primary/40 hover:glow-primary"
             }`}
           >
-            {(card.flipped || card.matched) ? card.emoji : "?"}
+            <span className={`transition-transform duration-300 ${card.flipped || card.matched ? "scale-100" : "scale-0"}`}>
+              {card.emoji}
+            </span>
+            {!card.flipped && !card.matched && (
+              <span className="text-muted-foreground font-display text-lg">?</span>
+            )}
           </motion.div>
         ))}
       </div>
       {gameWon && (
-        <button onClick={initGame} className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-display text-sm">
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          onClick={initGame}
+          className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary hover:brightness-110 transition-all"
+        >
           PLAY AGAIN
-        </button>
+        </motion.button>
       )}
     </div>
   );

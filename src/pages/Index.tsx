@@ -1,13 +1,9 @@
 import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
 import { StatsBar } from "@/components/StatsBar";
-import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
-import { LogOut } from "lucide-react";
 
 const Index = () => {
-  const { user, signOut } = useAuth();
-
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
@@ -15,12 +11,7 @@ const Index = () => {
           <h1 className="text-2xl font-display font-black text-glow-primary text-primary">
             BRAIN<span className="text-secondary">ARCADE</span>
           </h1>
-          <div className="flex items-center gap-4">
-            <StatsBar />
-            <button onClick={signOut} className="text-muted-foreground hover:text-foreground transition-colors p-2">
-              <LogOut className="h-5 w-5" />
-            </button>
-          </div>
+          <StatsBar />
         </div>
       </header>
 
@@ -31,13 +22,13 @@ const Index = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {games.map((game, i) =>
-          <GameCard key={game.id} game={game} index={i} />
-          )}
+          {games.map((game, i) => (
+            <GameCard key={game.id} game={game} index={i} />
+          ))}
         </div>
       </main>
-    </div>);
-
+    </div>
+  );
 };
 
 export default Index;

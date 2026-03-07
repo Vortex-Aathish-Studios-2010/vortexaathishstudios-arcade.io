@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { motion } from "framer-motion";
 import { addPoints, updateStreak } from "@/lib/streaks";
 import { toast } from "sonner";
 
@@ -32,24 +33,21 @@ const rotate = (shape: number[][]): number[][] => {
 };
 
 const collides = (board: Board, piece: Piece): boolean => {
-  for (let r = 0; r < piece.shape.length; r++) {
+  for (let r = 0; r < piece.shape.length; r++)
     for (let c = 0; c < piece.shape[r].length; c++) {
       if (!piece.shape[r][c]) continue;
       const nr = piece.y + r, nc = piece.x + c;
       if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) return true;
       if (board[nr][nc]) return true;
     }
-  }
   return false;
 };
 
 const merge = (board: Board, piece: Piece): Board => {
   const b = board.map((r) => [...r]);
-  for (let r = 0; r < piece.shape.length; r++) {
-    for (let c = 0; c < piece.shape[r].length; c++) {
+  for (let r = 0; r < piece.shape.length; r++)
+    for (let c = 0; c < piece.shape[r].length; c++)
       if (piece.shape[r][c]) b[piece.y + r][piece.x + c] = piece.color + 1;
-    }
-  }
   return b;
 };
 
@@ -76,7 +74,6 @@ export const BlockStack = () => {
     setPiece((prev) => {
       const next = { ...prev, y: prev.y + 1 };
       if (!collides(board, next)) return next;
-      // Lock piece
       const merged = merge(board, prev);
       const [cleared, lines] = clearLines(merged);
       setBoard(cleared);
@@ -87,7 +84,7 @@ export const BlockStack = () => {
         setGameOver(true);
         setScore((s) => {
           addPoints(s + pts);
-          updateStreak();
+          updateStreak("tetris");
           toast.info(`Game Over! +${s + pts} points`);
           return s + pts;
         });
@@ -106,11 +103,8 @@ export const BlockStack = () => {
     if (gameOver) return;
     setPiece((prev) => {
       let next = { ...prev };
-      if (rot) {
-        next = { ...next, shape: rotate(prev.shape) };
-      } else {
-        next = { ...next, x: prev.x + dx, y: prev.y + dy };
-      }
+      if (rot) next = { ...next, shape: rotate(prev.shape) };
+      else next = { ...next, x: prev.x + dx, y: prev.y + dy };
       return collides(board, next) ? prev : next;
     });
   }, [board, gameOver]);
@@ -144,41 +138,39 @@ export const BlockStack = () => {
 
   const renderBoard = () => {
     const display = board.map((r) => [...r]);
-    for (let r = 0; r < piece.shape.length; r++) {
-      for (let c = 0; c < piece.shape[r].length; c++) {
+    for (let r = 0; r < piece.shape.length; r++)
+      for (let c = 0; c < piece.shape[r].length; c++)
         if (piece.shape[r][c]) {
           const nr = piece.y + r, nc = piece.x + c;
           if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) display[nr][nc] = piece.color + 1;
         }
-      }
-    }
     return display;
   };
 
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="text-sm text-muted-foreground">Score: <span className="font-display text-foreground">{score}</span></div>
-      <div className="bg-muted/30 p-1 rounded-xl inline-block">
+      <div className="bg-card border border-border p-1 rounded-xl inline-block">
         {renderBoard().map((row, r) => (
           <div key={r} className="flex">
             {row.map((cell, c) => (
-              <div key={c} className={`w-5 h-5 border border-border/20 rounded-sm ${cell ? COLORS[cell - 1] : "bg-background/50"}`} />
+              <div key={c} className={`w-5 h-5 border border-border/10 rounded-sm transition-colors ${cell ? `${COLORS[cell - 1]} shadow-[0_0_6px_hsl(var(--primary)/0.3)]` : "bg-background/30"}`} />
             ))}
           </div>
         ))}
       </div>
       <div className="flex gap-2">
-        <button onClick={() => movePiece(-1, 0)} className="px-3 py-2 bg-muted text-foreground rounded-lg font-display text-xs">←</button>
-        <button onClick={() => movePiece(0, 0, true)} className="px-3 py-2 bg-muted text-foreground rounded-lg font-display text-xs">↻</button>
-        <button onClick={() => movePiece(1, 0)} className="px-3 py-2 bg-muted text-foreground rounded-lg font-display text-xs">→</button>
-        <button onClick={() => movePiece(0, 1)} className="px-3 py-2 bg-muted text-foreground rounded-lg font-display text-xs">↓</button>
-        <button onClick={hardDrop} className="px-3 py-2 bg-primary/20 text-primary rounded-lg font-display text-xs">DROP</button>
+        <button onClick={() => movePiece(-1, 0)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-primary/50 transition-colors">←</button>
+        <button onClick={() => movePiece(0, 0, true)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-secondary/50 transition-colors">↻</button>
+        <button onClick={() => movePiece(1, 0)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-primary/50 transition-colors">→</button>
+        <button onClick={() => movePiece(0, 1)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-accent/50 transition-colors">↓</button>
+        <button onClick={hardDrop} className="px-3 py-2 bg-primary/20 border border-primary/40 text-primary rounded-lg font-display text-xs hover:glow-primary transition-all">DROP</button>
       </div>
       <p className="text-xs text-muted-foreground">Arrow keys + Space to drop</p>
       {gameOver && (
-        <button onClick={reset} className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-display text-sm">
+        <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} onClick={reset} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary">
           PLAY AGAIN
-        </button>
+        </motion.button>
       )}
     </div>
   );
