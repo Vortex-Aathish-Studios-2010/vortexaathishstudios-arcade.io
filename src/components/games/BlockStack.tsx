@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { motion } from "framer-motion";
 import { addPoints, updateStreak } from "@/lib/streaks";
 import { toast } from "sonner";
 
@@ -174,5 +175,3 @@ export const BlockStack = () => {
     </div>
   );
 };
-
-import { motion } from "framer-motion";
