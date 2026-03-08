@@ -3,32 +3,26 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { entertainmentGames } from "@/lib/entertainmentData";
 import { EntertainmentCard } from "@/components/EntertainmentCard";
-import { ArrowLeftRight, Trophy, XCircle } from "lucide-react";
-import { getTotalWins, getTotalLosses } from "@/lib/streaks";
+import { Star } from "lucide-react";
+import { getEntertainmentPoints } from "@/lib/streaks";
 
 const EntertainmentPage = () => {
   const navigate = useNavigate();
-  const [wins, setWins] = useState(0);
-  const [losses, setLosses] = useState(0);
+  const [points, setPoints] = useState(0);
 
   useEffect(() => {
-    setWins(getTotalWins());
-    setLosses(getTotalLosses());
-    const interval = setInterval(() => {
-      setWins(getTotalWins());
-      setLosses(getTotalLosses());
-    }, 2000);
+    setPoints(getEntertainmentPoints());
+    const interval = setInterval(() => setPoints(getEntertainmentPoints()), 1000);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="entertainment-theme min-h-screen bg-[hsl(var(--sport-bg))]">
-      {/* Decorative background stripes */}
+      {/* Decorative background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-[hsl(var(--sport-primary))]/10 blur-3xl" />
         <div className="absolute top-1/3 -left-20 w-80 h-80 rounded-full bg-[hsl(var(--sport-secondary))]/10 blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full bg-[hsl(var(--sport-accent))]/10 blur-3xl" />
-        {/* Field lines */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-full bg-[hsl(var(--sport-primary))]/5" />
         <div className="absolute top-1/2 left-0 w-full h-px bg-[hsl(var(--sport-primary))]/5" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full border border-[hsl(var(--sport-primary))]/5" />
@@ -46,16 +40,11 @@ const EntertainmentPage = () => {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-3 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-lg px-3 py-1.5 shadow-sm">
-              <div className="flex items-center gap-1">
-                <Trophy className="h-3.5 w-3.5 text-[hsl(var(--sport-primary))]" />
-                <span className="font-sport text-xs text-[hsl(var(--sport-text))]">{wins}</span>
-              </div>
-              <div className="w-px h-3 bg-[hsl(var(--sport-border))]" />
-              <div className="flex items-center gap-1">
-                <XCircle className="h-3.5 w-3.5 text-red-500" />
-                <span className="font-sport text-xs text-[hsl(var(--sport-text))]">{losses}</span>
-              </div>
+            {/* Points display */}
+            <div className="flex items-center gap-2 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-lg px-3 py-1.5 shadow-sm">
+              <Star className="h-3.5 w-3.5 text-[hsl(var(--sport-accent))]" />
+              <span className="font-sport text-sm text-[hsl(var(--sport-text))]">{points}</span>
+              <span className="font-sport-body text-[10px] text-[hsl(var(--sport-muted))]">PTS</span>
             </div>
             {/* Brain Arcade switch */}
             <button
@@ -88,7 +77,7 @@ const EntertainmentPage = () => {
           </p>
         </motion.div>
 
-        {/* Animated stadium wave decoration */}
+        {/* Stadium wave decoration */}
         <div className="flex justify-center gap-1 mb-10">
           {Array.from({ length: 15 }).map((_, i) => (
             <motion.div
@@ -100,11 +89,8 @@ const EntertainmentPage = () => {
                   : i % 3 === 1
                   ? "hsl(210 90% 55%)"
                   : "hsl(35 95% 55%)",
-                animationDelay: `${i * 0.1}s`,
               }}
-              animate={{
-                y: [0, -12, 0],
-              }}
+              animate={{ y: [0, -12, 0] }}
               transition={{
                 duration: 1.2,
                 repeat: Infinity,
@@ -120,8 +106,6 @@ const EntertainmentPage = () => {
             <EntertainmentCard key={game.id} game={game} index={i} />
           ))}
         </div>
-
-
       </main>
     </div>
   );

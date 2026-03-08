@@ -25,6 +25,16 @@ export const addPoints = (pts: number) => {
   localStorage.setItem(POINTS_KEY, String(current + pts));
 };
 
+// Entertainment Arcade points
+export const getEntertainmentPoints = (): number => {
+  return parseInt(localStorage.getItem(ENT_POINTS_KEY) || "0", 10);
+};
+
+export const addEntertainmentPoints = (pts: number) => {
+  const current = getEntertainmentPoints();
+  localStorage.setItem(ENT_POINTS_KEY, String(current + pts));
+};
+
 export const updateStreak = (gameId: string) => {
   const key = streakKey(gameId);
   const lpKey = lastPlayKey(gameId);
