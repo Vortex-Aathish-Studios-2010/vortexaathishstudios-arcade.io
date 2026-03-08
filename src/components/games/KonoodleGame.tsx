@@ -110,7 +110,6 @@ export const KonoodleGame = ({ onComplete }: Props) => {
       addPoints(200);
       updateStreak("konoodle");
       addWin("konoodle");
-      toast.success("Konoodle solved! +200 points");
       onComplete?.(200);
     }
   };
