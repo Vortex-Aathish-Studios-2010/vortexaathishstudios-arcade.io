@@ -205,7 +205,6 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setShuffling(true);
     sfx.shake();
 
-    // Delay computation so the cover animation plays fully first (400ms close)
     setTimeout(() => {
       const boardWithout = board.map(row => row.map(cell => cell === lastPlacedId ? null : cell));
 
@@ -218,6 +217,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
               candidates.push({ cells: orientation, r, c });
       }
 
+      // Shuffle and pick a random valid candidate immediately (no heavy solve check)
       for (let i = candidates.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
@@ -225,32 +225,37 @@ export const KonoodleGame = ({ onComplete }: Props) => {
 
       let foundBoard: BoardState | null = null;
       let foundCells: [number, number][] = [];
-      for (const cand of candidates) {
-        const testBoard = boardWithout.map(row => [...row]);
-        const pc: [number, number][] = [];
-        cand.cells.forEach(([dr, dc]) => {
-          testBoard[cand.r + dr][cand.c + dc] = lastPlacedId;
-          pc.push([cand.r + dr, cand.c + dc]);
-        });
-        const currentPlacedIds = new Set(placed.keys());
-        if (solvePuzzle(testBoard, currentPlacedIds, 500000) !== null) {
-          foundBoard = testBoard;
-          foundCells = pc;
-          break;
+
+      if (candidates.length > 0) {
+        // Quick solvability check on just 3 candidates with a tiny step limit
+        const toCheck = candidates.slice(0, 3);
+        for (const cand of toCheck) {
+          const testBoard = boardWithout.map(row => [...row]);
+          const pc: [number, number][] = [];
+          cand.cells.forEach(([dr, dc]) => {
+            testBoard[cand.r + dr][cand.c + dc] = lastPlacedId;
+            pc.push([cand.r + dr, cand.c + dc]);
+          });
+          const currentPlacedIds = new Set(placed.keys());
+          if (solvePuzzle(testBoard, currentPlacedIds, 50000) !== null) {
+            foundBoard = testBoard;
+            foundCells = pc;
+            break;
+          }
+        }
+
+        // Fallback: just use first candidate without checking
+        if (!foundBoard) {
+          const cand = candidates[0];
+          foundBoard = boardWithout.map(row => [...row]);
+          foundCells = [];
+          cand.cells.forEach(([dr, dc]) => {
+            foundBoard![cand.r + dr][cand.c + dc] = lastPlacedId;
+            foundCells.push([cand.r + dr, cand.c + dc]);
+          });
         }
       }
 
-      if (!foundBoard && candidates.length > 0) {
-        const cand = candidates[0];
-        foundBoard = boardWithout.map(row => [...row]);
-        foundCells = [];
-        cand.cells.forEach(([dr, dc]) => {
-          foundBoard![cand.r + dr][cand.c + dc] = lastPlacedId;
-          foundCells.push([cand.r + dr, cand.c + dc]);
-        });
-      }
-
-      // Update board while still covered
       if (foundBoard) {
         setBoard(foundBoard);
         const newPlaced = new Map(placed);
@@ -258,13 +263,12 @@ export const KonoodleGame = ({ onComplete }: Props) => {
         setPlaced(newPlaced);
       }
 
-      // Hold the cover for a moment so user sees it, then reveal
       setTimeout(() => {
         setShuffling(false);
         setHasShuffled(true);
         sfx.place();
-      }, 500);
-    }, 500);
+      }, 400);
+    }, 400);
   }, [board, placed, lastPlacedId]);
 
   // Solve puzzle
