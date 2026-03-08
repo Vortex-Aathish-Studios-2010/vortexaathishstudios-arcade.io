@@ -61,6 +61,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   const [solving, setSolving] = useState(false);
   const [showingSolution, setShowingSolution] = useState(false);
   const [shuffling, setShuffling] = useState(false);
+  const [hasShuffled, setHasShuffled] = useState(false);
   const [dragOverCell, setDragOverCell] = useState<[number, number] | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
