@@ -1,27 +1,34 @@
 import { useState, useMemo, useCallback } from "react";
 import { addPoints, updateStreak, getGameLevel, incrementLevel, addWin } from "@/lib/streaks";
+import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
 
-const BASE_GRID = 10;
+const BASE_GRID = 8;
 const DIRECTIONS = [[0, 1], [1, 0], [1, 1], [0, -1], [1, -1]];
 
 const ALL_WORDS = [
-  // 4-letter
-  ["REACT", "CODE", "TYPE", "LOOP", "NODE", "DATA"],
-  ["BRAIN", "GAME", "PLAY", "SCORE", "LEVEL", "GRID"],
-  ["LOGIC", "THINK", "SOLVE", "FIND", "WORD", "CLUE"],
-  // 5-letter
+  // 3-4 letter
+  ["CODE", "TYPE", "LOOP", "NODE", "DATA", "GAME"],
+  // 4-5 letter
+  ["REACT", "BRAIN", "SCORE", "LEVEL", "LOGIC", "THINK"],
+  // 5 letter
   ["PUZZLE", "QUEST", "POWER", "SMART", "FOCUS", "SHARP"],
+  // 5-6 letter
   ["SKILL", "SPEED", "TRAIN", "LEARN", "BUILD", "CRAFT"],
-  // 6-letter
+  // 6 letter
   ["MEMORY", "ARCADE", "SEARCH", "HIDDEN", "TARGET", "MASTER"],
+  // 6-7 letter
   ["GENIUS", "NEURAL", "CODING", "GAMING", "PLAYER", "WINNER"],
+  // 7+ letter
+  ["CHAMPION", "DISCOVER", "TREASURE", "CREATIVE", "ADVANCED", "STRATEGY"],
+  ["CHALLENGE", "BRILLIANT", "KNOWLEDGE", "DEVELOPER", "ALGORITHM", "ARCHITECT"],
+  ["INNOVATION", "INCREDIBLE", "TECHNOLOGY", "MASTERPLAN", "EXPERIENCE"],
 ];
 
 const getConfig = (level: number) => {
-  const gridSize = Math.min(BASE_GRID + Math.floor((level - 1) * 1.5), 16);
+  const gridSize = Math.min(BASE_GRID + Math.floor((level - 1) * 1.2), 18);
   const wordSetIdx = Math.min(level - 1, ALL_WORDS.length - 1);
-  const wordCount = Math.min(4 + level, 8);
+  const wordCount = Math.min(3 + level, 8);
   return { gridSize, words: ALL_WORDS[wordSetIdx].slice(0, wordCount) };
 };
 
@@ -30,7 +37,7 @@ const generateGrid = (words: string[], gridSize: number) => {
   const placements = new Map<string, [number, number][]>();
   for (const word of words) {
     let placed = false;
-    for (let attempt = 0; attempt < 200 && !placed; attempt++) {
+    for (let attempt = 0; attempt < 300 && !placed; attempt++) {
       const [dr, dc] = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
       const r = Math.floor(Math.random() * gridSize);
       const c = Math.floor(Math.random() * gridSize);
@@ -57,12 +64,13 @@ interface Props {
 }
 
 export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
-  const currentLevel = propLevel || getGameLevel("wordsearch");
+  const [currentLevel, setCurrentLevel] = useState(propLevel || getGameLevel("wordsearch"));
   const config = useMemo(() => getConfig(currentLevel), [currentLevel]);
-  const { grid, placements } = useMemo(() => generateGrid(config.words, config.gridSize), [config]);
+  const { grid, placements } = useMemo(() => generateGrid(config.words, config.gridSize), [currentLevel, config]);
   const [found, setFound] = useState<Set<string>>(new Set());
   const [selecting, setSelecting] = useState<[number, number][]>([]);
   const [isMouseDown, setIsMouseDown] = useState(false);
+  const [levelComplete, setLevelComplete] = useState(false);
 
   const cellKey = (r: number, c: number) => `${r},${c}`;
   const foundCells = useMemo(() => {
@@ -79,13 +87,16 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
       if (!found.has(word) && (selected === word || reversed === word)) {
         const newFound = new Set([...found, word]);
         setFound(newFound);
+        sfx.wordFound();
         if (newFound.size === config.words.length) {
           const pts = 80 + currentLevel * 30;
           addPoints(pts);
           updateStreak("wordsearch");
           addWin("wordsearch");
           incrementLevel("wordsearch");
-          toast.success(`All words found! +${pts} points. Next: bigger grid!`);
+          sfx.levelComplete();
+          toast.success(`All words found! +${pts} points`);
+          setLevelComplete(true);
           onComplete?.(pts);
         } else toast.success(`Found "${word}"!`);
       }
@@ -94,12 +105,20 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
     setIsMouseDown(false);
   }, [selecting, grid, config.words, found, currentLevel, onComplete]);
 
-  const cellSize = config.gridSize > 12 ? "w-6 h-6 text-[11px]" : "w-8 h-8 text-sm";
+  const handleNextLevel = () => {
+    const next = currentLevel + 1;
+    setCurrentLevel(next);
+    setFound(new Set());
+    setSelecting([]);
+    setLevelComplete(false);
+  };
+
+  const cellSize = config.gridSize > 14 ? "w-5 h-5 text-[10px]" : config.gridSize > 12 ? "w-6 h-6 text-[11px]" : "w-8 h-8 text-sm";
 
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="text-xs font-display text-muted-foreground">
-        Grid: {config.gridSize}×{config.gridSize} · Level {currentLevel}
+        Grid: {config.gridSize}×{config.gridSize} · Words up to {Math.max(...config.words.map(w => w.length))} letters
       </div>
       <div
         className="bg-card border border-border p-2 rounded-xl select-none"
@@ -112,9 +131,9 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
             {row.map((letter, c) => (
               <div
                 key={c}
-                onMouseDown={() => { setIsMouseDown(true); setSelecting([[r, c]]); }}
+                onMouseDown={() => { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); }}
                 onMouseEnter={() => { if (isMouseDown && !selectingSet.has(cellKey(r, c))) setSelecting((prev) => [...prev, [r, c]]); }}
-                onTouchStart={() => { setIsMouseDown(true); setSelecting([[r, c]]); }}
+                onTouchStart={() => { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); }}
                 onTouchMove={(e) => {
                   const touch = e.touches[0];
                   const el = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -139,6 +158,14 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
           </span>
         ))}
       </div>
+      {levelComplete && (
+        <button
+          onClick={handleNextLevel}
+          className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary hover:brightness-110 transition-all"
+        >
+          NEXT LEVEL →
+        </button>
+      )}
     </div>
   );
 };

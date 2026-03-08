@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { addPoints, updateStreak, addLoss } from "@/lib/streaks";
+import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
 
 const COLS = 25;
@@ -55,16 +56,19 @@ export const SnakeGame = ({ onComplete }: Props) => {
       const head: Pos = [prev[0][0] + d[0], prev[0][1] + d[1]];
       if (head[0] < 0 || head[0] >= ROWS || head[1] < 0 || head[1] >= COLS) {
         setGameOver(true);
+        sfx.gameOver();
         setScore((s) => { addPoints(s); updateStreak("snake"); addLoss("snake"); toast.info(`Game Over! +${s} points`); onComplete?.(s); return s; });
         return prev;
       }
       if (prev.some(([r, c]) => r === head[0] && c === head[1])) {
         setGameOver(true);
+        sfx.gameOver();
         setScore((s) => { addPoints(s); updateStreak("snake"); addLoss("snake"); toast.info(`Game Over! +${s} points`); onComplete?.(s); return s; });
         return prev;
       }
       if (obstacles.has(`${head[0]},${head[1]}`)) {
         setGameOver(true);
+        sfx.gameOver();
         setScore((s) => { addPoints(s); updateStreak("snake"); addLoss("snake"); toast.info(`Hit obstacle! +${s} points`); onComplete?.(s); return s; });
         return prev;
       }
@@ -72,6 +76,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
       if (head[0] === food[0] && head[1] === food[1]) {
         const pts = getPointsPerFood();
         setScore((s) => s + pts);
+        sfx.eat();
         // Add obstacles every 5 foods eaten
         if (newSnake.length % 5 === 0) {
           const newObs = generateObstacles(2, newSnake, food);
@@ -96,6 +101,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
       const map: Record<string, Pos> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
       if (map[e.key]) {
         e.preventDefault();
+        sfx.move();
         if (!started) setStarted(true);
         const [dr, dc] = map[e.key];
         if (dirRef.current[0] + dr !== 0 || dirRef.current[1] + dc !== 0) { dirRef.current = [dr, dc]; setDir([dr, dc]); }
@@ -124,6 +130,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
   }, [started]);
 
   const reset = () => {
+    sfx.click();
     setSnake(initialSnake); setFood(randomFood(initialSnake, new Set())); dirRef.current = [0, 1]; setDir([0, 1]); setGameOver(false); setScore(0); setStarted(false); setObstacles(new Set());
   };
 

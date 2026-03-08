@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { addPoints, updateStreak, addWin } from "@/lib/streaks";
+import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
 import { Clock } from "lucide-react";
 
@@ -57,6 +58,7 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
     const row = Math.floor(index / SIZE), col = index % SIZE;
     const bRow = Math.floor(blankIdx / SIZE), bCol = blankIdx % SIZE;
     if ((Math.abs(row - bRow) === 1 && col === bCol) || (Math.abs(col - bCol) === 1 && row === bRow)) {
+      sfx.move();
       const newTiles = [...tiles];
       [newTiles[index], newTiles[blankIdx]] = [newTiles[blankIdx], newTiles[index]];
       setTiles(newTiles);
@@ -64,7 +66,7 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
       if (isSolved(newTiles)) {
         setWon(true);
         setRunning(false);
-        // Time-based scoring: max 300 pts, lose 1 pt per second
+        sfx.levelComplete();
         const pts = Math.max(300 - elapsed - moves * 2, 20);
         addPoints(pts);
         updateStreak("sliding");
@@ -123,7 +125,7 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
     }
   };
 
-  const reset = () => { setTiles(shuffle(createSolved())); setMoves(0); setWon(false); setElapsed(0); setRunning(true); };
+  const reset = () => { sfx.click(); setTiles(shuffle(createSolved())); setMoves(0); setWon(false); setElapsed(0); setRunning(true); };
 
   return (
     <div className="flex flex-col items-center gap-4">

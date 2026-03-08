@@ -4,12 +4,12 @@ import { addPoints, updateStreak, getGameLevel, incrementLevel, addWin } from "@
 import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
 
-const allEmojis = ["🎯", "🚀", "⚡", "🔥", "💎", "🌟", "🎪", "🎨", "🎵", "🎮", "🏆", "🧩", "🔮", "🌈", "🎲", "🎸", "🦄", "🍀"];
+const allEmojis = ["🎯", "🚀", "⚡", "🔥", "💎", "🌟", "🎪", "🎨", "🎵", "🎮", "🏆", "🧩", "🔮", "🌈", "🎲", "🎸", "🦄", "🍀", "🌻", "🎭", "🐉", "🦊", "🌙", "🎤", "🧠", "💡", "🔬", "🎻", "🪐", "🏔️", "🌊", "🦁", "🐺", "🦅", "🌸", "🍄"];
 
 const getLevelConfig = (level: number) => {
-  const pairs = Math.min(5 + level, 18);
+  const pairs = Math.min(4 + Math.floor(level * 1.5), allEmojis.length);
   const total = pairs * 2;
-  const cols = total <= 12 ? 4 : total <= 20 ? 5 : total <= 30 ? 6 : 7;
+  const cols = total <= 10 ? 4 : total <= 16 ? 4 : total <= 20 ? 5 : total <= 30 ? 6 : total <= 42 ? 7 : 8;
   return { cols, pairs };
 };
 
@@ -26,15 +26,17 @@ interface Props {
 }
 
 export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
-  const currentLevel = propLevel || getGameLevel("memory");
-  const config = getLevelConfig(currentLevel);
+  const [currentLevel, setCurrentLevel] = useState(propLevel || getGameLevel("memory"));
+  const [config, setConfig] = useState(() => getLevelConfig(currentLevel));
   const [cards, setCards] = useState<Card[]>([]);
   const [flipped, setFlipped] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
   const [gameWon, setGameWon] = useState(false);
 
-  const initGame = () => {
-    const emojis = allEmojis.slice(0, config.pairs);
+  const initGame = (lvl: number) => {
+    const cfg = getLevelConfig(lvl);
+    setConfig(cfg);
+    const emojis = allEmojis.slice(0, cfg.pairs);
     const shuffled = [...emojis, ...emojis]
       .sort(() => Math.random() - 0.5)
       .map((emoji, i) => ({ id: i, emoji, flipped: false, matched: false }));
@@ -44,7 +46,7 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
     setGameWon(false);
   };
 
-  useEffect(() => { initGame(); }, [currentLevel]);
+  useEffect(() => { initGame(currentLevel); }, [currentLevel]);
 
   const handleFlip = (id: number) => {
     if (flipped.length === 2 || gameWon) return;
@@ -91,18 +93,26 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
     }
   };
 
+  const handleNextLevel = () => {
+    const next = currentLevel + 1;
+    setCurrentLevel(next);
+  };
+
+  const cardSize = config.pairs > 15 ? "w-11 h-11 text-base" : config.pairs > 10 ? "w-12 h-12 text-lg" : "w-14 h-14 text-xl";
+
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="flex gap-6 text-sm">
         <span className="text-muted-foreground">Moves: <span className="font-display text-foreground">{moves}</span></span>
+        <span className="text-muted-foreground">Cards: <span className="font-display text-primary">{config.pairs * 2}</span></span>
       </div>
-      <div className={`grid gap-2.5`} style={{ gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))` }}>
+      <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))` }}>
         {cards.map((card) => (
           <motion.div
             key={card.id}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleFlip(card.id)}
-            className={`w-14 h-14 rounded-xl flex items-center justify-center text-xl cursor-pointer transition-all duration-300 border-2 ${
+            className={`${cardSize} rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 border-2 ${
               card.matched
                 ? "bg-primary/20 border-primary glow-primary"
                 : card.flipped
@@ -123,7 +133,7 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
         <motion.button
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          onClick={initGame}
+          onClick={handleNextLevel}
           className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary hover:brightness-110 transition-all"
         >
           NEXT LEVEL →

@@ -4,7 +4,7 @@ import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
 import { StatsBar } from "@/components/StatsBar";
 import { motion } from "framer-motion";
-import { Gamepad2, Brain, Lock, Trophy, XCircle, ArrowLeftRight } from "lucide-react";
+import { Brain, Lock, Trophy, XCircle, ArrowLeftRight } from "lucide-react";
 import { getTotalWins, getTotalLosses } from "@/lib/streaks";
 
 const Index = () => {
@@ -57,7 +57,7 @@ const Index = () => {
             <div className="absolute top-3 right-3">
               <Lock className="h-4 w-4 text-muted-foreground" />
             </div>
-            <Gamepad2 className="h-16 w-16 text-secondary/40 mx-auto mb-4" />
+            <div className="h-16 w-16 mx-auto mb-4 flex items-center justify-center text-4xl">🎮</div>
             <h2 className="font-display text-xl font-bold text-muted-foreground mb-2">Entertainment Arcade</h2>
             <p className="text-sm text-muted-foreground">Coming Soon</p>
           </motion.button>
@@ -91,6 +91,20 @@ const Index = () => {
             </h1>
           </div>
           <div className="flex items-center gap-3">
+            {/* Entertainment Arcade button */}
+            <button
+              className="relative overflow-hidden rounded-lg px-3 py-1.5 bg-white border border-border cursor-not-allowed opacity-70"
+              title="Coming Soon"
+            >
+              <div className="absolute top-0 left-0 right-0 h-[3px] flex">
+                <div className="flex-1 bg-destructive" />
+                <div className="flex-1 bg-primary" />
+                <div className="flex-1 bg-[hsl(142,71%,45%)]" />
+              </div>
+              <span className="font-display text-xs text-foreground flex items-center gap-1">
+                🎮 <Lock className="h-3 w-3" />
+              </span>
+            </button>
             <div className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-1.5">
               <div className="flex items-center gap-1">
                 <Trophy className="h-3.5 w-3.5 text-primary" />
