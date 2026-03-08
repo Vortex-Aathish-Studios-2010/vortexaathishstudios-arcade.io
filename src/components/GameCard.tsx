@@ -40,16 +40,17 @@ export const GameCard = ({ game, index }: { game: GameInfo; index: number }) => 
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={clicked
-        ? { scale: 1.12, opacity: 0, boxShadow: `0 0 40px ${glowColors[game.color]}` }
+        ? { scale: 1.3, opacity: 0, y: -20, filter: "blur(8px)" }
         : { opacity: 1, y: 0 }
       }
       transition={clicked
-        ? { duration: 0.35, ease: "easeIn" }
+        ? { duration: 0.45, ease: [0.4, 0, 0.2, 1] }
         : { delay: index * 0.08, duration: 0.4 }
       }
       whileHover={!clicked ? { scale: 1.04, y: -4 } : undefined}
       onClick={handleClick}
-      className={`relative cursor-pointer rounded-xl border-2 bg-card p-6 transition-all duration-300 ${colorMap[game.color]} overflow-hidden`}
+      className={`relative cursor-pointer rounded-xl border-2 bg-card p-6 transition-shadow duration-300 ${colorMap[game.color]} overflow-hidden`}
+      style={clicked ? { zIndex: 50 } : undefined}
     >
       {/* Ripple effect on click */}
       <AnimatePresence>
