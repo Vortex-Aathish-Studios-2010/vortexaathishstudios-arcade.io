@@ -81,14 +81,7 @@ export const GameCard = ({ game, index }: { game: GameInfo; index: number }) => 
       </motion.div>
       <h3 className="font-display text-lg font-bold text-foreground mb-1 relative z-10">{game.name}</h3>
       <p className="text-sm text-muted-foreground mb-3 relative z-10">{game.description}</p>
-      <div className="flex items-center justify-between relative z-10">
-        <span className={`text-[10px] font-display uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-          game.difficulty === "Easy" ? "text-primary border-primary/30 bg-primary/10" :
-          game.difficulty === "Medium" ? "text-accent border-accent/30 bg-accent/10" :
-          "text-secondary border-secondary/30 bg-secondary/10"
-        }`}>
-          {game.difficulty}
-        </span>
+      <div className="flex items-center justify-end relative z-10">
         {showLevel && level > 1 && (
           <span className="text-[10px] font-display text-primary bg-primary/10 px-2 py-0.5 rounded-full">
             LVL {level}
