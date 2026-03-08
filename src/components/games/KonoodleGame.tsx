@@ -227,8 +227,8 @@ export const KonoodleGame = ({ onComplete }: Props) => {
       let foundCells: [number, number][] = [];
 
       if (candidates.length > 0) {
-        // Quick solvability check on just 3 candidates with a tiny step limit
-        const toCheck = candidates.slice(0, 3);
+        // Quick solvability check on up to 8 candidates with a reasonable step limit
+        const toCheck = candidates.slice(0, 8);
         for (const cand of toCheck) {
           const testBoard = boardWithout.map(row => [...row]);
           const pc: [number, number][] = [];
@@ -237,14 +237,14 @@ export const KonoodleGame = ({ onComplete }: Props) => {
             pc.push([cand.r + dr, cand.c + dc]);
           });
           const currentPlacedIds = new Set(placed.keys());
-          if (solvePuzzle(testBoard, currentPlacedIds, 50000) !== null) {
+          if (solvePuzzle(testBoard, currentPlacedIds, 200000) !== null) {
             foundBoard = testBoard;
             foundCells = pc;
             break;
           }
         }
 
-        // Fallback: just use first candidate without checking
+        // Fallback: just use a random candidate
         if (!foundBoard) {
           const cand = candidates[0];
           foundBoard = boardWithout.map(row => [...row]);
