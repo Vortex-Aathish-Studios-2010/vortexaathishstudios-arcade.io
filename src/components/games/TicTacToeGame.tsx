@@ -195,6 +195,13 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
     }
   }, [board]);
 
+  // On hard, bot goes first
+  useEffect(() => {
+    if (mode === "bot" && difficulty === "hard" && board.every((c) => c === null)) {
+      setTurn("O");
+    }
+  }, [mode, difficulty]);
+
   // Bot makes a move
   useEffect(() => {
     if (mode !== "bot" || turn !== "O" || gameOver || !difficulty) return;
