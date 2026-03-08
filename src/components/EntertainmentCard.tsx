@@ -42,7 +42,7 @@ export const EntertainmentCard = ({ game, index }: { game: EntertainmentGameInfo
       whileHover={!clicked ? { scale: 1.06, y: -6, transition: { type: "spring", stiffness: 300 } } : undefined}
       whileTap={!clicked && game.available ? { scale: 0.97 } : undefined}
       onClick={handleClick}
-      className={`relative ${game.available ? "cursor-pointer" : "cursor-default"} rounded-2xl border-2 bg-white/80 backdrop-blur-sm p-6 transition-shadow duration-300 ${colorMap[game.color]} shadow-lg hover:shadow-xl overflow-hidden`}
+      className={`relative ${game.available ? "cursor-pointer" : "cursor-default"} rounded-2xl border-2 bg-[hsl(var(--sport-card))]/80 backdrop-blur-sm p-6 transition-shadow duration-300 ${colorMap[game.color]} shadow-lg hover:shadow-xl overflow-hidden`}
       style={clicked ? { zIndex: 50 } : undefined}
     >
       {/* Glow effect on click */}
