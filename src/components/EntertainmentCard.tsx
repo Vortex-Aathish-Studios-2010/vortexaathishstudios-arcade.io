@@ -34,11 +34,6 @@ export const EntertainmentCard = ({ game, index }: { game: EntertainmentGameInfo
       <div className="text-4xl mb-3 relative z-10">{game.icon}</div>
       <h3 className="font-sport text-lg font-bold text-gray-800 mb-1 relative z-10">{game.name}</h3>
       <p className="text-sm text-gray-500 mb-3 relative z-10">{game.description}</p>
-      <div className="flex items-center justify-between relative z-10">
-        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${badgeMap[game.color]}`}>
-          {game.difficulty}
-        </span>
-      </div>
     </motion.div>
   );
 };
