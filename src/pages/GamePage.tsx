@@ -29,7 +29,7 @@ const gameComponents: Record<string, React.FC<{ level?: number; onComplete?: (sc
 };
 
 // Games that manage their own level internally or don't use levels
-const HIDE_LEVEL_IDS = new Set(["tetris", "snake", "konoodle"]);
+const HIDE_LEVEL_IDS = new Set(["tetris", "snake", "konoodle", "tictactoe"]);
 
 const GamePage = () => {
   const { id } = useParams();
