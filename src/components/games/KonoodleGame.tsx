@@ -228,9 +228,8 @@ export const KonoodleGame = ({ onComplete }: Props) => {
       let foundCells: [number, number][] = [];
 
       if (candidates.length > 0) {
-        // Check candidates and CACHE the solution for later use
-        const toCheck = candidates.slice(0, 10);
-        for (const cand of toCheck) {
+        // Try ALL candidates until we find one with a known solution
+        for (const cand of candidates) {
           const testBoard = boardWithout.map(row => [...row]);
           const pc: [number, number][] = [];
           cand.cells.forEach(([dr, dc]) => {
@@ -242,21 +241,9 @@ export const KonoodleGame = ({ onComplete }: Props) => {
           if (sol !== null) {
             foundBoard = testBoard;
             foundCells = pc;
-            cachedSolutionRef.current = sol; // Cache the solution!
+            cachedSolutionRef.current = sol;
             break;
           }
-        }
-
-        // Fallback: use first candidate
-        if (!foundBoard) {
-          const cand = candidates[0];
-          foundBoard = boardWithout.map(row => [...row]);
-          foundCells = [];
-          cand.cells.forEach(([dr, dc]) => {
-            foundBoard![cand.r + dr][cand.c + dc] = lastPlacedId;
-            foundCells.push([cand.r + dr, cand.c + dc]);
-          });
-          cachedSolutionRef.current = null;
         }
       }
 
