@@ -6,10 +6,11 @@ import { toast } from "sonner";
 
 const allEmojis = ["🎯", "🚀", "⚡", "🔥", "💎", "🌟", "🎪", "🎨", "🎵", "🎮", "🏆", "🧩", "🔮", "🌈", "🎲", "🎸", "🦄", "🍀", "🌻", "🎭", "🐉", "🦊", "🌙", "🎤", "🧠", "💡", "🔬", "🎻", "🪐", "🏔️", "🌊", "🦁", "🐺", "🦅", "🌸", "🍄"];
 
+// Level 1 = 8 cards (4 pairs), Level 2 = 16 cards (8 pairs), etc.
 const getLevelConfig = (level: number) => {
-  const pairs = Math.min(4 + Math.floor(level * 1.5), allEmojis.length);
+  const pairs = Math.min(level * 4, allEmojis.length);
   const total = pairs * 2;
-  const cols = total <= 10 ? 4 : total <= 16 ? 4 : total <= 20 ? 5 : total <= 30 ? 6 : total <= 42 ? 7 : 8;
+  const cols = total <= 8 ? 4 : total <= 16 ? 4 : total <= 24 ? 6 : total <= 32 ? 8 : total <= 42 ? 7 : 8;
   return { cols, pairs };
 };
 
@@ -106,7 +107,7 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
         <span className="text-muted-foreground">Moves: <span className="font-display text-foreground">{moves}</span></span>
         <span className="text-muted-foreground">Cards: <span className="font-display text-primary">{config.pairs * 2}</span></span>
       </div>
-      <div className={`grid gap-2`} style={{ gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))` }}>
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))` }}>
         {cards.map((card) => (
           <motion.div
             key={card.id}
