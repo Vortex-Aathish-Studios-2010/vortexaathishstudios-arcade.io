@@ -360,12 +360,9 @@ export const KonoodleGame = ({ onComplete }: Props) => {
               style={{ originY: 0 }}
               className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary via-secondary to-accent flex items-center justify-center z-10"
             >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 0.6, repeat: Infinity, ease: "linear", repeatType: "loop" }}
-              >
+              <div className="animate-spin" style={{ animationDuration: "0.6s" }}>
                 <Shuffle className="h-8 w-8 text-primary-foreground" />
-              </motion.div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
