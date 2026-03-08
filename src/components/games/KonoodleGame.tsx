@@ -227,8 +227,8 @@ export const KonoodleGame = ({ onComplete }: Props) => {
       let foundCells: [number, number][] = [];
 
       if (candidates.length > 0) {
-        // Quick solvability check on just 3 candidates with a tiny step limit
-        const toCheck = candidates.slice(0, 3);
+        // Quick solvability check on up to 8 candidates with a reasonable step limit
+        const toCheck = candidates.slice(0, 8);
         for (const cand of toCheck) {
           const testBoard = boardWithout.map(row => [...row]);
           const pc: [number, number][] = [];
@@ -237,14 +237,14 @@ export const KonoodleGame = ({ onComplete }: Props) => {
             pc.push([cand.r + dr, cand.c + dc]);
           });
           const currentPlacedIds = new Set(placed.keys());
-          if (solvePuzzle(testBoard, currentPlacedIds, 50000) !== null) {
+          if (solvePuzzle(testBoard, currentPlacedIds, 200000) !== null) {
             foundBoard = testBoard;
             foundCells = pc;
             break;
           }
         }
 
-        // Fallback: just use first candidate without checking
+        // Fallback: just use a random candidate
         if (!foundBoard) {
           const cand = candidates[0];
           foundBoard = boardWithout.map(row => [...row]);
@@ -275,24 +275,29 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   const handleSolve = useCallback(() => {
     setSolving(true);
     setTimeout(() => {
-      // Try current arrangement first, then retry with higher limit, then solve from scratch
-      let solution = solvePuzzle(board, placedIds);
-      if (!solution || (solution.length === 0 && !board.every(r => r.every(c => c)))) {
-        solution = solvePuzzle(board, placedIds, 10000000);
-      }
+      // Try current state with increasing step limits
+      let solution = solvePuzzle(board, placedIds, 5000000);
+      let solvedFromScratch = false;
+
       if (!solution) {
-        // Reset and solve from scratch
+        // Solve from scratch as fallback — always works
         const freshBoard = createEmptyBoard();
-        solution = solvePuzzle(freshBoard, new Set(), 10000000);
+        solution = solvePuzzle(freshBoard, new Set(), 20000000);
         if (solution) {
-          setBoard(createEmptyBoard());
-          setPlaced(new Map());
+          solvedFromScratch = true;
         }
       }
 
       setSolving(false);
       if (solution && solution.length > 0) {
         setShowingSolution(true);
+
+        if (solvedFromScratch) {
+          // Reset board first, then animate all pieces
+          setBoard(createEmptyBoard());
+          setPlaced(new Map());
+        }
+
         solution.forEach((step, i) => {
           setTimeout(() => {
             setBoard(prev => {
