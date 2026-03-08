@@ -158,7 +158,7 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
           toast.success("+30 points!");
         }
       }
-      sfx.win?.();
+      sfx.levelComplete?.();
     } else if (isDraw(board)) {
       setGameOver(true);
       setResult("It's a Draw!");
