@@ -10,11 +10,10 @@ import { WordSearchGame } from "@/components/games/WordSearchGame";
 import { SnakeGame } from "@/components/games/SnakeGame";
 import { TicTacToeGame } from "@/components/games/TicTacToeGame";
 import { GameTutorial } from "@/components/GameTutorial";
-import { StatsBar } from "@/components/StatsBar";
 import { MultiplayerLobby, MultiplayerResult } from "@/components/MultiplayerLobby";
-import { ArrowLeft, HelpCircle, Flame, Users } from "lucide-react";
+import { ArrowLeft, HelpCircle, Users } from "lucide-react";
 import { motion } from "framer-motion";
-import { getStreak, isTutorialShown, markTutorialShown, getGameLevel } from "@/lib/streaks";
+import { isTutorialShown, markTutorialShown, getGameLevel } from "@/lib/streaks";
 import { reportScore } from "@/lib/multiplayer";
 
 const gameComponents: Record<string, React.FC<{ level?: number; onComplete?: (score: number) => void }>> = {
