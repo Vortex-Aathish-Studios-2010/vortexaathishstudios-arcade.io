@@ -46,6 +46,17 @@ const EntertainmentPage = () => {
             </h1>
           </div>
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 bg-white border border-[hsl(var(--sport-border))] rounded-lg px-3 py-1.5 shadow-sm">
+              <div className="flex items-center gap-1">
+                <Trophy className="h-3.5 w-3.5 text-[hsl(var(--sport-primary))]" />
+                <span className="font-sport text-xs text-[hsl(var(--sport-text))]">{wins}</span>
+              </div>
+              <div className="w-px h-3 bg-[hsl(var(--sport-border))]" />
+              <div className="flex items-center gap-1">
+                <XCircle className="h-3.5 w-3.5 text-red-500" />
+                <span className="font-sport text-xs text-[hsl(var(--sport-text))]">{losses}</span>
+              </div>
+            </div>
             {/* Brain Arcade switch */}
             <button
               onClick={() => navigate("/?mode=brain")}
