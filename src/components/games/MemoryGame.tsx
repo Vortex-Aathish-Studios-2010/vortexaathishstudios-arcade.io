@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { addPoints, updateStreak, getGameLevel, incrementLevel, addWin } from "@/lib/streaks";
+import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
 
 const allEmojis = ["🎯", "🚀", "⚡", "🔥", "💎", "🌟", "🎪", "🎨", "🎵", "🎮", "🏆", "🧩", "🔮", "🌈", "🎲", "🎸", "🦄", "🍀"];
