@@ -84,19 +84,19 @@ const botMove = (board: Board, difficulty: Difficulty): number => {
   const empty = getEmptyCells(board);
   if (empty.length === 0) return -1;
 
-  // On easy/medium, the bot intentionally loses to avoid draws
   if (difficulty === "easy") {
-    // 80% intentionally lose, 20% best move
-    if (Math.random() < 0.8) return findLosingMove([...board]);
-  } else if (difficulty === "medium") {
-    // 50% intentionally lose, 50% best move
-    if (Math.random() < 0.5) return findLosingMove([...board]);
-  } else {
-    // Hard: 0.1% intentionally lose
-    if (Math.random() < 0.001) return findLosingMove([...board]);
+    // Bot mostly makes bad moves — user should win ~80%
+    if (Math.random() < 0.85) return findLosingMove([...board]);
+    return empty[Math.floor(Math.random() * empty.length)];
   }
 
-  // Hard: always best move
+  if (difficulty === "medium") {
+    // 50/50: half the time play optimally, half the time lose
+    if (Math.random() < 0.5) return findLosingMove([...board]);
+  }
+
+  // Hard: always optimal — but if the best outcome is a draw, try to trick the player
+  // by picking a move that maximizes the chance the player makes a mistake
   let bestScore = -Infinity;
   let bestMove = empty[0];
   for (const i of empty) {
