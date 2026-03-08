@@ -1,17 +1,106 @@
+import { useState, useEffect } from "react";
 import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
 import { StatsBar } from "@/components/StatsBar";
 import { motion } from "framer-motion";
+import { Gamepad2, Brain, Lock, Trophy, XCircle } from "lucide-react";
+import { getTotalWins, getTotalLosses } from "@/lib/streaks";
 
 const Index = () => {
+  const [mode, setMode] = useState<"select" | "brain" | "entertainment">("select");
+  const [wins, setWins] = useState(0);
+  const [losses, setLosses] = useState(0);
+
+  useEffect(() => {
+    setWins(getTotalWins());
+    setLosses(getTotalLosses());
+    const interval = setInterval(() => {
+      setWins(getTotalWins());
+      setLosses(getTotalLosses());
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (mode === "select") {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-display font-black text-foreground mb-2">
+            <span className="text-primary text-glow-primary">BRAIN</span><span className="text-secondary text-glow-secondary">ARCADE</span>
+          </h1>
+          <p className="text-muted-foreground">Choose your arena</p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-xl w-full">
+          <motion.button
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            whileHover={{ scale: 1.04, y: -4 }}
+            onClick={() => setMode("brain")}
+            className="relative rounded-2xl border-2 border-primary/40 bg-card p-8 text-center hover:border-primary hover:glow-primary transition-all"
+          >
+            <Brain className="h-16 w-16 text-primary mx-auto mb-4" />
+            <h2 className="font-display text-xl font-bold text-foreground mb-2">Brain Arcade</h2>
+            <p className="text-sm text-muted-foreground">Puzzles & strategy games to train your mind</p>
+          </motion.button>
+
+          <motion.button
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="relative rounded-2xl border-2 border-secondary/20 bg-card/50 p-8 text-center cursor-not-allowed opacity-60"
+          >
+            <div className="absolute top-3 right-3">
+              <Lock className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <Gamepad2 className="h-16 w-16 text-secondary/40 mx-auto mb-4" />
+            <h2 className="font-display text-xl font-bold text-muted-foreground mb-2">Entertainment Arcade</h2>
+            <p className="text-sm text-muted-foreground">Coming Soon</p>
+          </motion.button>
+        </div>
+
+        {(wins > 0 || losses > 0) && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-8 flex items-center gap-4 bg-card border border-border rounded-xl px-6 py-3">
+            <div className="flex items-center gap-1.5">
+              <Trophy className="h-4 w-4 text-primary" />
+              <span className="font-display text-sm text-foreground">{wins} <span className="text-muted-foreground text-xs">wins</span></span>
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-1.5">
+              <XCircle className="h-4 w-4 text-destructive" />
+              <span className="font-display text-sm text-foreground">{losses} <span className="text-muted-foreground text-xs">losses</span></span>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-display font-black text-glow-primary text-primary">
-            BRAIN<span className="text-secondary">ARCADE</span>
-          </h1>
-          <StatsBar />
+          <div className="flex items-center gap-4">
+            <button onClick={() => setMode("select")} className="text-muted-foreground hover:text-foreground transition-colors font-display text-sm">← BACK</button>
+            <h1 className="text-2xl font-display font-black text-glow-primary text-primary">
+              BRAIN<span className="text-secondary">ARCADE</span>
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-1.5">
+              <div className="flex items-center gap-1">
+                <Trophy className="h-3.5 w-3.5 text-primary" />
+                <span className="font-display text-xs text-foreground">{wins}</span>
+              </div>
+              <div className="w-px h-3 bg-border" />
+              <div className="flex items-center gap-1">
+                <XCircle className="h-3.5 w-3.5 text-destructive" />
+                <span className="font-display text-xs text-foreground">{losses}</span>
+              </div>
+            </div>
+            <StatsBar />
+          </div>
         </div>
       </header>
 
