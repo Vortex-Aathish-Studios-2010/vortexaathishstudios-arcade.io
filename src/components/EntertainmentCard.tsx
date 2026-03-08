@@ -86,8 +86,8 @@ export const EntertainmentCard = ({ game, index }: { game: EntertainmentGameInfo
       >
         {game.icon}
       </motion.div>
-      <h3 className="font-sport text-lg font-bold text-gray-800 mb-1 relative z-10">{game.name}</h3>
-      <p className="text-sm text-gray-500 mb-3 relative z-10">{game.description}</p>
+      <h3 className="font-sport text-lg font-bold text-[hsl(var(--sport-text))] mb-1 relative z-10">{game.name}</h3>
+      <p className="text-sm text-[hsl(var(--sport-muted))] mb-3 relative z-10">{game.description}</p>
     </motion.div>
   );
 };
