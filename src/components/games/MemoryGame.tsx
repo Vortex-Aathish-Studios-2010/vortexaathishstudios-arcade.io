@@ -67,6 +67,7 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
         newCards[b].matched = true;
         setCards([...newCards]);
         setFlipped([]);
+        sfx.match();
         if (newCards.every((c) => c.matched)) {
           setGameWon(true);
           const pts = Math.max(150 - moves * 2, 30) + currentLevel * 20;
@@ -74,10 +75,12 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
           updateStreak("memory");
           addWin("memory");
           incrementLevel("memory");
-          toast.success(`Level ${currentLevel} complete! +${pts} points`);
+          sfx.levelComplete();
+          toast.success(`Level complete! +${pts} points`);
           onComplete?.(pts);
         }
       } else {
+        sfx.mismatch();
         setTimeout(() => {
           newCards[a].flipped = false;
           newCards[b].flipped = false;
