@@ -10,11 +10,10 @@ import { WordSearchGame } from "@/components/games/WordSearchGame";
 import { SnakeGame } from "@/components/games/SnakeGame";
 import { TicTacToeGame } from "@/components/games/TicTacToeGame";
 import { GameTutorial } from "@/components/GameTutorial";
-import { StatsBar } from "@/components/StatsBar";
 import { MultiplayerLobby, MultiplayerResult } from "@/components/MultiplayerLobby";
-import { ArrowLeft, HelpCircle, Flame, Users } from "lucide-react";
+import { ArrowLeft, HelpCircle, Users } from "lucide-react";
 import { motion } from "framer-motion";
-import { getStreak, isTutorialShown, markTutorialShown, getGameLevel } from "@/lib/streaks";
+import { isTutorialShown, markTutorialShown, getGameLevel } from "@/lib/streaks";
 import { reportScore } from "@/lib/multiplayer";
 
 const gameComponents: Record<string, React.FC<{ level?: number; onComplete?: (score: number) => void }>> = {
@@ -42,7 +41,6 @@ const GamePage = () => {
   const [multiplayerRoom, setMultiplayerRoom] = useState<{ roomId: string; playerId: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
   const level = id ? getGameLevel(id) : 1;
-  const gameStreak = id ? getStreak(id) : 0;
 
   const handleTutorialClose = useCallback(() => {
     setShowTutorial(false);
@@ -87,10 +85,6 @@ const GamePage = () => {
             <span className="font-display text-sm">BACK</span>
           </button>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-card border border-border rounded-lg px-3 py-1.5">
-              <Flame className="h-4 w-4 text-accent" />
-              <span className="font-display text-sm font-bold text-foreground">{gameStreak}</span>
-            </div>
             <button onClick={() => setShowMultiplayer(true)} className="flex items-center gap-1.5 bg-card border border-secondary/30 rounded-lg px-3 py-1.5 text-secondary hover:border-secondary/60 hover:glow-secondary transition-all">
               <Users className="h-4 w-4" />
               <span className="font-display text-xs">VS</span>
@@ -98,7 +92,7 @@ const GamePage = () => {
             <button onClick={() => setShowTutorial(true)} className="text-muted-foreground hover:text-foreground transition-colors">
               <HelpCircle className="h-5 w-5" />
             </button>
-            <StatsBar />
+            
           </div>
         </motion.div>
 

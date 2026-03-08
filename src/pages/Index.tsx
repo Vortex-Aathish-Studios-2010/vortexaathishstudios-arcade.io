@@ -1,29 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
-import { StatsBar } from "@/components/StatsBar";
 import { motion } from "framer-motion";
-import { Brain, Lock, Trophy, XCircle, ArrowLeftRight } from "lucide-react";
-import { getTotalWins, getTotalLosses } from "@/lib/streaks";
+import { Brain } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const initialMode = searchParams.get("mode") === "brain" ? "brain" : "select";
-  const [mode, setMode] = useState<"select" | "brain" | "entertainment">(initialMode);
-  const [wins, setWins] = useState(0);
-  const [losses, setLosses] = useState(0);
-
-  useEffect(() => {
-    setWins(getTotalWins());
-    setLosses(getTotalLosses());
-    const interval = setInterval(() => {
-      setWins(getTotalWins());
-      setLosses(getTotalLosses());
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+  const [mode, setMode] = useState<"select" | "brain">(initialMode);
 
   if (mode === "select") {
     return (
@@ -67,20 +53,6 @@ const Index = () => {
             <p className="text-sm text-muted-foreground">Sports & action games</p>
           </motion.button>
         </div>
-
-        {(wins > 0 || losses > 0) && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-8 flex items-center gap-4 bg-card border border-border rounded-xl px-6 py-3">
-            <div className="flex items-center gap-1.5">
-              <Trophy className="h-4 w-4 text-primary" />
-              <span className="font-display text-sm text-foreground">{wins} <span className="text-muted-foreground text-xs">wins</span></span>
-            </div>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-1.5">
-              <XCircle className="h-4 w-4 text-destructive" />
-              <span className="font-display text-sm text-foreground">{losses} <span className="text-muted-foreground text-xs">losses</span></span>
-            </div>
-          </motion.div>
-        )}
       </div>
     );
   }
@@ -111,18 +83,6 @@ const Index = () => {
                 🎮
               </span>
             </button>
-            <div className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-1.5">
-              <div className="flex items-center gap-1">
-                <Trophy className="h-3.5 w-3.5 text-primary" />
-                <span className="font-display text-xs text-foreground">{wins}</span>
-              </div>
-              <div className="w-px h-3 bg-border" />
-              <div className="flex items-center gap-1">
-                <XCircle className="h-3.5 w-3.5 text-destructive" />
-                <span className="font-display text-xs text-foreground">{losses}</span>
-              </div>
-            </div>
-            <StatsBar />
           </div>
         </div>
       </header>
@@ -138,8 +98,6 @@ const Index = () => {
             <GameCard key={game.id} game={game} index={i} />
           ))}
         </div>
-
-
       </main>
     </div>
   );

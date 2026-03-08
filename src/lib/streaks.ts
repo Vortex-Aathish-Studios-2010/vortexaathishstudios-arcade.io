@@ -1,4 +1,5 @@
 const POINTS_KEY = "brainpuzzle_points";
+const ENT_POINTS_KEY = "entertainment_points";
 
 const streakKey = (gameId: string) => `brainpuzzle_streak_${gameId}`;
 const lastPlayKey = (gameId: string) => `brainpuzzle_last_play_${gameId}`;
@@ -22,6 +23,16 @@ export const getPoints = (): number => {
 export const addPoints = (pts: number) => {
   const current = getPoints();
   localStorage.setItem(POINTS_KEY, String(current + pts));
+};
+
+// Entertainment Arcade points
+export const getEntertainmentPoints = (): number => {
+  return parseInt(localStorage.getItem(ENT_POINTS_KEY) || "0", 10);
+};
+
+export const addEntertainmentPoints = (pts: number) => {
+  const current = getEntertainmentPoints();
+  localStorage.setItem(ENT_POINTS_KEY, String(current + pts));
 };
 
 export const updateStreak = (gameId: string) => {
