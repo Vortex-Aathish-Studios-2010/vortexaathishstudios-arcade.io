@@ -33,7 +33,7 @@ const EntertainmentGamePage = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="flex items-center justify-between mb-8"
+          className="flex items-center mb-6"
         >
           <button
             onClick={() => navigate("/entertainment")}
@@ -45,41 +45,9 @@ const EntertainmentGamePage = () => {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.15, type: "spring", stiffness: 150 }}
-          className="text-center mb-8"
-        >
-          <motion.span
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.25, type: "spring", stiffness: 200 }}
-            className="text-5xl mb-3 block"
-          >
-            {game.icon}
-          </motion.span>
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="text-2xl font-sport tracking-wide text-[hsl(var(--sport-text))]"
-          >
-            {game.name}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.45 }}
-            className="text-sm text-[hsl(var(--sport-muted))] font-sport-body mt-1"
-          >
-            {game.description}
-          </motion.p>
-        </motion.div>
-
-        <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5, type: "spring", stiffness: 100 }}
+          transition={{ delay: 0.15, duration: 0.5, type: "spring", stiffness: 100 }}
         >
           <GameComponent />
         </motion.div>
