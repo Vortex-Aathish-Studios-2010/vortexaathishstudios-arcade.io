@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { entertainmentGames } from "@/lib/entertainmentData";
 import { EntertainmentCard } from "@/components/EntertainmentCard";
-import { ArrowLeft, ArrowLeftRight, Trophy } from "lucide-react";
+import { ArrowLeftRight, Trophy, XCircle } from "lucide-react";
+import { getTotalWins, getTotalLosses } from "@/lib/streaks";
 
 const EntertainmentPage = () => {
   const navigate = useNavigate();
