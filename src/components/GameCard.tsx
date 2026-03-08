@@ -2,8 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { GameInfo } from "@/lib/gameData";
-import { Flame } from "lucide-react";
-import { getStreak } from "@/lib/streaks";
+import { getGameLevel } from "@/lib/streaks";
 import { sfx } from "@/lib/sounds";
 
 const colorMap = {
@@ -18,9 +17,12 @@ const glowColors = {
   accent: "hsl(var(--accent))",
 };
 
+const HIDE_LEVEL_IDS = new Set(["tetris", "snake", "konoodle", "tictactoe"]);
+
 export const GameCard = ({ game, index }: { game: GameInfo; index: number }) => {
   const navigate = useNavigate();
-  const streak = getStreak(game.id);
+  const level = getGameLevel(game.id);
+  const showLevel = !HIDE_LEVEL_IDS.has(game.id);
   const [clicked, setClicked] = useState(false);
 
   const handleClick = () => {
@@ -69,7 +71,7 @@ export const GameCard = ({ game, index }: { game: GameInfo; index: number }) => 
         )}
       </AnimatePresence>
 
-      {/* Icon with bounce on hover */}
+      {/* Icon */}
       <motion.div
         className="text-4xl mb-3 relative z-10"
         animate={clicked ? { scale: 1.4, y: -10 } : {}}
@@ -79,12 +81,18 @@ export const GameCard = ({ game, index }: { game: GameInfo; index: number }) => 
       </motion.div>
       <h3 className="font-display text-lg font-bold text-foreground mb-1 relative z-10">{game.name}</h3>
       <p className="text-sm text-muted-foreground mb-3 relative z-10">{game.description}</p>
-      <div className="flex items-center justify-end relative z-10">
-        {streak > 0 && (
-          <div className="flex items-center gap-1 text-accent">
-            <Flame className="h-3.5 w-3.5" />
-            <span className="text-xs font-display font-bold">{streak}</span>
-          </div>
+      <div className="flex items-center justify-between relative z-10">
+        <span className={`text-[10px] font-display uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+          game.difficulty === "Easy" ? "text-primary border-primary/30 bg-primary/10" :
+          game.difficulty === "Medium" ? "text-accent border-accent/30 bg-accent/10" :
+          "text-secondary border-secondary/30 bg-secondary/10"
+        }`}>
+          {game.difficulty}
+        </span>
+        {showLevel && level > 1 && (
+          <span className="text-[10px] font-display text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+            LVL {level}
+          </span>
         )}
       </div>
     </motion.div>

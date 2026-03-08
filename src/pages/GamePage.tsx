@@ -27,7 +27,6 @@ const gameComponents: Record<string, React.FC<{ level?: number; onComplete?: (sc
   tictactoe: TicTacToeGame,
 };
 
-// Games that manage their own level internally or don't use levels
 const HIDE_LEVEL_IDS = new Set(["tetris", "snake", "konoodle", "tictactoe"]);
 
 const GamePage = () => {
@@ -74,67 +73,58 @@ const GamePage = () => {
       className="min-h-screen bg-background p-6"
     >
       <div className="max-w-lg mx-auto">
+        {/* Top bar */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="flex items-center justify-between mb-8"
+          className="flex items-center justify-between mb-6"
         >
-          <button onClick={() => navigate("/?mode=brain")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            onClick={() => navigate("/?mode=brain")}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
             <ArrowLeft className="h-5 w-5" />
             <span className="font-display text-sm">BACK</span>
           </button>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setShowMultiplayer(true)} className="flex items-center gap-1.5 bg-card border border-secondary/30 rounded-lg px-3 py-1.5 text-secondary hover:border-secondary/60 hover:glow-secondary transition-all">
+          <div className="flex items-center gap-2">
+            {showLevel && (
+              <span className="text-xs font-display text-primary bg-primary/10 border border-primary/20 rounded-lg px-3 py-1.5">
+                LVL {level}
+              </span>
+            )}
+            <button
+              onClick={() => setShowMultiplayer(true)}
+              className="flex items-center gap-1.5 bg-card border border-secondary/30 rounded-lg px-3 py-1.5 text-secondary hover:border-secondary/60 hover:glow-secondary transition-all"
+            >
               <Users className="h-4 w-4" />
               <span className="font-display text-xs">VS</span>
             </button>
-            <button onClick={() => setShowTutorial(true)} className="text-muted-foreground hover:text-foreground transition-colors">
+            <button
+              onClick={() => setShowTutorial(true)}
+              className="text-muted-foreground hover:text-foreground transition-colors p-1.5"
+            >
               <HelpCircle className="h-5 w-5" />
             </button>
-            
           </div>
         </motion.div>
 
+        {/* Game title */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.15, type: "spring", stiffness: 150 }}
-          className="text-center mb-8"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="text-center mb-6"
         >
-          <motion.span
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.25, type: "spring", stiffness: 200 }}
-            className="text-5xl mb-3 block"
-          >
-            {game.icon}
-          </motion.span>
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="text-2xl font-display font-bold text-foreground"
-          >
-            {game.name}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.45 }}
-            className="text-sm text-muted-foreground mt-1"
-          >
-            {game.description}
-          </motion.p>
-          {showLevel && (
-            <span className="text-xs font-display text-primary mt-1 block">Level {level}</span>
-          )}
+          <span className="text-4xl mb-2 block">{game.icon}</span>
+          <h1 className="text-xl font-display font-bold text-foreground">{game.name}</h1>
         </motion.div>
 
+        {/* Game component */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5, type: "spring", stiffness: 100 }}
+          transition={{ delay: 0.25, duration: 0.5, type: "spring", stiffness: 120 }}
         >
           <GameComponent level={level} onComplete={multiplayerRoom ? handleGameComplete : undefined} />
         </motion.div>
