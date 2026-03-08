@@ -268,13 +268,25 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   // Solve puzzle
   const handleSolve = useCallback(() => {
     setSolving(true);
-    toast.info("Solving... this may take a moment.");
     setTimeout(() => {
-      const solution = solvePuzzle(board, placedIds);
+      // Try current arrangement first, then retry with higher limit, then solve from scratch
+      let solution = solvePuzzle(board, placedIds);
+      if (!solution || (solution.length === 0 && !board.every(r => r.every(c => c)))) {
+        solution = solvePuzzle(board, placedIds, 10000000);
+      }
+      if (!solution) {
+        // Reset and solve from scratch
+        const freshBoard = createEmptyBoard();
+        solution = solvePuzzle(freshBoard, new Set(), 10000000);
+        if (solution) {
+          setBoard(createEmptyBoard());
+          setPlaced(new Map());
+        }
+      }
+
       setSolving(false);
       if (solution && solution.length > 0) {
         setShowingSolution(true);
-        toast.success(`Solution found! Placing ${solution.length} pieces.`);
         solution.forEach((step, i) => {
           setTimeout(() => {
             setBoard(prev => {
@@ -288,69 +300,11 @@ export const KonoodleGame = ({ onComplete }: Props) => {
               return p;
             });
             sfx.place();
-            if (i === solution.length - 1) {
-              setTimeout(() => {
-                sfx.levelComplete();
-                toast.success("Board complete!");
-              }, 200);
+            if (i === solution!.length - 1) {
+              setTimeout(() => sfx.levelComplete(), 200);
             }
           }, (i + 1) * 350);
         });
-      } else if (solution && solution.length === 0) {
-        toast.success("Board is already complete!");
-      } else {
-        // Solver couldn't find solution within step limit — retry with higher limit
-        const retryResult = solvePuzzle(board, placedIds, 10000000);
-        if (retryResult && retryResult.length > 0) {
-          setShowingSolution(true);
-          toast.success(`Solution found! Placing ${retryResult.length} pieces.`);
-          retryResult.forEach((step, i) => {
-            setTimeout(() => {
-              setBoard(prev => {
-                const b = prev.map(r => [...r]);
-                step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
-                return b;
-              });
-              setPlaced(prev => {
-                const p = new Map(prev);
-                p.set(step.pieceId, step.cells);
-                return p;
-              });
-              sfx.place();
-              if (i === retryResult.length - 1) {
-                setTimeout(() => { sfx.levelComplete(); toast.success("Board complete!"); }, 200);
-              }
-            }, (i + 1) * 350);
-          });
-        } else {
-          toast.info("Resetting and solving from scratch...");
-          // Reset board keeping no pieces, solve fresh
-          const freshBoard = createEmptyBoard();
-          const freshSolution = solvePuzzle(freshBoard, new Set(), 10000000);
-          if (freshSolution) {
-            setBoard(createEmptyBoard());
-            setPlaced(new Map());
-            setShowingSolution(true);
-            freshSolution.forEach((step, i) => {
-              setTimeout(() => {
-                setBoard(prev => {
-                  const b = prev.map(r => [...r]);
-                  step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
-                  return b;
-                });
-                setPlaced(prev => {
-                  const p = new Map(prev);
-                  p.set(step.pieceId, step.cells);
-                  return p;
-                });
-                sfx.place();
-                if (i === freshSolution.length - 1) {
-                  setTimeout(() => { sfx.levelComplete(); toast.success("Board complete!"); }, 200);
-                }
-              }, (i + 1) * 350);
-            });
-          }
-        }
       }
     }, 50);
   }, [board, placedIds]);
