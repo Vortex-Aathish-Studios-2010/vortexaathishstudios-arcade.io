@@ -184,7 +184,13 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
       sfx.levelComplete?.();
     } else if (isDraw(board)) {
       setGameOver(true);
-      setResult("It's a Draw!");
+      if (mode === "bot") {
+        // In bot mode, draws count as bot win (bot never lets you win)
+        setResult("Bot Wins 🤖");
+        onComplete?.(0);
+      } else {
+        setResult("It's a Draw!");
+      }
       sfx.click?.();
     }
   }, [board]);
