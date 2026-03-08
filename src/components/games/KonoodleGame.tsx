@@ -367,7 +367,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
               exit={{ scaleY: 0 }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
               style={{ originY: 0 }}
-              className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary/80 via-secondary/60 to-accent/80 backdrop-blur-sm flex items-center justify-center z-10"
+              className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary via-secondary to-accent flex items-center justify-center z-10"
             >
               <motion.div
                 animate={{ rotate: 360 }}
