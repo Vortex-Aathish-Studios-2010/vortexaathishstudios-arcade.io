@@ -69,9 +69,19 @@ const GamePage = () => {
   const showLevel = id && !HIDE_LEVEL_IDS.has(id);
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="min-h-screen bg-background p-6"
+    >
       <div className="max-w-lg mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="flex items-center justify-between mb-8"
+        >
           <button onClick={() => navigate("/?mode=brain")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-5 w-5" />
             <span className="font-display text-sm">BACK</span>
@@ -90,18 +100,48 @@ const GamePage = () => {
             </button>
             <StatsBar />
           </div>
-        </div>
+        </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-          <span className="text-4xl mb-2 block">{game.icon}</span>
-          <h1 className="text-2xl font-display font-bold text-foreground">{game.name}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{game.description}</p>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.15, type: "spring", stiffness: 150 }}
+          className="text-center mb-8"
+        >
+          <motion.span
+            initial={{ scale: 0, rotate: -30 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.25, type: "spring", stiffness: 200 }}
+            className="text-5xl mb-3 block"
+          >
+            {game.icon}
+          </motion.span>
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="text-2xl font-display font-bold text-foreground"
+          >
+            {game.name}
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.45 }}
+            className="text-sm text-muted-foreground mt-1"
+          >
+            {game.description}
+          </motion.p>
           {showLevel && (
             <span className="text-xs font-display text-primary mt-1 block">Level {level}</span>
           )}
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5, type: "spring", stiffness: 100 }}
+        >
           <GameComponent level={level} onComplete={multiplayerRoom ? handleGameComplete : undefined} />
         </motion.div>
 
@@ -124,7 +164,7 @@ const GamePage = () => {
           />
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
