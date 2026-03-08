@@ -366,14 +366,15 @@ export const KonoodleGame = ({ onComplete }: Props) => {
             <motion.div
               initial={{ scaleY: 0 }}
               animate={{ scaleY: 1 }}
-              exit={{ scaleY: 0 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
+              exit={{ scaleY: 0, transition: { duration: 0.4, ease: "easeIn" } }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
               style={{ originY: 0 }}
               className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary via-secondary to-accent flex items-center justify-center z-10"
             >
               <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 0.6, repeat: Infinity, ease: "linear" }}
+                initial={{ scale: 0, rotate: 0 }}
+                animate={{ scale: 1, rotate: 360 }}
+                transition={{ scale: { duration: 0.3 }, rotate: { duration: 0.8, repeat: Infinity, ease: "linear" } }}
               >
                 <Shuffle className="h-8 w-8 text-primary-foreground" />
               </motion.div>
