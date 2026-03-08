@@ -386,18 +386,20 @@ export const KonoodleGame = ({ onComplete }: Props) => {
         </AnimatePresence>
       </div>
 
-      {/* Piece tray */}
-      <div className="flex flex-wrap gap-2 justify-center max-w-sm">
-        {PIECES.filter((p) => !placedIds.has(p.id)).map((piece) => (
-          <PiecePreview
-            key={piece.id}
-            piece={piece}
-            selected={selectedPiece?.id === piece.id}
-            onClick={() => { setSelectedPiece(piece); setRotation(0); sfx.click(); }}
-            onDragStart={(e) => handleDragStart(e, piece)}
-          />
-        ))}
-      </div>
+      {/* Piece tray — hidden until first shuffle */}
+      {(hasShuffled || placed.size === 0) && (
+        <div className="flex flex-wrap gap-2 justify-center max-w-sm">
+          {PIECES.filter((p) => !placedIds.has(p.id)).map((piece) => (
+            <PiecePreview
+              key={piece.id}
+              piece={piece}
+              selected={selectedPiece?.id === piece.id}
+              onClick={() => { setSelectedPiece(piece); setRotation(0); sfx.click(); }}
+              onDragStart={(e) => handleDragStart(e, piece)}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Rotation controls */}
       {selectedPiece && (
