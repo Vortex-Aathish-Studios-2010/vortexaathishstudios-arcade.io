@@ -147,7 +147,7 @@ export const ChessGame = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => resetGame("bot")}
-            className="px-6 py-3 rounded-xl bg-[hsl(var(--sport-primary))] text-white font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
+            className="px-6 py-3 rounded-xl bg-[hsl(var(--sport-primary))] text-[hsl(var(--sport-bg))] font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
           >
             🤖 vs Hard Bot
           </motion.button>
@@ -155,7 +155,7 @@ export const ChessGame = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => resetGame("friend")}
-            className="px-6 py-3 rounded-xl bg-[hsl(var(--sport-secondary))] text-white font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
+            className="px-6 py-3 rounded-xl bg-[hsl(var(--sport-secondary))] text-[hsl(var(--sport-bg))] font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
           >
             👥 vs Friend
           </motion.button>
