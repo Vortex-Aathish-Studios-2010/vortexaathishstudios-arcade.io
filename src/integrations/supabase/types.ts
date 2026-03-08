@@ -14,7 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      game_rooms: {
+        Row: {
+          code: string
+          created_at: string | null
+          difficulty: number | null
+          game_id: string
+          host_id: string | null
+          id: string
+          status: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          difficulty?: number | null
+          game_id: string
+          host_id?: string | null
+          id?: string
+          status?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          difficulty?: number | null
+          game_id?: string
+          host_id?: string | null
+          id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_rooms_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      players: {
+        Row: {
+          created_at: string | null
+          display_name: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_name: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      room_players: {
+        Row: {
+          finished: boolean | null
+          finished_at: string | null
+          id: string
+          is_winner: boolean | null
+          player_id: string | null
+          room_id: string | null
+          score: number | null
+        }
+        Insert: {
+          finished?: boolean | null
+          finished_at?: string | null
+          id?: string
+          is_winner?: boolean | null
+          player_id?: string | null
+          room_id?: string | null
+          score?: number | null
+        }
+        Update: {
+          finished?: boolean | null
+          finished_at?: string | null
+          id?: string
+          is_winner?: boolean | null
+          player_id?: string | null
+          room_id?: string | null
+          score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_players_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "game_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
