@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface Coin {
   id: string;
@@ -19,7 +19,6 @@ interface Striker {
   vx: number;
   vy: number;
   radius: number;
-  moving: boolean;
 }
 
 type Mode = "select" | "bot" | "friend";
@@ -27,16 +26,20 @@ type Player = "player1" | "player2";
 
 const BOARD_SIZE = 360;
 const POCKET_RADIUS = 18;
-const COIN_RADIUS = 11;
-const STRIKER_RADIUS = 14;
-const FRICTION = 0.975;
-const MIN_SPEED = 0.15;
-const BASELINE_OFFSET = 60;
+const COIN_RADIUS = 10;
+const STRIKER_RADIUS = 13;
+const FRICTION = 0.978;
+const MIN_SPEED = 0.12;
+const BASELINE_Y1 = BOARD_SIZE - 55; // player1 baseline (bottom)
+const BASELINE_Y2 = 55; // player2 baseline (top)
+const BASELINE_MIN_X = 65;
+const BASELINE_MAX_X = BOARD_SIZE - 65;
+
 const POCKET_POSITIONS = [
-  { x: 30, y: 30 },
-  { x: BOARD_SIZE - 30, y: 30 },
-  { x: 30, y: BOARD_SIZE - 30 },
-  { x: BOARD_SIZE - 30, y: BOARD_SIZE - 30 },
+  { x: 28, y: 28 },
+  { x: BOARD_SIZE - 28, y: 28 },
+  { x: 28, y: BOARD_SIZE - 28 },
+  { x: BOARD_SIZE - 28, y: BOARD_SIZE - 28 },
 ];
 
 const createCoins = (): Coin[] => {
@@ -44,24 +47,25 @@ const createCoins = (): Coin[] => {
   const cx = BOARD_SIZE / 2;
   const cy = BOARD_SIZE / 2;
 
+  // Queen (red) center
   coins.push({ id: "red-0", x: cx, y: cy, vx: 0, vy: 0, radius: COIN_RADIUS, color: "red", pocketed: false, points: 20 });
 
-  const innerRadius = 28;
+  // Inner ring - 6 coins
   for (let i = 0; i < 6; i++) {
     const angle = (i * Math.PI * 2) / 6;
-    const color = i % 2 === 0 ? "white" : "black";
+    const color: "white" | "black" = i % 2 === 0 ? "white" : "black";
     coins.push({
-      id: `${color}-${i}`, x: cx + Math.cos(angle) * innerRadius, y: cy + Math.sin(angle) * innerRadius,
+      id: `inner-${i}`, x: cx + Math.cos(angle) * 26, y: cy + Math.sin(angle) * 26,
       vx: 0, vy: 0, radius: COIN_RADIUS, color, pocketed: false, points: color === "white" ? 10 : 5,
     });
   }
 
-  const outerRadius = 52;
+  // Outer ring - 12 coins
   for (let i = 0; i < 12; i++) {
     const angle = (i * Math.PI * 2) / 12 + Math.PI / 12;
-    const color = i % 2 === 0 ? "black" : "white";
+    const color: "white" | "black" = i % 2 === 0 ? "black" : "white";
     coins.push({
-      id: `${color}-outer-${i}`, x: cx + Math.cos(angle) * outerRadius, y: cy + Math.sin(angle) * outerRadius,
+      id: `outer-${i}`, x: cx + Math.cos(angle) * 48, y: cy + Math.sin(angle) * 48,
       vx: 0, vy: 0, radius: COIN_RADIUS, color, pocketed: false, points: color === "white" ? 10 : 5,
     });
   }
@@ -69,15 +73,32 @@ const createCoins = (): Coin[] => {
   return coins;
 };
 
-const getStrikerPos = (turn: Player): { x: number; y: number } => ({
+const createStriker = (turn: Player): Striker => ({
   x: BOARD_SIZE / 2,
-  y: turn === "player1" ? BOARD_SIZE - BASELINE_OFFSET : BASELINE_OFFSET,
+  y: turn === "player1" ? BASELINE_Y1 : BASELINE_Y2,
+  vx: 0, vy: 0, radius: STRIKER_RADIUS,
 });
 
-const createStriker = (turn: Player): Striker => ({
-  ...getStrikerPos(turn),
-  vx: 0, vy: 0, radius: STRIKER_RADIUS, moving: false,
-});
+// Resolve overlap between circles
+const resolveOverlap = (
+  ax: number, ay: number, ar: number,
+  bx: number, by: number, br: number
+): { ax: number; ay: number; bx: number; by: number } | null => {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const minDist = ar + br;
+  if (dist >= minDist || dist === 0) return null;
+  const nx = dx / dist;
+  const ny = dy / dist;
+  const overlap = minDist - dist;
+  return {
+    ax: ax - nx * overlap * 0.5,
+    ay: ay - ny * overlap * 0.5,
+    bx: bx + nx * overlap * 0.5,
+    by: by + ny * overlap * 0.5,
+  };
+};
 
 export const CarromGame = () => {
   const [mode, setMode] = useState<Mode>("select");
@@ -86,20 +107,24 @@ export const CarromGame = () => {
   const [striker, setStriker] = useState<Striker>(createStriker("player1"));
   const [scores, setScores] = useState({ player1: 0, player2: 0 });
   const [shots, setShots] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
-  const [dragCurrent, setDragCurrent] = useState<{ x: number; y: number } | null>(null);
+  const [draggingStriker, setDraggingStriker] = useState(false); // repositioning along baseline
+  const [aiming, setAiming] = useState(false); // pulling back to aim
+  const [aimStart, setAimStart] = useState<{ x: number; y: number } | null>(null);
+  const [aimCurrent, setAimCurrent] = useState<{ x: number; y: number } | null>(null);
   const [animating, setAnimating] = useState(false);
   const [gameOver, setGameOver] = useState(false);
-  const [strikerPocketed, setStrikerPocketed] = useState(false);
+  const [pocketedThisTurn, setPocketedThisTurn] = useState<Coin[]>([]);
   const [botThinking, setBotThinking] = useState(false);
+  const [message, setMessage] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
   const coinsRef = useRef(coins);
   const strikerRef = useRef(striker);
+  const turnRef = useRef(turn);
 
   coinsRef.current = coins;
   strikerRef.current = striker;
+  turnRef.current = turn;
 
   const resetGame = (m: Mode) => {
     setMode(m);
@@ -110,260 +135,381 @@ export const CarromGame = () => {
     setShots(0);
     setGameOver(false);
     setAnimating(false);
-    setStrikerPocketed(false);
     setBotThinking(false);
+    setAiming(false);
+    setDraggingStriker(false);
+    setMessage("");
+    setPocketedThisTurn([]);
   };
 
-  // Drawing
+  // ─── Drawing ───────────────────────────
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const scale = window.devicePixelRatio || 1;
-    canvas.width = BOARD_SIZE * scale;
-    canvas.height = BOARD_SIZE * scale;
-    ctx.scale(scale, scale);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = BOARD_SIZE * dpr;
+    canvas.height = BOARD_SIZE * dpr;
+    ctx.scale(dpr, dpr);
 
-    // Board
-    ctx.fillStyle = "#D4A056";
+    // Board surface
+    ctx.fillStyle = "#C8963E";
     ctx.fillRect(0, 0, BOARD_SIZE, BOARD_SIZE);
+
+    // Outer frame
     ctx.strokeStyle = "#5C3A1E";
-    ctx.lineWidth = 8;
-    ctx.strokeRect(4, 4, BOARD_SIZE - 8, BOARD_SIZE - 8);
-    ctx.strokeStyle = "#8B6914";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(24, 24, BOARD_SIZE - 48, BOARD_SIZE - 48);
+    ctx.lineWidth = 10;
+    ctx.strokeRect(5, 5, BOARD_SIZE - 10, BOARD_SIZE - 10);
+
+    // Inner playing boundary
+    ctx.strokeStyle = "#8B691499";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(22, 22, BOARD_SIZE - 44, BOARD_SIZE - 44);
 
     const cx = BOARD_SIZE / 2;
     const cy = BOARD_SIZE / 2;
-    ctx.beginPath(); ctx.arc(cx, cy, 60, 0, Math.PI * 2); ctx.strokeStyle = "#8B6914"; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.strokeStyle = "#8B6914"; ctx.stroke();
 
-    // Corner diagonals
-    const cornerOff = 24;
-    const cornerLen = 45;
+    // Center circles
+    ctx.beginPath(); ctx.arc(cx, cy, 55, 0, Math.PI * 2);
+    ctx.strokeStyle = "#6B4E0A88"; ctx.lineWidth = 1.5; ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+    ctx.fillStyle = "#B8862222"; ctx.fill();
+    ctx.strokeStyle = "#6B4E0A88"; ctx.lineWidth = 1; ctx.stroke();
+
+    // Corner arrows (decorative lines toward pockets)
+    const arrowLen = 40;
+    const arrowOff = 22;
     [
-      { x: cornerOff, y: cornerOff, dx: 1, dy: 1 },
-      { x: BOARD_SIZE - cornerOff, y: cornerOff, dx: -1, dy: 1 },
-      { x: cornerOff, y: BOARD_SIZE - cornerOff, dx: 1, dy: -1 },
-      { x: BOARD_SIZE - cornerOff, y: BOARD_SIZE - cornerOff, dx: -1, dy: -1 },
-    ].forEach(({ x, y, dx, dy }) => {
-      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx * cornerLen, y + dy * cornerLen);
-      ctx.strokeStyle = "#8B6914"; ctx.lineWidth = 1.5; ctx.stroke();
+      [arrowOff, arrowOff, 1, 1], [BOARD_SIZE - arrowOff, arrowOff, -1, 1],
+      [arrowOff, BOARD_SIZE - arrowOff, 1, -1], [BOARD_SIZE - arrowOff, BOARD_SIZE - arrowOff, -1, -1],
+    ].forEach(([x, y, dx, dy]) => {
+      ctx.beginPath(); ctx.moveTo(x as number, y as number);
+      ctx.lineTo((x as number) + (dx as number) * arrowLen, (y as number) + (dy as number) * arrowLen);
+      ctx.strokeStyle = "#6B4E0A55"; ctx.lineWidth = 1.5; ctx.stroke();
     });
 
-    // Both baselines
-    ctx.setLineDash([5, 5]);
-    ctx.strokeStyle = "#8B691488";
-    ctx.lineWidth = 1;
-    // Bottom (player1)
-    ctx.beginPath(); ctx.moveTo(70, BOARD_SIZE - BASELINE_OFFSET); ctx.lineTo(BOARD_SIZE - 70, BOARD_SIZE - BASELINE_OFFSET); ctx.stroke();
-    // Top (player2/bot)
-    ctx.beginPath(); ctx.moveTo(70, BASELINE_OFFSET); ctx.lineTo(BOARD_SIZE - 70, BASELINE_OFFSET); ctx.stroke();
-    ctx.setLineDash([]);
+    // Baselines
+    const drawBaseline = (y: number, active: boolean) => {
+      ctx.save();
+      ctx.setLineDash(active ? [] : [4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(BASELINE_MIN_X, y);
+      ctx.lineTo(BASELINE_MAX_X, y);
+      ctx.strokeStyle = active ? "#22c55e66" : "#6B4E0A44";
+      ctx.lineWidth = active ? 2 : 1;
+      ctx.stroke();
 
-    // Highlight active baseline
-    const activeY = turn === "player1" ? BOARD_SIZE - BASELINE_OFFSET : BASELINE_OFFSET;
-    ctx.setLineDash([]);
-    ctx.beginPath(); ctx.moveTo(70, activeY); ctx.lineTo(BOARD_SIZE - 70, activeY);
-    ctx.strokeStyle = "#22c55e88"; ctx.lineWidth = 2; ctx.stroke();
+      // Small circles at ends of baseline
+      if (active) {
+        [BASELINE_MIN_X, BASELINE_MAX_X].forEach((bx) => {
+          ctx.beginPath(); ctx.arc(bx, y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = "#22c55e44"; ctx.fill();
+        });
+      }
+      ctx.restore();
+    };
+
+    drawBaseline(BASELINE_Y1, turn === "player1");
+    drawBaseline(BASELINE_Y2, turn === "player2");
 
     // Pockets
     POCKET_POSITIONS.forEach(({ x, y }) => {
       ctx.beginPath(); ctx.arc(x, y, POCKET_RADIUS, 0, Math.PI * 2);
-      ctx.fillStyle = "#2a1a0a"; ctx.fill();
-      ctx.strokeStyle = "#5C3A1E"; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = "#1a0e05"; ctx.fill();
+      ctx.strokeStyle = "#3d2510"; ctx.lineWidth = 2.5; ctx.stroke();
     });
 
     // Coins
     coinsRef.current.forEach((coin) => {
       if (coin.pocketed) return;
+      // Shadow
+      ctx.beginPath(); ctx.arc(coin.x + 1, coin.y + 2, coin.radius, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0,0,0,0.15)"; ctx.fill();
+      // Body
       ctx.beginPath(); ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
-      if (coin.color === "white") { ctx.fillStyle = "#F5F0E0"; ctx.strokeStyle = "#C0B090"; }
-      else if (coin.color === "black") { ctx.fillStyle = "#1a1a1a"; ctx.strokeStyle = "#444"; }
+      if (coin.color === "white") { ctx.fillStyle = "#F0E8D0"; ctx.strokeStyle = "#B8A880"; }
+      else if (coin.color === "black") { ctx.fillStyle = "#1a1a1a"; ctx.strokeStyle = "#3a3a3a"; }
       else { ctx.fillStyle = "#DC2626"; ctx.strokeStyle = "#991B1B"; }
-      ctx.fill(); ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.beginPath(); ctx.arc(coin.x, coin.y, coin.radius * 0.55, 0, Math.PI * 2);
-      ctx.strokeStyle = coin.color === "black" ? "#555" : coin.color === "red" ? "#FCA5A5" : "#D4C8A8";
-      ctx.lineWidth = 0.8; ctx.stroke();
+      ctx.fill(); ctx.lineWidth = 1.2; ctx.stroke();
+      // Inner ring
+      ctx.beginPath(); ctx.arc(coin.x, coin.y, coin.radius * 0.5, 0, Math.PI * 2);
+      ctx.strokeStyle = coin.color === "black" ? "#4a4a4a" : coin.color === "red" ? "#FCA5A5" : "#C8B888";
+      ctx.lineWidth = 0.7; ctx.stroke();
     });
 
-    // Striker
+    // Striker shadow + body
     const s = strikerRef.current;
+    ctx.beginPath(); ctx.arc(s.x + 1, s.y + 2, s.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.fill();
     ctx.beginPath(); ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-    ctx.fillStyle = "#E8D8B8"; ctx.fill();
+    const strikerGrad = ctx.createRadialGradient(s.x - 2, s.y - 2, 1, s.x, s.y, s.radius);
+    strikerGrad.addColorStop(0, "#F5E8C8");
+    strikerGrad.addColorStop(1, "#C8A868");
+    ctx.fillStyle = strikerGrad; ctx.fill();
     ctx.strokeStyle = "#8B6914"; ctx.lineWidth = 2; ctx.stroke();
-    ctx.beginPath(); ctx.arc(s.x, s.y, s.radius * 0.4, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.radius * 0.35, 0, Math.PI * 2);
     ctx.strokeStyle = "#A08050"; ctx.lineWidth = 1; ctx.stroke();
 
-    // Drag arrow
-    if (dragging && dragStart && dragCurrent) {
-      const dx = dragStart.x - dragCurrent.x;
-      const dy = dragStart.y - dragCurrent.y;
-      const power = Math.min(Math.sqrt(dx * dx + dy * dy), 150);
+    // Aim line
+    if (aiming && aimStart && aimCurrent) {
+      const dx = aimStart.x - aimCurrent.x;
+      const dy = aimStart.y - aimCurrent.y;
+      const power = Math.min(Math.sqrt(dx * dx + dy * dy), 160);
       const angle = Math.atan2(dy, dx);
+
+      // Dotted aim line
+      const lineLen = power * 1.2;
+      ctx.save();
+      ctx.setLineDash([4, 6]);
       ctx.beginPath();
       ctx.moveTo(s.x, s.y);
-      ctx.lineTo(s.x + Math.cos(angle) * power * 0.8, s.y + Math.sin(angle) * power * 0.8);
-      ctx.strokeStyle = `rgba(220, 38, 38, ${0.4 + power / 250})`;
-      ctx.lineWidth = 3; ctx.stroke();
+      ctx.lineTo(s.x + Math.cos(angle) * lineLen, s.y + Math.sin(angle) * lineLen);
+      ctx.strokeStyle = `rgba(34, 197, 94, ${0.3 + power / 300})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+
+      // Power indicator circle
+      const pw = power / 160;
       ctx.beginPath();
-      ctx.arc(s.x + Math.cos(angle) * power * 0.8, s.y + Math.sin(angle) * power * 0.8, 4, 0, Math.PI * 2);
-      ctx.fillStyle = "#DC2626"; ctx.fill();
+      ctx.arc(s.x + Math.cos(angle) * lineLen, s.y + Math.sin(angle) * lineLen, 5, 0, Math.PI * 2);
+      ctx.fillStyle = pw > 0.7 ? "#ef4444" : pw > 0.4 ? "#f59e0b" : "#22c55e";
+      ctx.fill();
+
+      // Pull-back indicator at striker
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.radius + 3 + power * 0.05, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(220, 38, 38, ${0.2 + pw * 0.4})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
     }
-  }, [dragging, dragStart, dragCurrent, turn]);
+  }, [aiming, aimStart, aimCurrent, turn]);
 
   useEffect(() => { draw(); }, [draw, coins, striker]);
 
+  // ─── Input helpers ─────────────────────
   const getCanvasPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    const scaleX = BOARD_SIZE / rect.width;
-    const scaleY = BOARD_SIZE / rect.height;
+    const sx = BOARD_SIZE / rect.width;
+    const sy = BOARD_SIZE / rect.height;
     if ("touches" in e) {
-      return { x: (e.touches[0].clientX - rect.left) * scaleX, y: (e.touches[0].clientY - rect.top) * scaleY };
+      return { x: (e.touches[0].clientX - rect.left) * sx, y: (e.touches[0].clientY - rect.top) * sy };
     }
-    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+    return { x: (e.clientX - rect.left) * sx, y: (e.clientY - rect.top) * sy };
   };
 
   const isBotTurn = mode === "bot" && turn === "player2";
 
+  const fireStriker = useCallback((vx: number, vy: number) => {
+    setStriker((s) => ({ ...s, vx, vy }));
+    setShots((s) => s + 1);
+    setAnimating(true);
+    setPocketedThisTurn([]);
+  }, []);
+
+  // ─── Pointer handlers ─────────────────
   const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
     if (animating || gameOver || isBotTurn || botThinking) return;
     const pos = getCanvasPos(e);
+    const baseY = turn === "player1" ? BASELINE_Y1 : BASELINE_Y2;
     const dx = pos.x - striker.x;
     const dy = pos.y - striker.y;
-    if (Math.sqrt(dx * dx + dy * dy) < striker.radius * 3) {
-      setDragging(true);
-      setDragStart(pos);
-      setDragCurrent(pos);
+    const distToStriker = Math.sqrt(dx * dx + dy * dy);
+
+    // If clicking near baseline but not on striker → reposition
+    if (Math.abs(pos.y - baseY) < 25 && distToStriker > striker.radius * 2) {
+      const newX = Math.max(BASELINE_MIN_X, Math.min(BASELINE_MAX_X, pos.x));
+      setStriker((s) => ({ ...s, x: newX, y: baseY }));
+      setDraggingStriker(true);
+      return;
+    }
+
+    // If clicking on/near striker → start aiming
+    if (distToStriker < striker.radius * 3.5) {
+      setAiming(true);
+      setAimStart(pos);
+      setAimCurrent(pos);
     }
   };
 
   const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!dragging) return;
     e.preventDefault();
-    setDragCurrent(getCanvasPos(e));
-  };
+    const pos = getCanvasPos(e);
 
-  const fireStriker = useCallback((vx: number, vy: number) => {
-    setStriker((s) => ({ ...s, vx, vy, moving: true }));
-    setShots((s) => s + 1);
-    setAnimating(true);
-  }, []);
+    if (draggingStriker) {
+      const baseY = turn === "player1" ? BASELINE_Y1 : BASELINE_Y2;
+      const newX = Math.max(BASELINE_MIN_X, Math.min(BASELINE_MAX_X, pos.x));
+      setStriker((s) => ({ ...s, x: newX, y: baseY }));
+      return;
+    }
+
+    if (aiming) {
+      setAimCurrent(pos);
+    }
+  };
 
   const handlePointerUp = () => {
-    if (!dragging || !dragStart || !dragCurrent) {
-      setDragging(false);
+    if (draggingStriker) {
+      setDraggingStriker(false);
       return;
     }
-    const dx = dragStart.x - dragCurrent.x;
-    const dy = dragStart.y - dragCurrent.y;
-    const power = Math.min(Math.sqrt(dx * dx + dy * dy), 150);
-    if (power < 8) {
-      setDragging(false); setDragStart(null); setDragCurrent(null);
+
+    if (!aiming || !aimStart || !aimCurrent) {
+      setAiming(false);
       return;
     }
+
+    const dx = aimStart.x - aimCurrent.x;
+    const dy = aimStart.y - aimCurrent.y;
+    const power = Math.min(Math.sqrt(dx * dx + dy * dy), 160);
+
+    if (power < 10) {
+      setAiming(false); setAimStart(null); setAimCurrent(null);
+      return;
+    }
+
     const angle = Math.atan2(dy, dx);
-    const speed = power * 0.14;
+    const speed = power * 0.13;
     fireStriker(Math.cos(angle) * speed, Math.sin(angle) * speed);
-    setDragging(false); setDragStart(null); setDragCurrent(null);
+    setAiming(false); setAimStart(null); setAimCurrent(null);
   };
 
-  // Baseline repositioning
-  const handleBaselineClick = (e: React.MouseEvent | React.TouchEvent) => {
-    if (animating || dragging || gameOver || isBotTurn || botThinking) return;
-    const pos = getCanvasPos(e);
-    const baseY = turn === "player1" ? BOARD_SIZE - BASELINE_OFFSET : BASELINE_OFFSET;
-    if (Math.abs(pos.y - baseY) < 20) {
-      const newX = Math.max(70, Math.min(BOARD_SIZE - 70, pos.x));
-      setStriker((s) => ({ ...s, x: newX }));
-    }
-  };
-
-  // Bot AI
+  // ─── Bot AI ────────────────────────────
   useEffect(() => {
     if (!isBotTurn || animating || gameOver) return;
     setBotThinking(true);
+
     const timer = setTimeout(() => {
       const remaining = coinsRef.current.filter((c) => !c.pocketed);
       if (remaining.length === 0) { setBotThinking(false); return; }
 
-      // Find nearest coin to a pocket line from striker position
-      const s = strikerRef.current;
-      let bestAngle = -Math.PI / 2; // default: shoot downward (toward player1 side)
-      let bestScore = -Infinity;
+      const s = { ...strikerRef.current };
 
-      for (const coin of remaining) {
-        for (const pocket of POCKET_POSITIONS) {
-          // Angle from coin to pocket
-          const cpx = pocket.x - coin.x;
-          const cpy = pocket.y - coin.y;
-          const cpDist = Math.sqrt(cpx * cpx + cpy * cpy);
-          // Position behind coin (opposite of pocket direction)
-          const behindX = coin.x - (cpx / cpDist) * (coin.radius + s.radius);
-          const behindY = coin.y - (cpy / cpDist) * (coin.radius + s.radius);
-          // Angle from striker to that point
-          const dx = behindX - s.x;
-          const dy = behindY - s.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          // Score: prefer closer coins and closer pockets
-          const sc = coin.points / (dist * 0.01 + 1) + 1 / (cpDist * 0.01 + 1);
-          if (sc > bestScore) {
-            bestScore = sc;
-            bestAngle = Math.atan2(dy, dx);
+      // Try multiple striker positions and pick the best shot
+      let bestVx = 0;
+      let bestVy = 0;
+      let bestScore = -Infinity;
+      let bestStrikerX = s.x;
+
+      for (let attempt = 0; attempt < 15; attempt++) {
+        const testX = BASELINE_MIN_X + Math.random() * (BASELINE_MAX_X - BASELINE_MIN_X);
+        const testY = BASELINE_Y2;
+
+        for (const coin of remaining) {
+          for (const pocket of POCKET_POSITIONS) {
+            // Direction from coin to pocket
+            const cpx = pocket.x - coin.x;
+            const cpy = pocket.y - coin.y;
+            const cpDist = Math.sqrt(cpx * cpx + cpy * cpy);
+            if (cpDist < 1) continue;
+
+            // Point behind coin to hit it toward pocket
+            const hitX = coin.x - (cpx / cpDist) * (coin.radius + STRIKER_RADIUS + 1);
+            const hitY = coin.y - (cpy / cpDist) * (coin.radius + STRIKER_RADIUS + 1);
+
+            // Direction from striker to hit point
+            const sx = hitX - testX;
+            const sy = hitY - testY;
+            const sDist = Math.sqrt(sx * sx + sy * sy);
+            if (sDist < 20) continue;
+
+            // Check if path is roughly clear (no coins blocking)
+            let blocked = false;
+            for (const other of remaining) {
+              if (other.id === coin.id) continue;
+              // Distance from other coin to the line (striker → hitpoint)
+              const nx = sx / sDist;
+              const ny = sy / sDist;
+              const ox = other.x - testX;
+              const oy = other.y - testY;
+              const proj = ox * nx + oy * ny;
+              if (proj > 0 && proj < sDist) {
+                const perpDist = Math.abs(ox * ny - oy * nx);
+                if (perpDist < other.radius + STRIKER_RADIUS + 2) {
+                  blocked = true;
+                  break;
+                }
+              }
+            }
+
+            // Score this shot
+            let score = coin.points * 2;
+            score -= sDist * 0.02; // prefer closer
+            score -= cpDist * 0.01; // prefer closer to pocket
+            if (blocked) score -= 50;
+            // Bonus if hit point is reachable (not behind walls)
+            if (hitX > 20 && hitX < BOARD_SIZE - 20 && hitY > 20 && hitY < BOARD_SIZE - 20) {
+              score += 10;
+            }
+
+            if (score > bestScore) {
+              bestScore = score;
+              bestStrikerX = testX;
+              const angle = Math.atan2(sy, sx);
+              const power = Math.min(6 + Math.random() * 7, 14);
+              bestVx = Math.cos(angle) * power;
+              bestVy = Math.sin(angle) * power;
+            }
           }
         }
       }
 
-      // Add slight randomness
-      bestAngle += (Math.random() - 0.5) * 0.15;
-      const power = 8 + Math.random() * 6;
+      // If no good shot found, shoot toward center
+      if (bestScore < -40) {
+        const angle = Math.PI / 2 + (Math.random() - 0.5) * 0.5; // roughly downward
+        bestVx = Math.cos(angle) * 8;
+        bestVy = Math.sin(angle) * 8;
+        bestStrikerX = BASELINE_MIN_X + Math.random() * (BASELINE_MAX_X - BASELINE_MIN_X);
+      }
 
-      // Reposition striker randomly on baseline
-      const newX = 100 + Math.random() * (BOARD_SIZE - 200);
-      setStriker((prev) => ({ ...prev, x: newX }));
+      // Reposition striker, then fire
+      setStriker((prev) => ({ ...prev, x: bestStrikerX, y: BASELINE_Y2 }));
 
       setTimeout(() => {
-        fireStriker(Math.cos(bestAngle) * power, Math.sin(bestAngle) * power);
+        fireStriker(bestVx, bestVy);
         setBotThinking(false);
-      }, 300);
-    }, 800);
+      }, 500);
+    }, 700);
+
     return () => clearTimeout(timer);
   }, [turn, mode, animating, gameOver, isBotTurn, fireStriker]);
 
-  // Physics simulation
+  // ─── Physics ───────────────────────────
   useEffect(() => {
     if (!animating) return;
 
     const simulate = () => {
       let allStopped = true;
-      const currentCoins = [...coinsRef.current];
+      const cs = coinsRef.current.map((c) => ({ ...c }));
       const s = { ...strikerRef.current };
-      let pocketedThisFrame: Coin[] = [];
-      let strikerPocket = false;
+      const newPocketed: Coin[] = [];
+      let sPocketed = false;
 
-      // Update striker
+      // Move striker
       if (Math.abs(s.vx) > MIN_SPEED || Math.abs(s.vy) > MIN_SPEED) {
         s.x += s.vx; s.y += s.vy;
         s.vx *= FRICTION; s.vy *= FRICTION;
         allStopped = false;
-        if (s.x - s.radius < 12) { s.x = 12 + s.radius; s.vx = Math.abs(s.vx) * 0.7; }
-        if (s.x + s.radius > BOARD_SIZE - 12) { s.x = BOARD_SIZE - 12 - s.radius; s.vx = -Math.abs(s.vx) * 0.7; }
-        if (s.y - s.radius < 12) { s.y = 12 + s.radius; s.vy = Math.abs(s.vy) * 0.7; }
-        if (s.y + s.radius > BOARD_SIZE - 12) { s.y = BOARD_SIZE - 12 - s.radius; s.vy = -Math.abs(s.vy) * 0.7; }
-        for (const pocket of POCKET_POSITIONS) {
-          const pdx = s.x - pocket.x;
-          const pdy = s.y - pocket.y;
-          if (Math.sqrt(pdx * pdx + pdy * pdy) < POCKET_RADIUS - 2) { strikerPocket = true; break; }
+        // Walls
+        if (s.x - s.radius < 12) { s.x = 12 + s.radius; s.vx = Math.abs(s.vx) * 0.6; }
+        if (s.x + s.radius > BOARD_SIZE - 12) { s.x = BOARD_SIZE - 12 - s.radius; s.vx = -Math.abs(s.vx) * 0.6; }
+        if (s.y - s.radius < 12) { s.y = 12 + s.radius; s.vy = Math.abs(s.vy) * 0.6; }
+        if (s.y + s.radius > BOARD_SIZE - 12) { s.y = BOARD_SIZE - 12 - s.radius; s.vy = -Math.abs(s.vy) * 0.6; }
+        // Pockets
+        for (const p of POCKET_POSITIONS) {
+          if (Math.sqrt((s.x - p.x) ** 2 + (s.y - p.y) ** 2) < POCKET_RADIUS - 3) {
+            sPocketed = true; break;
+          }
         }
       } else { s.vx = 0; s.vy = 0; }
 
-      // Update coins
-      for (const coin of currentCoins) {
+      // Move coins
+      for (const coin of cs) {
         if (coin.pocketed) continue;
         if (Math.abs(coin.vx) > MIN_SPEED || Math.abs(coin.vy) > MIN_SPEED) {
           coin.x += coin.vx; coin.y += coin.vy;
@@ -371,35 +517,33 @@ export const CarromGame = () => {
           allStopped = false;
         } else { coin.vx = 0; coin.vy = 0; }
 
-        if (coin.x - coin.radius < 12) { coin.x = 12 + coin.radius; coin.vx = Math.abs(coin.vx) * 0.7; }
-        if (coin.x + coin.radius > BOARD_SIZE - 12) { coin.x = BOARD_SIZE - 12 - coin.radius; coin.vx = -Math.abs(coin.vx) * 0.7; }
-        if (coin.y - coin.radius < 12) { coin.y = 12 + coin.radius; coin.vy = Math.abs(coin.vy) * 0.7; }
-        if (coin.y + coin.radius > BOARD_SIZE - 12) { coin.y = BOARD_SIZE - 12 - coin.radius; coin.vy = -Math.abs(coin.vy) * 0.7; }
+        // Walls
+        if (coin.x - coin.radius < 12) { coin.x = 12 + coin.radius; coin.vx = Math.abs(coin.vx) * 0.6; }
+        if (coin.x + coin.radius > BOARD_SIZE - 12) { coin.x = BOARD_SIZE - 12 - coin.radius; coin.vx = -Math.abs(coin.vx) * 0.6; }
+        if (coin.y - coin.radius < 12) { coin.y = 12 + coin.radius; coin.vy = Math.abs(coin.vy) * 0.6; }
+        if (coin.y + coin.radius > BOARD_SIZE - 12) { coin.y = BOARD_SIZE - 12 - coin.radius; coin.vy = -Math.abs(coin.vy) * 0.6; }
 
-        for (const pocket of POCKET_POSITIONS) {
-          const pdx = coin.x - pocket.x;
-          const pdy = coin.y - pocket.y;
-          if (Math.sqrt(pdx * pdx + pdy * pdy) < POCKET_RADIUS - 2) {
+        // Pockets
+        for (const p of POCKET_POSITIONS) {
+          if (Math.sqrt((coin.x - p.x) ** 2 + (coin.y - p.y) ** 2) < POCKET_RADIUS - 3) {
             coin.pocketed = true; coin.vx = 0; coin.vy = 0;
-            pocketedThisFrame.push(coin); break;
+            newPocketed.push(coin); break;
           }
         }
 
-        if (!coin.pocketed) {
-          const cdx = coin.x - s.x;
-          const cdy = coin.y - s.y;
-          const dist = Math.sqrt(cdx * cdx + cdy * cdy);
-          const minDist = coin.radius + s.radius;
-          if (dist < minDist && dist > 0) {
-            const nx = cdx / dist; const ny = cdy / dist;
-            const overlap = minDist - dist;
-            coin.x += nx * overlap * 0.5; coin.y += ny * overlap * 0.5;
-            s.x -= nx * overlap * 0.5; s.y -= ny * overlap * 0.5;
+        // Striker-coin collision
+        if (!coin.pocketed && !sPocketed) {
+          const res = resolveOverlap(s.x, s.y, s.radius, coin.x, coin.y, coin.radius);
+          if (res) {
+            s.x = res.ax; s.y = res.ay; coin.x = res.bx; coin.y = res.by;
+            const nx = (coin.x - s.x); const ny = (coin.y - s.y);
+            const d = Math.sqrt(nx * nx + ny * ny) || 1;
+            const ux = nx / d; const uy = ny / d;
             const dvx = s.vx - coin.vx; const dvy = s.vy - coin.vy;
-            const dot = dvx * nx + dvy * ny;
+            const dot = dvx * ux + dvy * uy;
             if (dot > 0) {
-              coin.vx += nx * dot * 0.9; coin.vy += ny * dot * 0.9;
-              s.vx -= nx * dot * 0.9; s.vy -= ny * dot * 0.9;
+              coin.vx += ux * dot * 0.85; coin.vy += uy * dot * 0.85;
+              s.vx -= ux * dot * 0.85; s.vy -= uy * dot * 0.85;
             }
             allStopped = false;
           }
@@ -407,57 +551,61 @@ export const CarromGame = () => {
       }
 
       // Coin-coin collisions
-      for (let i = 0; i < currentCoins.length; i++) {
-        if (currentCoins[i].pocketed) continue;
-        for (let j = i + 1; j < currentCoins.length; j++) {
-          if (currentCoins[j].pocketed) continue;
-          const a = currentCoins[i]; const b = currentCoins[j];
-          const ddx = b.x - a.x; const ddy = b.y - a.y;
-          const dist = Math.sqrt(ddx * ddx + ddy * ddy);
-          const minDist = a.radius + b.radius;
-          if (dist < minDist && dist > 0) {
-            const nx = ddx / dist; const ny = ddy / dist;
-            const overlap = minDist - dist;
-            a.x -= nx * overlap * 0.5; a.y -= ny * overlap * 0.5;
-            b.x += nx * overlap * 0.5; b.y += ny * overlap * 0.5;
+      for (let i = 0; i < cs.length; i++) {
+        if (cs[i].pocketed) continue;
+        for (let j = i + 1; j < cs.length; j++) {
+          if (cs[j].pocketed) continue;
+          const a = cs[i]; const b = cs[j];
+          const res = resolveOverlap(a.x, a.y, a.radius, b.x, b.y, b.radius);
+          if (res) {
+            a.x = res.ax; a.y = res.ay; b.x = res.bx; b.y = res.by;
+            const nx = b.x - a.x; const ny = b.y - a.y;
+            const d = Math.sqrt(nx * nx + ny * ny) || 1;
+            const ux = nx / d; const uy = ny / d;
             const dvx = a.vx - b.vx; const dvy = a.vy - b.vy;
-            const dot = dvx * nx + dvy * ny;
+            const dot = dvx * ux + dvy * uy;
             if (dot > 0) {
-              a.vx -= nx * dot * 0.5; a.vy -= ny * dot * 0.5;
-              b.vx += nx * dot * 0.5; b.vy += ny * dot * 0.5;
+              a.vx -= ux * dot * 0.5; a.vy -= uy * dot * 0.5;
+              b.vx += ux * dot * 0.5; b.vy += uy * dot * 0.5;
             }
             allStopped = false;
           }
         }
       }
 
-      setStriker(s);
-      setCoins([...currentCoins]);
+      strikerRef.current = s;
+      coinsRef.current = cs;
+      setStriker({ ...s });
+      setCoins([...cs]);
 
-      if (pocketedThisFrame.length > 0) {
-        const earned = pocketedThisFrame.reduce((sum, c) => sum + c.points, 0);
-        setScores((prev) => ({ ...prev, [turn]: prev[turn] + earned }));
+      if (newPocketed.length > 0) {
+        const currentTurn = turnRef.current;
+        const earned = newPocketed.reduce((sum, c) => sum + c.points, 0);
+        setScores((prev) => ({ ...prev, [currentTurn]: prev[currentTurn] + earned }));
+        setPocketedThisTurn((prev) => [...prev, ...newPocketed]);
       }
-
-      if (strikerPocket) setStrikerPocketed(true);
 
       if (allStopped) {
         setAnimating(false);
-        if (strikerPocket) {
-          setScores((prev) => ({ ...prev, [turn]: Math.max(0, prev[turn] - 5) }));
-          setStrikerPocketed(false);
+        const currentTurn = turnRef.current;
+
+        if (sPocketed) {
+          setScores((prev) => ({ ...prev, [currentTurn]: Math.max(0, prev[currentTurn] - 5) }));
+          setMessage("Striker pocketed! -5 penalty");
+          setTimeout(() => setMessage(""), 2000);
         }
 
-        const remaining = currentCoins.filter((c) => !c.pocketed);
+        const remaining = cs.filter((c) => !c.pocketed);
         if (remaining.length === 0) {
           setGameOver(true);
           return;
         }
 
-        // Switch turn
-        const nextTurn: Player = turn === "player1" ? "player2" : "player1";
+        // Switch turns
+        const nextTurn: Player = currentTurn === "player1" ? "player2" : "player1";
         setTurn(nextTurn);
         setStriker(createStriker(nextTurn));
+        setPocketedThisTurn([]);
       } else {
         animFrameRef.current = requestAnimationFrame(simulate);
       }
@@ -465,15 +613,16 @@ export const CarromGame = () => {
 
     animFrameRef.current = requestAnimationFrame(simulate);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [animating, turn]);
+  }, [animating]);
 
+  // ─── Mode select screen ────────────────
   if (mode === "select") {
     return (
       <div className="flex flex-col items-center gap-6">
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }} className="text-7xl">
           🎯
         </motion.div>
-        <h2 className="font-sport text-2xl tracking-wide text-[hsl(var(--sport-text))]">CHOOSE MODE</h2>
+        <h2 className="font-sport text-2xl tracking-wide text-[hsl(var(--sport-text))]">CARROMS</h2>
         <div className="flex gap-4">
           <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => resetGame("bot")}
             className="px-6 py-3 rounded-xl bg-[hsl(var(--sport-primary))] text-[hsl(var(--sport-bg))] font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-shadow">
@@ -484,94 +633,85 @@ export const CarromGame = () => {
             👥 vs Friend
           </motion.button>
         </div>
+        <p className="text-xs text-[hsl(var(--sport-muted))] font-sport-body text-center max-w-[260px]">
+          Drag along baseline to position striker. Pull back on striker to aim & shoot!
+        </p>
       </div>
     );
   }
 
+  // ─── Game UI ───────────────────────────
   const remaining = coins.filter((c) => !c.pocketed);
-  const turnLabel = turn === "player1"
-    ? (mode === "bot" ? "Your Turn" : "Player 1's Turn")
-    : (mode === "bot" ? "Bot's Turn" : "Player 2's Turn");
+  const currentLabel = turn === "player1"
+    ? (mode === "bot" ? "You" : "Player 1")
+    : (mode === "bot" ? "Bot" : "Player 2");
 
   const winner = gameOver
     ? scores.player1 > scores.player2
-      ? (mode === "bot" ? "You Win!" : "Player 1 Wins!")
+      ? (mode === "bot" ? "You Win! 🎉" : "Player 1 Wins! 🎉")
       : scores.player2 > scores.player1
-      ? (mode === "bot" ? "Bot Wins!" : "Player 2 Wins!")
+      ? (mode === "bot" ? "Bot Wins! 🤖" : "Player 2 Wins! 🎉")
       : "It's a Draw!"
     : "";
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      {/* Scores */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-4 bg-[hsl(var(--sport-card))] rounded-xl px-5 py-3 shadow-md border border-[hsl(var(--sport-border))]">
-        <div className={`text-center ${turn === "player1" ? "opacity-100" : "opacity-50"}`}>
-          <div className="text-xs text-[hsl(var(--sport-muted))] font-sport-body">{mode === "bot" ? "YOU" : "P1"}</div>
-          <div className="text-2xl font-sport text-[hsl(var(--sport-primary))]">{scores.player1}</div>
+    <div className="flex flex-col items-center gap-3">
+      {/* Scores bar */}
+      <div className="flex items-center gap-4 bg-[hsl(var(--sport-card))] rounded-xl px-4 py-2.5 shadow-md border border-[hsl(var(--sport-border))] w-full max-w-[360px]">
+        <div className={`text-center flex-1 ${turn === "player1" ? "opacity-100" : "opacity-40"}`}>
+          <div className="text-[10px] text-[hsl(var(--sport-muted))] font-sport-body uppercase">{mode === "bot" ? "You" : "P1"}</div>
+          <div className="text-xl font-sport text-[hsl(var(--sport-primary))]">{scores.player1}</div>
         </div>
-        <div className="text-[hsl(var(--sport-muted))] font-sport text-sm">VS</div>
-        <div className={`text-center ${turn === "player2" ? "opacity-100" : "opacity-50"}`}>
-          <div className="text-xs text-[hsl(var(--sport-muted))] font-sport-body">{mode === "bot" ? "BOT" : "P2"}</div>
-          <div className="text-2xl font-sport text-[hsl(var(--sport-secondary))]">{scores.player2}</div>
+        <div className="text-[hsl(var(--sport-muted))] font-sport text-xs">VS</div>
+        <div className={`text-center flex-1 ${turn === "player2" ? "opacity-100" : "opacity-40"}`}>
+          <div className="text-[10px] text-[hsl(var(--sport-muted))] font-sport-body uppercase">{mode === "bot" ? "Bot" : "P2"}</div>
+          <div className="text-xl font-sport text-[hsl(var(--sport-secondary))]">{scores.player2}</div>
         </div>
-        <div className="w-px h-8 bg-[hsl(var(--sport-border))]" />
+        <div className="w-px h-7 bg-[hsl(var(--sport-border))]" />
         <div className="text-center">
-          <div className="text-xs text-[hsl(var(--sport-muted))] font-sport-body">LEFT</div>
-          <div className="text-2xl font-sport text-[hsl(var(--sport-accent))]">{remaining.length}</div>
+          <div className="text-[10px] text-[hsl(var(--sport-muted))] font-sport-body">LEFT</div>
+          <div className="text-xl font-sport text-[hsl(var(--sport-accent))]">{remaining.length}</div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Turn indicator */}
-      <motion.div key={turnLabel} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-        className="text-sm font-sport-body font-bold text-[hsl(var(--sport-text))] bg-[hsl(var(--sport-card))]/80 px-4 py-1.5 rounded-lg border border-[hsl(var(--sport-border))]">
-        {botThinking ? "🤖 Bot thinking..." : gameOver ? "" : `${turnLabel} — Drag striker to shoot`}
-      </motion.div>
+      {/* Status */}
+      <div className="text-xs font-sport-body text-[hsl(var(--sport-muted))]">
+        {botThinking ? "🤖 Bot is aiming..." : gameOver ? "" : `${currentLabel}'s turn`}
+        {message && <span className="ml-2 text-red-400">{message}</span>}
+      </div>
 
-      {/* Game over */}
+      {/* Legend */}
+      <div className="flex items-center gap-3 text-[10px] font-sport-body text-[hsl(var(--sport-muted))]">
+        <span>⚪ 10pts</span><span>⚫ 5pts</span><span>🔴 20pts</span>
+      </div>
+
       {gameOver && (
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
           className="bg-[hsl(var(--sport-primary))]/20 border border-[hsl(var(--sport-primary))] rounded-xl px-6 py-3 text-center">
-          <div className="text-xl font-sport text-[hsl(var(--sport-primary))]">🎉 {winner}</div>
-          <div className="text-sm text-[hsl(var(--sport-text))] font-sport-body">
-            {scores.player1} vs {scores.player2} in {shots} shots
-          </div>
+          <div className="text-lg font-sport text-[hsl(var(--sport-primary))]">{winner}</div>
+          <div className="text-xs text-[hsl(var(--sport-text))] font-sport-body">{scores.player1} vs {scores.player2} in {shots} shots</div>
         </motion.div>
       )}
-
-      {strikerPocketed && animating && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm font-sport-body text-red-400">
-          ⚠️ Striker pocketed! -5 penalty
-        </motion.div>
-      )}
-
-      {/* Pocketed legend */}
-      <div className="flex items-center gap-3 text-xs font-sport-body text-[hsl(var(--sport-muted))]">
-        <span>⚪ 10pts</span>
-        <span>⚫ 5pts</span>
-        <span>🔴 20pts</span>
-      </div>
 
       {/* Board */}
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-        className="rounded-lg overflow-hidden shadow-2xl border-4 border-amber-900/80">
+        className="rounded-lg overflow-hidden shadow-2xl border-4 border-amber-900/80 cursor-crosshair">
         <canvas ref={canvasRef} style={{ width: BOARD_SIZE, height: BOARD_SIZE, touchAction: "none" }}
-          onMouseDown={(e) => { handleBaselineClick(e); handlePointerDown(e); }}
-          onMouseMove={handlePointerMove} onMouseUp={handlePointerUp} onMouseLeave={handlePointerUp}
-          onTouchStart={(e) => { handleBaselineClick(e); handlePointerDown(e); }}
-          onTouchMove={handlePointerMove} onTouchEnd={handlePointerUp}
+          onMouseDown={handlePointerDown} onMouseMove={handlePointerMove}
+          onMouseUp={handlePointerUp} onMouseLeave={handlePointerUp}
+          onTouchStart={handlePointerDown} onTouchMove={handlePointerMove} onTouchEnd={handlePointerUp}
         />
       </motion.div>
 
       {/* Controls */}
-      <div className="flex gap-3 mt-2">
+      <div className="flex gap-3 mt-1">
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => resetGame(mode)}
-          className="px-4 py-2 rounded-lg bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] text-[hsl(var(--sport-text))] font-sport-body font-bold text-sm shadow-sm hover:shadow-md transition-shadow">
+          className="px-4 py-2 rounded-lg bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] text-[hsl(var(--sport-text))] font-sport-body font-bold text-sm shadow-sm">
           🔄 New Game
         </motion.button>
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => resetGame("select")}
-          className="px-4 py-2 rounded-lg bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] text-[hsl(var(--sport-text))] font-sport-body font-bold text-sm shadow-sm hover:shadow-md transition-shadow">
-          🔙 Change Mode
+          className="px-4 py-2 rounded-lg bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] text-[hsl(var(--sport-text))] font-sport-body font-bold text-sm shadow-sm">
+          🔙 Mode
         </motion.button>
       </div>
     </div>
