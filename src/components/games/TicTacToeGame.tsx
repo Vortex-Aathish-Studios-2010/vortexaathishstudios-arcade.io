@@ -66,11 +66,15 @@ const botMove = (board: Board, difficulty: Difficulty): number => {
   if (empty.length === 0) return -1;
 
   if (difficulty === "easy") {
-    // 70% random, 30% best
-    if (Math.random() < 0.7) return empty[Math.floor(Math.random() * empty.length)];
+    // 80% random → user wins ~80%
+    if (Math.random() < 0.8) return empty[Math.floor(Math.random() * empty.length)];
   } else if (difficulty === "medium") {
-    // 40% random, 60% best
-    if (Math.random() < 0.4) return empty[Math.floor(Math.random() * empty.length)];
+    // 50% random → user wins ~50%
+    if (Math.random() < 0.5) return empty[Math.floor(Math.random() * empty.length)];
+  }
+  // Hard: 99.9% best move, 0.1% random → user wins ~0.1%
+  if (difficulty === "hard" && Math.random() < 0.001) {
+    return empty[Math.floor(Math.random() * empty.length)];
   }
 
   // Hard: always best move
@@ -351,12 +355,7 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
               "border-destructive/30 hover:border-destructive/60"
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span>{d.charAt(0).toUpperCase() + d.slice(1)}</span>
-              <span className="text-xs text-muted-foreground">
-                {d === "easy" ? "Random moves" : d === "medium" ? "Balanced" : "Unbeatable"}
-              </span>
-            </div>
+            <span>{d.charAt(0).toUpperCase() + d.slice(1)}</span>
           </button>
         ))}
       </motion.div>
