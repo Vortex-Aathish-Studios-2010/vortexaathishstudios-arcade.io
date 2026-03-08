@@ -8,6 +8,7 @@ import { SudokuGame } from "@/components/games/SudokuGame";
 import { KonoodleGame } from "@/components/games/KonoodleGame";
 import { WordSearchGame } from "@/components/games/WordSearchGame";
 import { SnakeGame } from "@/components/games/SnakeGame";
+import { TicTacToeGame } from "@/components/games/TicTacToeGame";
 import { GameTutorial } from "@/components/GameTutorial";
 import { StatsBar } from "@/components/StatsBar";
 import { MultiplayerLobby, MultiplayerResult } from "@/components/MultiplayerLobby";
