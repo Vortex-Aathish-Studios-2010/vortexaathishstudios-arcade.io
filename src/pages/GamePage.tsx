@@ -37,23 +37,17 @@ const GamePage = () => {
   const [multiplayerRoom, setMultiplayerRoom] = useState<{ roomId: string; playerId: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
   const level = id ? getGameLevel(id) : 1;
-
-  if (!game || !GameComponent) {
-    navigate("/");
-    return null;
-  }
-
   const gameStreak = id ? getStreak(id) : 0;
 
-  const handleTutorialClose = () => {
+  const handleTutorialClose = useCallback(() => {
     setShowTutorial(false);
     if (id) markTutorialShown(id);
-  };
+  }, [id]);
 
-  const handleMultiplayerStart = (roomId: string, playerId: string, _diff: number) => {
+  const handleMultiplayerStart = useCallback((roomId: string, playerId: string, _diff: number) => {
     setMultiplayerRoom({ roomId, playerId });
     setShowMultiplayer(false);
-  };
+  }, []);
 
   const handleGameComplete = useCallback((score: number) => {
     if (multiplayerRoom) {
@@ -61,6 +55,11 @@ const GamePage = () => {
       setShowResult(true);
     }
   }, [multiplayerRoom]);
+
+  if (!game || !GameComponent) {
+    navigate("/");
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background p-6">
