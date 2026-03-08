@@ -68,10 +68,7 @@ export const GameCard = ({ game, index }: { game: GameInfo; index: number }) => 
       <div className="text-4xl mb-3 relative z-10">{game.icon}</div>
       <h3 className="font-display text-lg font-bold text-foreground mb-1 relative z-10">{game.name}</h3>
       <p className="text-sm text-muted-foreground mb-3 relative z-10">{game.description}</p>
-      <div className="flex items-center justify-between relative z-10">
-        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${badgeMap[game.color]}`}>
-          {game.difficulty}
-        </span>
+      <div className="flex items-center justify-end relative z-10">
         {streak > 0 && (
           <div className="flex items-center gap-1 text-accent">
             <Flame className="h-3.5 w-3.5" />
