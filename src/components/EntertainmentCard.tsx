@@ -64,13 +64,13 @@ export const EntertainmentCard = ({ game, index }: { game: EntertainmentGameInfo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: index * 0.07 + 0.3 }}
-          className="absolute inset-0 bg-white/40 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-2xl"
+          className="absolute inset-0 bg-black/50 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-2xl"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: index * 0.07 + 0.4, type: "spring", stiffness: 200 }}
-            className="flex items-center gap-2 bg-white/90 rounded-full px-4 py-2 shadow-md"
+            className="flex items-center gap-2 bg-[hsl(var(--sport-card))]/90 rounded-full px-4 py-2 shadow-md border border-[hsl(var(--sport-border))]"
           >
             <Lock className="h-4 w-4 text-[hsl(var(--sport-primary))]" />
             <span className="font-sport text-sm font-bold text-[hsl(var(--sport-primary))]">COMING SOON</span>
