@@ -275,24 +275,29 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   const handleSolve = useCallback(() => {
     setSolving(true);
     setTimeout(() => {
-      // Try current arrangement first, then retry with higher limit, then solve from scratch
-      let solution = solvePuzzle(board, placedIds);
-      if (!solution || (solution.length === 0 && !board.every(r => r.every(c => c)))) {
-        solution = solvePuzzle(board, placedIds, 10000000);
-      }
+      // Try current state with increasing step limits
+      let solution = solvePuzzle(board, placedIds, 5000000);
+      let solvedFromScratch = false;
+
       if (!solution) {
-        // Reset and solve from scratch
+        // Solve from scratch as fallback — always works
         const freshBoard = createEmptyBoard();
-        solution = solvePuzzle(freshBoard, new Set(), 10000000);
+        solution = solvePuzzle(freshBoard, new Set(), 20000000);
         if (solution) {
-          setBoard(createEmptyBoard());
-          setPlaced(new Map());
+          solvedFromScratch = true;
         }
       }
 
       setSolving(false);
       if (solution && solution.length > 0) {
         setShowingSolution(true);
+
+        if (solvedFromScratch) {
+          // Reset board first, then animate all pieces
+          setBoard(createEmptyBoard());
+          setPlaced(new Map());
+        }
+
         solution.forEach((step, i) => {
           setTimeout(() => {
             setBoard(prev => {
