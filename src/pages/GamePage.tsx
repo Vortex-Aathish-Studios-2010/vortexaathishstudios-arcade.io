@@ -65,7 +65,7 @@ const GamePage = () => {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={() => navigate("/?mode=brain")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-5 w-5" />
             <span className="font-display text-sm">BACK</span>
           </button>

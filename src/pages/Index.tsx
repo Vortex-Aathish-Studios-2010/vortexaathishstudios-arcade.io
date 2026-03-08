@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
 import { StatsBar } from "@/components/StatsBar";
 import { motion } from "framer-motion";
-import { Gamepad2, Brain, Lock, Trophy, XCircle } from "lucide-react";
+import { Gamepad2, Brain, Lock, Trophy, XCircle, ArrowLeftRight } from "lucide-react";
 import { getTotalWins, getTotalLosses } from "@/lib/streaks";
 
 const Index = () => {
-  const [mode, setMode] = useState<"select" | "brain" | "entertainment">("select");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialMode = searchParams.get("mode") === "brain" ? "brain" : "select";
+  const [mode, setMode] = useState<"select" | "brain" | "entertainment">(initialMode);
   const [wins, setWins] = useState(0);
   const [losses, setLosses] = useState(0);
 
@@ -114,6 +117,16 @@ const Index = () => {
           {games.map((game, i) => (
             <GameCard key={game.id} game={game} index={i} />
           ))}
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <button
+            onClick={() => { setMode("select"); setSearchParams({}); }}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors bg-card border border-border rounded-xl px-5 py-2.5"
+          >
+            <ArrowLeftRight className="h-4 w-4" />
+            <span className="font-display text-sm">Switch Arcade</span>
+          </button>
         </div>
       </main>
     </div>

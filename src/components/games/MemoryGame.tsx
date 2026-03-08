@@ -6,11 +6,10 @@ import { toast } from "sonner";
 const allEmojis = ["🎯", "🚀", "⚡", "🔥", "💎", "🌟", "🎪", "🎨", "🎵", "🎮", "🏆", "🧩", "🔮", "🌈", "🎲", "🎸", "🦄", "🍀"];
 
 const getLevelConfig = (level: number) => {
-  if (level <= 1) return { cols: 4, pairs: 6 };
-  if (level === 2) return { cols: 4, pairs: 8 };
-  if (level === 3) return { cols: 5, pairs: 10 };
-  if (level === 4) return { cols: 6, pairs: 12 };
-  return { cols: 6, pairs: Math.min(15, 6 + level) };
+  const pairs = Math.min(5 + level, 18);
+  const total = pairs * 2;
+  const cols = total <= 12 ? 4 : total <= 20 ? 5 : total <= 30 ? 6 : 7;
+  return { cols, pairs };
 };
 
 interface Card {
@@ -91,7 +90,6 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
     <div className="flex flex-col items-center gap-6">
       <div className="flex gap-6 text-sm">
         <span className="text-muted-foreground">Moves: <span className="font-display text-foreground">{moves}</span></span>
-        <span className="text-muted-foreground">Level: <span className="font-display text-primary">{currentLevel}</span></span>
       </div>
       <div className={`grid gap-2.5`} style={{ gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))` }}>
         {cards.map((card) => (
