@@ -205,8 +205,8 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setShuffling(true);
     sfx.shake();
 
-    // Use a web worker-like approach: compute synchronously but with minimal delay
-    requestAnimationFrame(() => {
+    // Delay computation so the cover animation plays fully first (400ms close)
+    setTimeout(() => {
       const boardWithout = board.map(row => row.map(cell => cell === lastPlacedId ? null : cell));
 
       type Candidate = { cells: number[][]; r: number; c: number };
@@ -218,13 +218,11 @@ export const KonoodleGame = ({ onComplete }: Props) => {
               candidates.push({ cells: orientation, r, c });
       }
 
-      // Shuffle candidates randomly
       for (let i = candidates.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
       }
 
-      // Pick first solvable candidate (use low step limit for speed)
       let foundBoard: BoardState | null = null;
       let foundCells: [number, number][] = [];
       for (const cand of candidates) {
@@ -242,7 +240,6 @@ export const KonoodleGame = ({ onComplete }: Props) => {
         }
       }
 
-      // Fallback: just pick first candidate
       if (!foundBoard && candidates.length > 0) {
         const cand = candidates[0];
         foundBoard = boardWithout.map(row => [...row]);
@@ -253,6 +250,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
         });
       }
 
+      // Update board while still covered
       if (foundBoard) {
         setBoard(foundBoard);
         const newPlaced = new Map(placed);
@@ -260,12 +258,13 @@ export const KonoodleGame = ({ onComplete }: Props) => {
         setPlaced(newPlaced);
       }
 
+      // Hold the cover for a moment so user sees it, then reveal
       setTimeout(() => {
         setShuffling(false);
         setHasShuffled(true);
         sfx.place();
-      }, 300);
-    });
+      }, 500);
+    }, 500);
   }, [board, placed, lastPlacedId]);
 
   // Solve puzzle
