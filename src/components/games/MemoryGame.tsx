@@ -6,11 +6,10 @@ import { toast } from "sonner";
 const allEmojis = ["🎯", "🚀", "⚡", "🔥", "💎", "🌟", "🎪", "🎨", "🎵", "🎮", "🏆", "🧩", "🔮", "🌈", "🎲", "🎸", "🦄", "🍀"];
 
 const getLevelConfig = (level: number) => {
-  if (level <= 1) return { cols: 4, pairs: 6 };
-  if (level === 2) return { cols: 4, pairs: 8 };
-  if (level === 3) return { cols: 5, pairs: 10 };
-  if (level === 4) return { cols: 6, pairs: 12 };
-  return { cols: 6, pairs: Math.min(15, 6 + level) };
+  const pairs = Math.min(5 + level, 18);
+  const total = pairs * 2;
+  const cols = total <= 12 ? 4 : total <= 20 ? 5 : total <= 30 ? 6 : 7;
+  return { cols, pairs };
 };
 
 interface Card {
