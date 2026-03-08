@@ -147,7 +147,7 @@ export const ChessGame = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => resetGame("bot")}
-            className="px-6 py-3 rounded-xl bg-[hsl(var(--sport-primary))] text-white font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
+            className="px-6 py-3 rounded-xl bg-[hsl(var(--sport-primary))] text-[hsl(var(--sport-bg))] font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
           >
             🤖 vs Hard Bot
           </motion.button>
@@ -155,7 +155,7 @@ export const ChessGame = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => resetGame("friend")}
-            className="px-6 py-3 rounded-xl bg-[hsl(var(--sport-secondary))] text-white font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
+            className="px-6 py-3 rounded-xl bg-[hsl(var(--sport-secondary))] text-[hsl(var(--sport-bg))] font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
           >
             👥 vs Friend
           </motion.button>
@@ -183,10 +183,10 @@ export const ChessGame = () => {
         animate={{ opacity: 1, y: 0 }}
         className={`font-sport-body text-lg font-bold px-4 py-2 rounded-lg ${
           state.isCheckmate
-            ? "bg-red-100 text-red-800"
+            ? "bg-red-900/60 text-red-300"
             : state.isCheck
-            ? "bg-yellow-100 text-yellow-800"
-            : "bg-white/80 text-[hsl(var(--sport-text))]"
+            ? "bg-yellow-900/60 text-yellow-300"
+            : "bg-[hsl(var(--sport-card))] text-[hsl(var(--sport-text))]"
         } shadow-sm`}
       >
         {statusText}
@@ -306,11 +306,11 @@ export const ChessGame = () => {
 
       {/* Controls */}
       <div className="flex gap-3 mt-2">
-        <motion.button
+          <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => resetGame(mode)}
-          className="px-4 py-2 rounded-lg bg-white border border-[hsl(var(--sport-border))] text-[hsl(var(--sport-text))] font-sport-body font-bold text-sm shadow-sm hover:shadow-md transition-shadow"
+          className="px-4 py-2 rounded-lg bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] text-[hsl(var(--sport-text))] font-sport-body font-bold text-sm shadow-sm hover:shadow-md transition-shadow"
         >
           🔄 New Game
         </motion.button>
@@ -318,7 +318,7 @@ export const ChessGame = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => resetGame("select")}
-          className="px-4 py-2 rounded-lg bg-white border border-[hsl(var(--sport-border))] text-[hsl(var(--sport-text))] font-sport-body font-bold text-sm shadow-sm hover:shadow-md transition-shadow"
+          className="px-4 py-2 rounded-lg bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] text-[hsl(var(--sport-text))] font-sport-body font-bold text-sm shadow-sm hover:shadow-md transition-shadow"
         >
           🔙 Change Mode
         </motion.button>
