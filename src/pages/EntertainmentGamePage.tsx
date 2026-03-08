@@ -1,13 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { entertainmentGames } from "@/lib/entertainmentData";
 import { ChessGame } from "@/components/games/ChessGame";
-import { CarromGame } from "@/components/games/CarromGame";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 const gameComponents: Record<string, React.FC> = {
   chess: ChessGame,
-  carroms: CarromGame,
 };
 
 const EntertainmentGamePage = () => {

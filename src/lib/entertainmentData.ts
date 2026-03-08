@@ -21,16 +21,6 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     tutorial: ["Choose to play against a hard bot or a friend locally.", "Click a piece to select it, then click a highlighted square to move.", "Capture enemy pieces by moving to their square.", "Put the opponent's king in checkmate to win!"],
   },
   {
-    id: "carroms",
-    name: "Carroms",
-    description: "Flick and pocket the coins",
-    icon: "🎯",
-    color: "sport-secondary",
-    available: true,
-    difficulty: "Medium",
-    tutorial: ["Drag the striker to aim and set power.", "White coins = 10pts, Black = 5pts, Red = 20pts.", "Click the baseline area to reposition the striker.", "Pocket all coins with the fewest shots!"],
-  },
-  {
     id: "archery",
     name: "Archery",
     description: "Aim for the bullseye",
