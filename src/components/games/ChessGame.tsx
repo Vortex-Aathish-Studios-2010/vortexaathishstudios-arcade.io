@@ -226,7 +226,7 @@ export const ChessGame = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-8" style={{ width: "min(85vw, 400px)", height: "min(85vw, 400px)" }}>
+        <div className="grid grid-cols-8" style={{ width: "min(85vw, 400px)" }}>
           {state.board.map((row, r) =>
             row.map((piece, c) => {
               const isLight = (r + c) % 2 === 0;
@@ -240,7 +240,7 @@ export const ChessGame = () => {
                 <motion.div
                   key={`${r}-${c}`}
                   onClick={() => handleSquareClick(r, c)}
-                  className="relative flex items-center justify-center cursor-pointer select-none"
+                  className="relative flex items-center justify-center cursor-pointer select-none aspect-square"
                   style={{
                     background: isCheckSquare
                       ? "radial-gradient(circle, #ef4444 0%, #dc2626 60%, " + (isLight ? "#F0D9B5" : "#B58863") + " 100%)"
@@ -279,9 +279,11 @@ export const ChessGame = () => {
                       className="select-none z-10"
                       style={{
                         fontSize: "min(9vw, 42px)",
+                        color: piece.color === "white" ? "#FFFFFF" : "#1a1a1a",
+                        WebkitTextStroke: piece.color === "white" ? "0.5px #888" : "0.5px #000",
                         filter: piece.color === "white"
-                          ? "drop-shadow(1px 2px 2px rgba(0,0,0,0.4))"
-                          : "drop-shadow(1px 2px 2px rgba(0,0,0,0.3))",
+                          ? "drop-shadow(1px 2px 3px rgba(0,0,0,0.5))"
+                          : "drop-shadow(1px 1px 1px rgba(0,0,0,0.3))",
                         lineHeight: 1,
                       }}
                     >
