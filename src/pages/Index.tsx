@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
 import { StatsBar } from "@/components/StatsBar";
 import { motion } from "framer-motion";
-import { Gamepad2, Brain, Lock, Trophy, XCircle } from "lucide-react";
+import { Gamepad2, Brain, Lock, Trophy, XCircle, ArrowLeftRight } from "lucide-react";
 import { getTotalWins, getTotalLosses } from "@/lib/streaks";
 
 const Index = () => {
-  const [mode, setMode] = useState<"select" | "brain" | "entertainment">("select");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialMode = searchParams.get("mode") === "brain" ? "brain" : "select";
+  const [mode, setMode] = useState<"select" | "brain" | "entertainment">(initialMode);
   const [wins, setWins] = useState(0);
   const [losses, setLosses] = useState(0);
 
