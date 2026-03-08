@@ -33,7 +33,7 @@ export const GameCard = ({ game, index }: { game: GameInfo; index: number }) => 
     if (clicked) return;
     setClicked(true);
     sfx.click();
-    setTimeout(() => navigate(`/game/${game.id}`), 400);
+    setTimeout(() => navigate(`/game/${game.id}`), 500);
   };
 
   return (
