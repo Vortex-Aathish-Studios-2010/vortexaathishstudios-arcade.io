@@ -134,6 +134,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setLastPlacedId(null);
     setShowingSolution(false);
     setShuffling(false);
+    setHasShuffled(false);
   };
 
   // Drag and drop — create a custom drag image matching board cell size
