@@ -70,12 +70,12 @@ export const addLoss = (gameId: string) => {
 };
 
 export const getTotalWins = (): number => {
-  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake"];
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe"];
   return gameIds.reduce((sum, id) => sum + getWins(id), 0);
 };
 
 export const getTotalLosses = (): number => {
-  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake"];
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe"];
   return gameIds.reduce((sum, id) => sum + getLosses(id), 0);
 };
 

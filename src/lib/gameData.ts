@@ -122,4 +122,20 @@ export const games: GameInfo[] = [
       "Survive as long as possible for the highest score!",
     ],
   },
+  {
+    id: "tictactoe",
+    name: "Tic Tac Toe",
+    description: "Get three in a row to win",
+    icon: "❌⭕",
+    color: "secondary",
+    available: true,
+    difficulty: "Easy",
+    tutorial: [
+      "Choose to play against a bot or a friend online.",
+      "Take turns placing your mark (X or O) on the 3×3 grid.",
+      "Get three of your marks in a row — horizontally, vertically, or diagonally — to win!",
+      "If all 9 squares are filled with no winner, it's a draw.",
+      "Against a bot, choose Easy, Medium, or Hard difficulty.",
+    ],
+  },
 ];

@@ -25,6 +25,7 @@ const gameComponents: Record<string, React.FC<{ level?: number; onComplete?: (sc
   konoodle: KonoodleGame,
   wordsearch: WordSearchGame,
   snake: SnakeGame,
+  tictactoe: TicTacToeGame,
 };
 
 // Games that manage their own level internally or don't use levels
