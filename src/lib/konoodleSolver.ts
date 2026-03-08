@@ -25,8 +25,9 @@ export const normalizeCells = (cells: number[][]): number[][] => {
 const getAllOrientations = (cells: number[][]): number[][][] => {
   const seen = new Set<string>();
   const result: number[][][] = [];
-  let current = cells.map(c => [...c]);
-  for (let flip = 0; flip < 2; flip++) {
+  const bases = [cells.map(c => [...c]), flipCells(cells)];
+  for (const base of bases) {
+    let current = base.map(c => [...c]);
     for (let rot = 0; rot < 4; rot++) {
       const normalized = normalizeCells(current);
       const key = JSON.stringify(normalized);
@@ -36,7 +37,6 @@ const getAllOrientations = (cells: number[][]): number[][][] => {
       }
       current = rotateCells(current);
     }
-    current = flipCells(normalizeCells(cells.map(c => [...c])));
   }
   return result;
 };
@@ -73,7 +73,7 @@ export interface Placement {
 export const solvePuzzle = (
   initialBoard: BoardState,
   placedPieceIds: Set<string>,
-  stepLimit = 500000
+  stepLimit = 2000000
 ): Placement[] | null => {
   const board = initialBoard.map(r => [...r]);
   const remaining = PIECES.filter(p => !placedPieceIds.has(p.id));
@@ -81,51 +81,56 @@ export const solvePuzzle = (
 
   const solve = (remIdx: number[]): Placement[] | null => {
     if (steps++ > stepLimit) return null;
-    
-    // Find first empty cell
+    if (remIdx.length === 0) {
+      // Check if board is full
+      for (let r = 0; r < BOARD_ROWS; r++)
+        for (let c = 0; c < BOARD_COLS; c++)
+          if (!board[r][c]) return null;
+      return [];
+    }
+
+    // Find first empty cell (top-left scan)
     let targetR = -1, targetC = -1;
     outer: for (let r = 0; r < BOARD_ROWS; r++)
       for (let c = 0; c < BOARD_COLS; c++)
         if (!board[r][c]) { targetR = r; targetC = c; break outer; }
-    
+
     if (targetR === -1) return []; // Board full!
-    
+
     for (const idx of remIdx) {
       const piece = remaining[idx];
       for (const orientation of piece.orientations) {
-        // Try each cell of orientation as anchor for target cell
-        for (const [ar, ac] of orientation) {
-          const baseR = targetR - ar;
-          const baseC = targetC - ac;
-          const placed: [number, number][] = [];
-          let valid = true;
-          
-          for (const [dr, dc] of orientation) {
-            const nr = baseR + dr, nc = baseC + dc;
-            if (nr < 0 || nr >= BOARD_ROWS || nc < 0 || nc >= BOARD_COLS || board[nr][nc]) {
-              valid = false;
-              break;
-            }
-            placed.push([nr, nc]);
+        // Key optimization: since targetR,targetC is the top-left empty cell,
+        // the piece's normalized top-left cell [0,0] must land there.
+        // All cells above/left are filled, so only orientation[0] can be the anchor.
+        const placedCells: [number, number][] = [];
+        let valid = true;
+
+        for (const [dr, dc] of orientation) {
+          const nr = targetR + dr, nc = targetC + dc;
+          if (nr < 0 || nr >= BOARD_ROWS || nc < 0 || nc >= BOARD_COLS || board[nr][nc]) {
+            valid = false;
+            break;
           }
-          
-          if (!valid) continue;
-          
-          // Place
-          placed.forEach(([r, c]) => { board[r][c] = piece.id; });
-          const newRem = remIdx.filter(i => i !== idx);
-          const result = solve(newRem);
-          
-          if (result !== null) {
-            return [{ pieceId: piece.id, cells: placed }, ...result];
-          }
-          
-          // Unplace
-          placed.forEach(([r, c]) => { board[r][c] = null; });
+          placedCells.push([nr, nc]);
         }
+
+        if (!valid) continue;
+
+        // Place
+        placedCells.forEach(([r, c]) => { board[r][c] = piece.id; });
+        const newRem = remIdx.filter(i => i !== idx);
+        const result = solve(newRem);
+
+        if (result !== null) {
+          return [{ pieceId: piece.id, cells: placedCells }, ...result];
+        }
+
+        // Unplace
+        placedCells.forEach(([r, c]) => { board[r][c] = null; });
       }
     }
-    
+
     return null;
   };
 

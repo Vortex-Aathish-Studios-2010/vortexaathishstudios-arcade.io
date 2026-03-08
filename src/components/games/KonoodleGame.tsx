@@ -1,11 +1,22 @@
 import { useState, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { addPoints, updateStreak, addWin } from "@/lib/streaks";
 import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
 import { Shuffle, Eye, RotateCw } from "lucide-react";
-import { PIECES, BOARD_ROWS, BOARD_COLS, createEmptyBoard, solvePuzzle, normalizeCells, type PieceDef, type BoardState, type Placement } from "@/lib/konoodleSolver";
+import { PIECES, BOARD_ROWS, BOARD_COLS, createEmptyBoard, solvePuzzle, type PieceDef, type BoardState, type Placement } from "@/lib/konoodleSolver";
 
-const PiecePreview = ({ piece, selected, onClick }: { piece: PieceDef; selected: boolean; onClick: () => void }) => {
+const PiecePreview = ({
+  piece,
+  selected,
+  onClick,
+  onDragStart,
+}: {
+  piece: PieceDef;
+  selected: boolean;
+  onClick: () => void;
+  onDragStart?: (e: React.DragEvent) => void;
+}) => {
   const cells = piece.orientations[0];
   const maxR = Math.max(...cells.map(([r]) => r));
   const maxC = Math.max(...cells.map(([, c]) => c));
@@ -13,9 +24,11 @@ const PiecePreview = ({ piece, selected, onClick }: { piece: PieceDef; selected:
 
   return (
     <button
+      draggable
+      onDragStart={onDragStart}
       onClick={onClick}
-      className={`p-1.5 rounded-lg transition-all border-2 ${
-        selected ? `border-primary ring-2 ring-primary/50 glow-primary` : "bg-card border-border hover:border-primary/40"
+      className={`p-1.5 rounded-lg transition-all border-2 cursor-grab active:cursor-grabbing ${
+        selected ? "border-primary ring-2 ring-primary/50 glow-primary" : "bg-card border-border hover:border-primary/40"
       }`}
     >
       {Array.from({ length: maxR + 1 }, (_, r) => (
@@ -46,8 +59,9 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   const [rotation, setRotation] = useState(0);
   const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
   const [solving, setSolving] = useState(false);
-  const [solutionSteps, setSolutionSteps] = useState<Placement[] | null>(null);
   const [showingSolution, setShowingSolution] = useState(false);
+  const [shuffling, setShuffling] = useState(false);
+  const [dragOverCell, setDragOverCell] = useState<[number, number] | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
   const placedIds = new Set(placed.keys());
@@ -56,34 +70,42 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     return piece.orientations[rot % piece.orientations.length];
   };
 
-  const canPlace = (cells: number[][], r: number, c: number) =>
+  const canPlace = (cells: number[][], r: number, c: number, boardState: BoardState = board) =>
     cells.every(([dr, dc]) => {
       const nr = r + dr, nc = c + dc;
-      return nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS && !board[nr][nc];
+      return nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS && !boardState[nr][nc];
     });
+
+  const doPlace = (piece: PieceDef, cells: number[][], r: number, c: number, currentBoard: BoardState, currentPlaced: Map<string, [number, number][]>) => {
+    const newBoard = currentBoard.map((row) => [...row]);
+    const placedCells: [number, number][] = [];
+    cells.forEach(([dr, dc]) => {
+      newBoard[r + dr][c + dc] = piece.id;
+      placedCells.push([r + dr, c + dc]);
+    });
+    const newPlaced = new Map(currentPlaced);
+    newPlaced.set(piece.id, placedCells);
+    return { newBoard, newPlaced, placedCells };
+  };
 
   const placePiece = (r: number, c: number) => {
     if (!selectedPiece || placedIds.has(selectedPiece.id)) return;
     const cells = getRotatedCells(selectedPiece, rotation);
     if (!canPlace(cells, r, c)) { sfx.error(); return; }
     sfx.place();
-    const newBoard = board.map((row) => [...row]);
-    const placedCells: [number, number][] = [];
-    cells.forEach(([dr, dc]) => {
-      newBoard[r + dr][c + dc] = selectedPiece.id;
-      placedCells.push([r + dr, c + dc]);
-    });
+    const { newBoard, newPlaced } = doPlace(selectedPiece, cells, r, c, board, placed);
     setBoard(newBoard);
-    const newPlaced = new Map(placed);
-    newPlaced.set(selectedPiece.id, placedCells);
     setPlaced(newPlaced);
     setLastPlacedId(selectedPiece.id);
     setSelectedPiece(null);
     setRotation(0);
-    setSolutionSteps(null);
     setShowingSolution(false);
+    setDragOverCell(null);
+    checkWin(newBoard);
+  };
 
-    if (newBoard.every((row) => row.every((cell) => cell !== null))) {
+  const checkWin = (b: BoardState) => {
+    if (b.every((row) => row.every((cell) => cell !== null))) {
       sfx.levelComplete();
       addPoints(200);
       updateStreak("konoodle");
@@ -94,6 +116,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   };
 
   const removePiece = (id: string) => {
+    if (showingSolution) return;
     sfx.click();
     setBoard(board.map((row) => row.map((cell) => (cell === id ? null : cell))));
     const newPlaced = new Map(placed);
@@ -109,65 +132,100 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setSelectedPiece(null);
     setRotation(0);
     setLastPlacedId(null);
-    setSolutionSteps(null);
     setShowingSolution(false);
+    setShuffling(false);
   };
 
-  // Shake: reposition the last placed piece randomly
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, piece: PieceDef) => {
+    setSelectedPiece(piece);
+    setRotation(0);
+    e.dataTransfer.setData("text/plain", piece.id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleBoardDragOver = (e: React.DragEvent, r: number, c: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverCell([r, c]);
+  };
+
+  const handleBoardDrop = (e: React.DragEvent, r: number, c: number) => {
+    e.preventDefault();
+    if (selectedPiece) placePiece(r, c);
+    setDragOverCell(null);
+  };
+
+  const handleBoardDragLeave = () => {
+    setDragOverCell(null);
+  };
+
+  // Drag preview cells
+  const dragPreviewCells = dragOverCell && selectedPiece ? (() => {
+    const cells = getRotatedCells(selectedPiece, rotation);
+    const [r, c] = dragOverCell;
+    const valid = canPlace(cells, r, c);
+    return { cells: cells.map(([dr, dc]) => [r + dr, c + dc] as [number, number]), valid };
+  })() : null;
+  const dragPreviewSet = new Set(dragPreviewCells?.cells.map(([r, c]) => `${r},${c}`) || []);
+
+  // Shuffle with cover/reveal animation
   const shakeLastPiece = useCallback(() => {
     if (!lastPlacedId) return;
     const piece = PIECES.find(p => p.id === lastPlacedId);
     if (!piece) return;
 
-    // Remove the piece first
-    const boardWithout = board.map(row => row.map(cell => cell === lastPlacedId ? null : cell));
-    
-    // Try random orientations and positions
-    const orientIdx = Math.floor(Math.random() * piece.orientations.length);
-    const cells = piece.orientations[orientIdx];
-    
-    const validPositions: [number, number][] = [];
-    for (let r = 0; r < BOARD_ROWS; r++)
-      for (let c = 0; c < BOARD_COLS; c++)
-        if (cells.every(([dr, dc]) => {
-          const nr = r + dr, nc = c + dc;
-          return nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS && !boardWithout[nr][nc];
-        })) validPositions.push([r, c]);
-
-    if (validPositions.length === 0) {
-      toast.error("No valid position found!");
-      return;
-    }
-
-    const [pr, pc] = validPositions[Math.floor(Math.random() * validPositions.length)];
+    setShuffling(true);
     sfx.shake();
-    const newBoard = boardWithout.map(row => [...row]);
-    const placedCells: [number, number][] = [];
-    cells.forEach(([dr, dc]) => {
-      newBoard[pr + dr][pc + dc] = lastPlacedId;
-      placedCells.push([pr + dr, pc + dc]);
-    });
-    setBoard(newBoard);
-    const newPlaced = new Map(placed);
-    newPlaced.set(lastPlacedId, placedCells);
-    setPlaced(newPlaced);
-    toast.success(`Repositioned "${lastPlacedId}"!`);
+
+    // After cover animation, reposition
+    setTimeout(() => {
+      const boardWithout = board.map(row => row.map(cell => cell === lastPlacedId ? null : cell));
+      const orientIdx = Math.floor(Math.random() * piece.orientations.length);
+      const cells = piece.orientations[orientIdx];
+
+      const validPositions: [number, number][] = [];
+      for (let r = 0; r < BOARD_ROWS; r++)
+        for (let c = 0; c < BOARD_COLS; c++)
+          if (canPlace(cells, r, c, boardWithout)) validPositions.push([r, c]);
+
+      if (validPositions.length === 0) {
+        setShuffling(false);
+        toast.error("No valid position found!");
+        return;
+      }
+
+      const [pr, pc] = validPositions[Math.floor(Math.random() * validPositions.length)];
+      const newBoard = boardWithout.map(row => [...row]);
+      const placedCells: [number, number][] = [];
+      cells.forEach(([dr, dc]) => {
+        newBoard[pr + dr][pc + dc] = lastPlacedId;
+        placedCells.push([pr + dr, pc + dc]);
+      });
+      setBoard(newBoard);
+      const newPlaced = new Map(placed);
+      newPlaced.set(lastPlacedId, placedCells);
+      setPlaced(newPlaced);
+
+      // Reveal after a short delay
+      setTimeout(() => {
+        setShuffling(false);
+        sfx.place();
+        toast.success(`Repositioned "${lastPlacedId}"!`);
+      }, 400);
+    }, 500);
   }, [board, placed, lastPlacedId]);
 
-  // Solve: find solution and animate it
+  // Solve puzzle
   const handleSolve = useCallback(() => {
     setSolving(true);
-    // Run solver in a timeout to not block UI
+    toast.info("Solving... this may take a moment.");
     setTimeout(() => {
       const solution = solvePuzzle(board, placedIds);
       setSolving(false);
-      if (solution) {
-        setSolutionSteps(solution);
+      if (solution && solution.length > 0) {
         setShowingSolution(true);
-        toast.success("Solution found! Watch the pieces fill in.");
-        // Animate placing pieces one by one
-        let newBoard = board.map(r => [...r]);
-        const newPlaced = new Map(placed);
+        toast.success(`Solution found! Placing ${solution.length} pieces.`);
         solution.forEach((step, i) => {
           setTimeout(() => {
             setBoard(prev => {
@@ -181,13 +239,21 @@ export const KonoodleGame = ({ onComplete }: Props) => {
               return p;
             });
             sfx.place();
-          }, (i + 1) * 400);
+            if (i === solution.length - 1) {
+              setTimeout(() => {
+                sfx.levelComplete();
+                toast.success("Board complete!");
+              }, 200);
+            }
+          }, (i + 1) * 350);
         });
+      } else if (solution && solution.length === 0) {
+        toast.success("Board is already complete!");
       } else {
-        toast.error("No solution found. Try resetting and starting over.");
+        toast.error("Couldn't find a solution with this arrangement. Try resetting!");
       }
     }, 50);
-  }, [board, placedIds, placed]);
+  }, [board, placedIds]);
 
   const pieceColor = (id: string) => PIECES.find((p) => p.id === id)?.color || "bg-muted";
 
@@ -215,34 +281,65 @@ export const KonoodleGame = ({ onComplete }: Props) => {
       <div className="text-xs font-display text-muted-foreground">
         {PIECES.length} pieces · {BOARD_ROWS * BOARD_COLS} cells · Fill the entire board!
       </div>
-      <div ref={boardRef} className="bg-card border border-border p-2 rounded-xl">
+
+      {/* Board with shuffle cover animation */}
+      <div ref={boardRef} className="relative bg-card border border-border p-2 rounded-xl">
         {board.map((row, r) => (
           <div key={r} className="flex">
             {row.map((cell, c) => (
               <div
                 key={c}
                 onClick={() => cell ? removePiece(cell) : placePiece(r, c)}
+                onDragOver={(e) => handleBoardDragOver(e, r, c)}
+                onDrop={(e) => handleBoardDrop(e, r, c)}
+                onDragLeave={handleBoardDragLeave}
                 className={`w-7 h-7 border border-border/20 rounded-sm cursor-pointer transition-all ${
                   cell ? `${pieceColor(cell)} shadow-[0_0_6px_rgba(0,0,0,0.15)]`
-                  : "bg-background/30 hover:bg-muted/50"
+                  : dragPreviewSet.has(`${r},${c}`)
+                    ? (dragPreviewCells?.valid ? "bg-primary/20 border-primary/40" : "bg-destructive/20 border-destructive/40")
+                    : "bg-background/30 hover:bg-muted/50"
                 }`}
               />
             ))}
           </div>
         ))}
+
+        {/* Shuffle cover overlay */}
+        <AnimatePresence>
+          {shuffling && (
+            <motion.div
+              initial={{ scaleY: 0 }}
+              animate={{ scaleY: 1 }}
+              exit={{ scaleY: 0 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              style={{ originY: 0 }}
+              className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary/80 via-secondary/60 to-accent/80 backdrop-blur-sm flex items-center justify-center z-10"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 0.6, repeat: Infinity, ease: "linear" }}
+              >
+                <Shuffle className="h-8 w-8 text-primary-foreground" />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      <div className="flex flex-wrap gap-2 justify-center max-w-xs">
+      {/* Piece tray */}
+      <div className="flex flex-wrap gap-2 justify-center max-w-sm">
         {PIECES.filter((p) => !placedIds.has(p.id)).map((piece) => (
           <PiecePreview
             key={piece.id}
             piece={piece}
             selected={selectedPiece?.id === piece.id}
             onClick={() => { setSelectedPiece(piece); setRotation(0); sfx.click(); }}
+            onDragStart={(e) => handleDragStart(e, piece)}
           />
         ))}
       </div>
 
+      {/* Rotation controls */}
       {selectedPiece && (
         <div className="flex items-center gap-3">
           {rotatedPreview}
@@ -253,11 +350,16 @@ export const KonoodleGame = ({ onComplete }: Props) => {
         </div>
       )}
 
+      {/* Action buttons */}
       <div className="flex gap-2 flex-wrap justify-center">
         {lastPlacedId && !showingSolution && (
-          <button onClick={shakeLastPiece} className="flex items-center gap-1.5 px-4 py-2 bg-accent/10 border border-accent/30 text-accent rounded-xl font-display text-xs hover:border-accent/60 transition-all">
+          <button
+            onClick={shakeLastPiece}
+            disabled={shuffling}
+            className="flex items-center gap-1.5 px-4 py-2 bg-accent/10 border border-accent/30 text-accent rounded-xl font-display text-xs hover:border-accent/60 transition-all disabled:opacity-40"
+          >
             <Shuffle className="h-3.5 w-3.5" />
-            SHAKE "{lastPlacedId}"
+            SHUFFLE "{lastPlacedId}"
           </button>
         )}
         <button
@@ -272,7 +374,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
           RESET
         </button>
       </div>
-      <p className="text-xs text-muted-foreground text-center">Click a piece then click the board · Tap placed pieces to remove</p>
+      <p className="text-xs text-muted-foreground text-center">Drag pieces onto the board or click to place · Tap placed pieces to remove</p>
     </div>
   );
 };
