@@ -226,7 +226,7 @@ export const ChessGame = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-8" style={{ width: "min(85vw, 400px)", height: "min(85vw, 400px)" }}>
+        <div className="grid grid-cols-8" style={{ width: "min(85vw, 400px)" }}>
           {state.board.map((row, r) =>
             row.map((piece, c) => {
               const isLight = (r + c) % 2 === 0;
