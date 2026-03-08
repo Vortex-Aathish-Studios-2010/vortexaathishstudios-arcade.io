@@ -16,6 +16,8 @@ export default {
       fontFamily: {
         display: ["Orbitron", "sans-serif"],
         body: ["Inter", "sans-serif"],
+        sport: ["Bebas Neue", "sans-serif"],
+        "sport-body": ["Nunito", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

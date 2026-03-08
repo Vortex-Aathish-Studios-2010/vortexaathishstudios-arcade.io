@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
 import { StatsBar } from "@/components/StatsBar";
@@ -8,6 +8,7 @@ import { Brain, Lock, Trophy, XCircle, ArrowLeftRight } from "lucide-react";
 import { getTotalWins, getTotalLosses } from "@/lib/streaks";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialMode = searchParams.get("mode") === "brain" ? "brain" : "select";
   const [mode, setMode] = useState<"select" | "brain" | "entertainment">(initialMode);
@@ -52,14 +53,18 @@ const Index = () => {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="relative rounded-2xl border-2 border-secondary/20 bg-card/50 p-8 text-center cursor-not-allowed opacity-60"
+            whileHover={{ scale: 1.04, y: -4 }}
+            onClick={() => navigate("/entertainment")}
+            className="relative rounded-2xl border-2 border-[hsl(35,95%,55%)]/40 bg-card p-8 text-center hover:border-[hsl(35,95%,55%)] transition-all"
           >
-            <div className="absolute top-3 right-3">
-              <Lock className="h-4 w-4 text-muted-foreground" />
+            <div className="absolute top-0 left-0 right-0 h-[4px] flex rounded-t-2xl overflow-hidden">
+              <div className="flex-1 bg-[hsl(145,70%,40%)]" />
+              <div className="flex-1 bg-[hsl(210,90%,55%)]" />
+              <div className="flex-1 bg-[hsl(35,95%,55%)]" />
             </div>
             <div className="h-16 w-16 mx-auto mb-4 flex items-center justify-center text-4xl">🎮</div>
-            <h2 className="font-display text-xl font-bold text-muted-foreground mb-2">Entertainment Arcade</h2>
-            <p className="text-sm text-muted-foreground">Coming Soon</p>
+            <h2 className="font-display text-xl font-bold text-foreground mb-2">Entertainment Arcade</h2>
+            <p className="text-sm text-muted-foreground">Sports & action games</p>
           </motion.button>
         </div>
 
@@ -93,16 +98,17 @@ const Index = () => {
           <div className="flex items-center gap-3">
             {/* Entertainment Arcade button */}
             <button
-              className="relative overflow-hidden rounded-lg px-3 py-1.5 bg-white border border-border cursor-not-allowed opacity-70"
-              title="Coming Soon"
+              onClick={() => navigate("/entertainment")}
+              className="relative overflow-hidden rounded-lg px-3 py-1.5 bg-card border border-border hover:border-[hsl(35,95%,55%)]/60 transition-all cursor-pointer"
+              title="Entertainment Arcade"
             >
               <div className="absolute top-0 left-0 right-0 h-[3px] flex">
-                <div className="flex-1 bg-destructive" />
-                <div className="flex-1 bg-primary" />
-                <div className="flex-1 bg-[hsl(142,71%,45%)]" />
+                <div className="flex-1 bg-[hsl(145,70%,40%)]" />
+                <div className="flex-1 bg-[hsl(210,90%,55%)]" />
+                <div className="flex-1 bg-[hsl(35,95%,55%)]" />
               </div>
               <span className="font-display text-xs text-foreground flex items-center gap-1">
-                🎮 <Lock className="h-3 w-3" />
+                🎮
               </span>
             </button>
             <div className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-1.5">
