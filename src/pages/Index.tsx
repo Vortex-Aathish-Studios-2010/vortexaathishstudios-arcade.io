@@ -53,14 +53,18 @@ const Index = () => {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="relative rounded-2xl border-2 border-secondary/20 bg-card/50 p-8 text-center cursor-not-allowed opacity-60"
+            whileHover={{ scale: 1.04, y: -4 }}
+            onClick={() => navigate("/entertainment")}
+            className="relative rounded-2xl border-2 border-[hsl(35,95%,55%)]/40 bg-card p-8 text-center hover:border-[hsl(35,95%,55%)] transition-all"
           >
-            <div className="absolute top-3 right-3">
-              <Lock className="h-4 w-4 text-muted-foreground" />
+            <div className="absolute top-0 left-0 right-0 h-[4px] flex rounded-t-2xl overflow-hidden">
+              <div className="flex-1 bg-[hsl(145,70%,40%)]" />
+              <div className="flex-1 bg-[hsl(210,90%,55%)]" />
+              <div className="flex-1 bg-[hsl(35,95%,55%)]" />
             </div>
             <div className="h-16 w-16 mx-auto mb-4 flex items-center justify-center text-4xl">🎮</div>
-            <h2 className="font-display text-xl font-bold text-muted-foreground mb-2">Entertainment Arcade</h2>
-            <p className="text-sm text-muted-foreground">Coming Soon</p>
+            <h2 className="font-display text-xl font-bold text-foreground mb-2">Entertainment Arcade</h2>
+            <p className="text-sm text-muted-foreground">Sports & action games</p>
           </motion.button>
         </div>
 
