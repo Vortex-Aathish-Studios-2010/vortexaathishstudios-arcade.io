@@ -275,14 +275,19 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     }, 400);
   }, [board, placed, lastPlacedId]);
 
-  // Solve puzzle
+  // Solve puzzle — use cached solution from shuffle if available
   const handleSolve = useCallback(() => {
     setSolving(true);
     setTimeout(() => {
-      // Solve from current board state — never reset placed pieces
-      let solution = solvePuzzle(board, placedIds, 20000000);
+      // Use cached solution from shuffle first, then try solving fresh
+      let solution = cachedSolutionRef.current;
+      if (!solution || solution.length === 0) {
+        solution = solvePuzzle(board, placedIds, 20000000);
+      }
 
       setSolving(false);
+      cachedSolutionRef.current = null;
+
       if (solution && solution.length > 0) {
         setShowingSolution(true);
 
