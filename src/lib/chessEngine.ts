@@ -502,8 +502,7 @@ const minimax = (board: Board, depth: number, alpha: number, beta: number, maxim
 
 export const getBotMove = (state: GameState): { from: Position; to: Position } | null => {
   const color = state.turn;
-  let bestMove: { from: Position; to: Position } | null = null;
-  let bestScore = color === "black" ? -Infinity : Infinity;
+  const candidates: { from: Position; to: Position; score: number }[] = [];
 
   const pieces: [number, number][] = [];
   for (let r = 0; r < 8; r++)
@@ -530,11 +529,39 @@ export const getBotMove = (state: GameState): { from: Position; to: Position } |
       if (piece.type === "pawn" && Math.abs(tr - r) === 2) newEp = [(r + tr) / 2, c];
 
       const score = minimax(nb, 3, -Infinity, Infinity, color === "white", newEp);
-      if (color === "black" ? score > bestScore : score < bestScore) {
-        bestScore = score;
-        bestMove = { from: [r, c], to: [tr, tc] };
-      }
+      candidates.push({ from: [r, c], to: [tr, tc], score });
     }
   }
-  return bestMove;
+
+  if (candidates.length === 0) return null;
+
+  // Sort by best score
+  candidates.sort((a, b) => color === "black" ? b.score - a.score : a.score - b.score);
+
+  // Check if a move would create repetition (bot moving same piece back and forth)
+  const isRepetition = (move: { from: Position; to: Position }) => {
+    const history = state.moves;
+    if (history.length < 3) return false;
+    // Check if bot's last move was the reverse of this move
+    const lastBotMove = history.length >= 2 ? history[history.length - 2] : null;
+    if (lastBotMove &&
+        lastBotMove.from[0] === move.to[0] && lastBotMove.from[1] === move.to[1] &&
+        lastBotMove.to[0] === move.from[0] && lastBotMove.to[1] === move.from[1]) {
+      return true;
+    }
+    // Check deeper: if this exact move was made 2 bot turns ago
+    if (history.length >= 4) {
+      const prevBotMove = history[history.length - 4];
+      if (prevBotMove &&
+          prevBotMove.from[0] === move.from[0] && prevBotMove.from[1] === move.from[1] &&
+          prevBotMove.to[0] === move.to[0] && prevBotMove.to[1] === move.to[1]) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  // Pick best non-repeating move; fall back to best if all repeat
+  const nonRepeating = candidates.find(m => !isRepetition(m));
+  return nonRepeating || candidates[0];
 };
