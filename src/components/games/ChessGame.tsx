@@ -240,7 +240,7 @@ export const ChessGame = () => {
                 <motion.div
                   key={`${r}-${c}`}
                   onClick={() => handleSquareClick(r, c)}
-                  className="relative flex items-center justify-center cursor-pointer select-none"
+                  className="relative flex items-center justify-center cursor-pointer select-none aspect-square"
                   style={{
                     background: isCheckSquare
                       ? "radial-gradient(circle, #ef4444 0%, #dc2626 60%, " + (isLight ? "#F0D9B5" : "#B58863") + " 100%)"
