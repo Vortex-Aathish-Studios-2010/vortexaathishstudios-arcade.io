@@ -8,6 +8,7 @@ import { Brain, Lock, Trophy, XCircle, ArrowLeftRight } from "lucide-react";
 import { getTotalWins, getTotalLosses } from "@/lib/streaks";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialMode = searchParams.get("mode") === "brain" ? "brain" : "select";
   const [mode, setMode] = useState<"select" | "brain" | "entertainment">(initialMode);
