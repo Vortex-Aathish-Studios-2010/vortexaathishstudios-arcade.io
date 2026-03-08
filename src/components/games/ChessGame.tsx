@@ -279,9 +279,11 @@ export const ChessGame = () => {
                       className="select-none z-10"
                       style={{
                         fontSize: "min(9vw, 42px)",
+                        color: piece.color === "white" ? "#FFFFFF" : "#1a1a1a",
+                        WebkitTextStroke: piece.color === "white" ? "0.5px #888" : "0.5px #000",
                         filter: piece.color === "white"
-                          ? "drop-shadow(1px 2px 2px rgba(0,0,0,0.4))"
-                          : "drop-shadow(1px 2px 2px rgba(0,0,0,0.3))",
+                          ? "drop-shadow(1px 2px 3px rgba(0,0,0,0.5))"
+                          : "drop-shadow(1px 1px 1px rgba(0,0,0,0.3))",
                         lineHeight: 1,
                       }}
                     >
