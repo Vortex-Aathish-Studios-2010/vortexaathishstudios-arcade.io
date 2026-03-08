@@ -92,7 +92,7 @@ const GamePage = () => {
             <button onClick={() => setShowTutorial(true)} className="text-muted-foreground hover:text-foreground transition-colors">
               <HelpCircle className="h-5 w-5" />
             </button>
-            <StatsBar />
+            
           </div>
         </motion.div>
 
