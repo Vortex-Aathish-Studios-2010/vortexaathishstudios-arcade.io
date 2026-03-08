@@ -83,11 +83,11 @@ export const games: GameInfo[] = [
     available: true,
     difficulty: "Hard",
     tutorial: [
-      "You have 11 pentomino pieces to fill a 5×11 board.",
-      "Click a piece from the tray to select it.",
-      "Click on the board to place the selected piece.",
-      "Use the rotate button to change orientation.",
-      "After placing, use Shake to reposition, or Show Solution for help!",
+      "Step 1: Place a piece on the board, then hit SHUFFLE to randomly reposition it.",
+      "Step 2: Fill the remaining spaces with the other pieces.",
+      "Drag pieces from the tray onto the board, or click to select and place.",
+      "Use the ROTATE button to change a piece's orientation before placing.",
+      "Stuck? Hit SHOW SOLUTION to watch the puzzle solve itself!",
     ],
   },
   {

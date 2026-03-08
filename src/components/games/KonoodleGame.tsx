@@ -169,7 +169,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   })() : null;
   const dragPreviewSet = new Set(dragPreviewCells?.cells.map(([r, c]) => `${r},${c}`) || []);
 
-  // Shuffle with cover/reveal animation
+  // Shuffle with cover/reveal animation — only commits if arrangement is solvable
   const shakeLastPiece = useCallback(() => {
     if (!lastPlacedId) return;
     const piece = PIECES.find(p => p.id === lastPlacedId);
@@ -178,36 +178,63 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setShuffling(true);
     sfx.shake();
 
-    // After cover animation, reposition
     setTimeout(() => {
       const boardWithout = board.map(row => row.map(cell => cell === lastPlacedId ? null : cell));
-      const orientIdx = Math.floor(Math.random() * piece.orientations.length);
-      const cells = piece.orientations[orientIdx];
 
-      const validPositions: [number, number][] = [];
-      for (let r = 0; r < BOARD_ROWS; r++)
-        for (let c = 0; c < BOARD_COLS; c++)
-          if (canPlace(cells, r, c, boardWithout)) validPositions.push([r, c]);
-
-      if (validPositions.length === 0) {
-        setShuffling(false);
-        toast.error("No valid position found!");
-        return;
+      // Collect all valid (orientation, position) combos
+      type Candidate = { cells: number[][]; r: number; c: number };
+      const candidates: Candidate[] = [];
+      for (const orientation of piece.orientations) {
+        for (let r = 0; r < BOARD_ROWS; r++)
+          for (let c = 0; c < BOARD_COLS; c++)
+            if (canPlace(orientation, r, c, boardWithout))
+              candidates.push({ cells: orientation, r, c });
       }
 
-      const [pr, pc] = validPositions[Math.floor(Math.random() * validPositions.length)];
-      const newBoard = boardWithout.map(row => [...row]);
-      const placedCells: [number, number][] = [];
-      cells.forEach(([dr, dc]) => {
-        newBoard[pr + dr][pc + dc] = lastPlacedId;
-        placedCells.push([pr + dr, pc + dc]);
-      });
-      setBoard(newBoard);
-      const newPlaced = new Map(placed);
-      newPlaced.set(lastPlacedId, placedCells);
-      setPlaced(newPlaced);
+      // Shuffle candidates randomly, then pick first solvable one
+      for (let i = candidates.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+      }
 
-      // Reveal after a short delay
+      let found = false;
+      for (const cand of candidates) {
+        const testBoard = boardWithout.map(row => [...row]);
+        const placedCells: [number, number][] = [];
+        cand.cells.forEach(([dr, dc]) => {
+          testBoard[cand.r + dr][cand.c + dc] = lastPlacedId;
+          placedCells.push([cand.r + dr, cand.c + dc]);
+        });
+
+        const currentPlacedIds = new Set(placed.keys());
+        const solution = solvePuzzle(testBoard, currentPlacedIds);
+        if (solution !== null) {
+          setBoard(testBoard);
+          const newPlaced = new Map(placed);
+          newPlaced.set(lastPlacedId, placedCells);
+          setPlaced(newPlaced);
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        // Fallback: just pick any valid position (extremely rare edge case)
+        if (candidates.length > 0) {
+          const cand = candidates[0];
+          const testBoard = boardWithout.map(row => [...row]);
+          const placedCells: [number, number][] = [];
+          cand.cells.forEach(([dr, dc]) => {
+            testBoard[cand.r + dr][cand.c + dc] = lastPlacedId;
+            placedCells.push([cand.r + dr, cand.c + dc]);
+          });
+          setBoard(testBoard);
+          const newPlaced = new Map(placed);
+          newPlaced.set(lastPlacedId, placedCells);
+          setPlaced(newPlaced);
+        }
+      }
+
       setTimeout(() => {
         setShuffling(false);
         sfx.place();
@@ -250,7 +277,58 @@ export const KonoodleGame = ({ onComplete }: Props) => {
       } else if (solution && solution.length === 0) {
         toast.success("Board is already complete!");
       } else {
-        toast.error("Couldn't find a solution with this arrangement. Try resetting!");
+        // Solver couldn't find solution within step limit — retry with higher limit
+        const retryResult = solvePuzzle(board, placedIds, 10000000);
+        if (retryResult && retryResult.length > 0) {
+          setShowingSolution(true);
+          toast.success(`Solution found! Placing ${retryResult.length} pieces.`);
+          retryResult.forEach((step, i) => {
+            setTimeout(() => {
+              setBoard(prev => {
+                const b = prev.map(r => [...r]);
+                step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
+                return b;
+              });
+              setPlaced(prev => {
+                const p = new Map(prev);
+                p.set(step.pieceId, step.cells);
+                return p;
+              });
+              sfx.place();
+              if (i === retryResult.length - 1) {
+                setTimeout(() => { sfx.levelComplete(); toast.success("Board complete!"); }, 200);
+              }
+            }, (i + 1) * 350);
+          });
+        } else {
+          toast.info("Resetting and solving from scratch...");
+          // Reset board keeping no pieces, solve fresh
+          const freshBoard = createEmptyBoard();
+          const freshSolution = solvePuzzle(freshBoard, new Set(), 10000000);
+          if (freshSolution) {
+            setBoard(createEmptyBoard());
+            setPlaced(new Map());
+            setShowingSolution(true);
+            freshSolution.forEach((step, i) => {
+              setTimeout(() => {
+                setBoard(prev => {
+                  const b = prev.map(r => [...r]);
+                  step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
+                  return b;
+                });
+                setPlaced(prev => {
+                  const p = new Map(prev);
+                  p.set(step.pieceId, step.cells);
+                  return p;
+                });
+                sfx.place();
+                if (i === freshSolution.length - 1) {
+                  setTimeout(() => { sfx.levelComplete(); toast.success("Board complete!"); }, 200);
+                }
+              }, (i + 1) * 350);
+            });
+          }
+        }
       }
     }, 50);
   }, [board, placedIds]);
