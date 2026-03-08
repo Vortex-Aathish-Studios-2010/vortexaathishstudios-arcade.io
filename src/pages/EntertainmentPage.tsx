@@ -1,11 +1,25 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { entertainmentGames } from "@/lib/entertainmentData";
 import { EntertainmentCard } from "@/components/EntertainmentCard";
-import { ArrowLeft, ArrowLeftRight, Trophy } from "lucide-react";
+import { ArrowLeftRight, Trophy, XCircle } from "lucide-react";
+import { getTotalWins, getTotalLosses } from "@/lib/streaks";
 
 const EntertainmentPage = () => {
   const navigate = useNavigate();
+  const [wins, setWins] = useState(0);
+  const [losses, setLosses] = useState(0);
+
+  useEffect(() => {
+    setWins(getTotalWins());
+    setLosses(getTotalLosses());
+    const interval = setInterval(() => {
+      setWins(getTotalWins());
+      setLosses(getTotalLosses());
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="entertainment-theme min-h-screen bg-[hsl(var(--sport-bg))]">
@@ -32,6 +46,17 @@ const EntertainmentPage = () => {
             </h1>
           </div>
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 bg-white border border-[hsl(var(--sport-border))] rounded-lg px-3 py-1.5 shadow-sm">
+              <div className="flex items-center gap-1">
+                <Trophy className="h-3.5 w-3.5 text-[hsl(var(--sport-primary))]" />
+                <span className="font-sport text-xs text-[hsl(var(--sport-text))]">{wins}</span>
+              </div>
+              <div className="w-px h-3 bg-[hsl(var(--sport-border))]" />
+              <div className="flex items-center gap-1">
+                <XCircle className="h-3.5 w-3.5 text-red-500" />
+                <span className="font-sport text-xs text-[hsl(var(--sport-text))]">{losses}</span>
+              </div>
+            </div>
             {/* Brain Arcade switch */}
             <button
               onClick={() => navigate("/?mode=brain")}
