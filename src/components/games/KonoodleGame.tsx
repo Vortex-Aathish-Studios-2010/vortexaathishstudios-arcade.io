@@ -62,6 +62,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   const [showingSolution, setShowingSolution] = useState(false);
   const [shuffling, setShuffling] = useState(false);
   const [hasShuffled, setHasShuffled] = useState(false);
+  const cachedSolutionRef = useRef<Placement[] | null>(null);
   const [dragOverCell, setDragOverCell] = useState<[number, number] | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
@@ -227,8 +228,8 @@ export const KonoodleGame = ({ onComplete }: Props) => {
       let foundCells: [number, number][] = [];
 
       if (candidates.length > 0) {
-        // Quick solvability check on up to 8 candidates with a reasonable step limit
-        const toCheck = candidates.slice(0, 8);
+        // Check candidates and CACHE the solution for later use
+        const toCheck = candidates.slice(0, 10);
         for (const cand of toCheck) {
           const testBoard = boardWithout.map(row => [...row]);
           const pc: [number, number][] = [];
@@ -237,14 +238,16 @@ export const KonoodleGame = ({ onComplete }: Props) => {
             pc.push([cand.r + dr, cand.c + dc]);
           });
           const currentPlacedIds = new Set(placed.keys());
-          if (solvePuzzle(testBoard, currentPlacedIds, 200000) !== null) {
+          const sol = solvePuzzle(testBoard, currentPlacedIds, 500000);
+          if (sol !== null) {
             foundBoard = testBoard;
             foundCells = pc;
+            cachedSolutionRef.current = sol; // Cache the solution!
             break;
           }
         }
 
-        // Fallback: just use a random candidate
+        // Fallback: use first candidate
         if (!foundBoard) {
           const cand = candidates[0];
           foundBoard = boardWithout.map(row => [...row]);
@@ -253,6 +256,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
             foundBoard![cand.r + dr][cand.c + dc] = lastPlacedId;
             foundCells.push([cand.r + dr, cand.c + dc]);
           });
+          cachedSolutionRef.current = null;
         }
       }
 
@@ -271,14 +275,19 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     }, 400);
   }, [board, placed, lastPlacedId]);
 
-  // Solve puzzle
+  // Solve puzzle — use cached solution from shuffle if available
   const handleSolve = useCallback(() => {
     setSolving(true);
     setTimeout(() => {
-      // Solve from current board state — never reset placed pieces
-      let solution = solvePuzzle(board, placedIds, 20000000);
+      // Use cached solution from shuffle first, then try solving fresh
+      let solution = cachedSolutionRef.current;
+      if (!solution || solution.length === 0) {
+        solution = solvePuzzle(board, placedIds, 20000000);
+      }
 
       setSolving(false);
+      cachedSolutionRef.current = null;
+
       if (solution && solution.length > 0) {
         setShowingSolution(true);
 
