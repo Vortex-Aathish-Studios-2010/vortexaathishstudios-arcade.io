@@ -46,7 +46,7 @@ export const updateStreak = (gameId: string) => {
 };
 
 export const getAllGameStreaks = (): Record<string, number> => {
-  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake"];
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe"];
   const streaks: Record<string, number> = {};
   for (const id of gameIds) {
     streaks[id] = getStreak(id);
