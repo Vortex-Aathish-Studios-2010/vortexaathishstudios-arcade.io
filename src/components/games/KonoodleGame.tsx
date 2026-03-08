@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { addPoints, updateStreak } from "@/lib/streaks";
+import { addPoints, updateStreak, addWin } from "@/lib/streaks";
 import { toast } from "sonner";
 
 const BOARD_ROWS = 5;
@@ -31,7 +31,42 @@ const normalizeCells = (cells: number[][]): number[][] => {
   return cells.map(([r, c]) => [r - minR, c - minC]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
 };
 
-export const KonoodleGame = () => {
+// Render mini piece shape
+const PiecePreview = ({ piece, selected, onClick }: { piece: PieceDef; selected: boolean; onClick: () => void }) => {
+  const cells = piece.cells;
+  const maxR = Math.max(...cells.map(([r]) => r));
+  const maxC = Math.max(...cells.map(([, c]) => c));
+  const cellSet = new Set(cells.map(([r, c]) => `${r},${c}`));
+
+  return (
+    <button
+      onClick={onClick}
+      className={`p-1.5 rounded-lg transition-all border-2 ${
+        selected ? `${piece.color} border-primary ring-2 ring-primary/50 glow-primary` : "bg-card border-border hover:border-primary/40"
+      }`}
+    >
+      {Array.from({ length: maxR + 1 }, (_, r) => (
+        <div key={r} className="flex">
+          {Array.from({ length: maxC + 1 }, (_, c) => (
+            <div
+              key={c}
+              className={`w-4 h-4 rounded-sm ${
+                cellSet.has(`${r},${c}`) ? piece.color : "bg-transparent"
+              }`}
+            />
+          ))}
+        </div>
+      ))}
+    </button>
+  );
+};
+
+interface Props {
+  level?: number;
+  onComplete?: (score: number) => void;
+}
+
+export const KonoodleGame = ({ onComplete }: Props) => {
   const [board, setBoard] = useState<(string | null)[][]>(() =>
     Array.from({ length: BOARD_ROWS }, () => Array(BOARD_COLS).fill(null))
   );
@@ -64,7 +99,9 @@ export const KonoodleGame = () => {
     if (newBoard.every((row) => row.every((cell) => cell !== null))) {
       addPoints(200);
       updateStreak("konoodle");
+      addWin("konoodle");
       toast.success("Konoodle solved! +200 points");
+      onComplete?.(200);
     }
   };
 
@@ -83,6 +120,26 @@ export const KonoodleGame = () => {
   };
 
   const pieceColor = (id: string) => PIECES.find((p) => p.id === id)?.color || "bg-muted";
+
+  // Show rotated preview
+  const rotatedPreview = selectedPiece ? (() => {
+    const cells = getRotatedCells(selectedPiece, rotation);
+    const maxR = Math.max(...cells.map(([r]) => r));
+    const maxC = Math.max(...cells.map(([, c]) => c));
+    const cellSet = new Set(cells.map(([r, c]) => `${r},${c}`));
+    return (
+      <div className="bg-card border border-primary/30 rounded-lg p-2">
+        <p className="text-[10px] font-display text-muted-foreground mb-1">PLACING</p>
+        {Array.from({ length: maxR + 1 }, (_, r) => (
+          <div key={r} className="flex">
+            {Array.from({ length: maxC + 1 }, (_, c) => (
+              <div key={c} className={`w-5 h-5 rounded-sm ${cellSet.has(`${r},${c}`) ? selectedPiece.color : "bg-transparent"}`} />
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  })() : null;
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -104,24 +161,22 @@ export const KonoodleGame = () => {
 
       <div className="flex flex-wrap gap-2 justify-center">
         {PIECES.filter((p) => !placed.has(p.id)).map((piece) => (
-          <button
+          <PiecePreview
             key={piece.id}
+            piece={piece}
+            selected={selectedPiece?.id === piece.id}
             onClick={() => { setSelectedPiece(piece); setRotation(0); }}
-            className={`px-3 py-1.5 rounded-lg font-display text-xs transition-all border ${
-              selectedPiece?.id === piece.id
-                ? `${piece.color} border-primary ring-2 ring-primary/50 glow-primary`
-                : "bg-card border-border text-foreground hover:border-primary/40"
-            }`}
-          >
-            {piece.id}
-          </button>
+          />
         ))}
       </div>
 
       {selectedPiece && (
-        <button onClick={() => setRotation((r) => r + 1)} className="px-4 py-1.5 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-secondary/50 transition-all">
-          ROTATE (R)
-        </button>
+        <div className="flex items-center gap-3">
+          {rotatedPreview}
+          <button onClick={() => setRotation((r) => r + 1)} className="px-4 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-secondary/50 transition-all">
+            ROTATE ↻
+          </button>
+        </div>
       )}
 
       <button onClick={reset} className="px-6 py-2 bg-card border border-border text-foreground rounded-xl font-display text-sm hover:border-primary/50 transition-all">

@@ -1,7 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { addPoints, updateStreak } from "@/lib/streaks";
+import { addPoints, updateStreak, addWin } from "@/lib/streaks";
 import { toast } from "sonner";
+import { Clock } from "lucide-react";
 
 const SIZE = 4;
 const createSolved = () => [...Array(SIZE * SIZE - 1).keys()].map((i) => i + 1).concat(0);
@@ -28,11 +29,27 @@ const shuffle = (arr: number[]): number[] => {
 
 const isSolved = (tiles: number[]) => tiles.every((v, i) => v === (i === tiles.length - 1 ? 0 : i + 1));
 
-export const SlidingPuzzle = () => {
+interface Props {
+  level?: number;
+  onComplete?: (score: number) => void;
+}
+
+export const SlidingPuzzle = ({ onComplete }: Props) => {
   const [tiles, setTiles] = useState<number[]>(() => shuffle(createSolved()));
   const [moves, setMoves] = useState(0);
   const [won, setWon] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [running, setRunning] = useState(true);
   const dragStart = useRef<{ index: number; x: number; y: number } | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval>>();
+
+  useEffect(() => {
+    if (!running || won) { clearInterval(timerRef.current); return; }
+    timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(timerRef.current);
+  }, [running, won]);
+
+  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
   const tryMove = (index: number) => {
     if (won) return;
@@ -46,10 +63,14 @@ export const SlidingPuzzle = () => {
       setMoves((m) => m + 1);
       if (isSolved(newTiles)) {
         setWon(true);
-        const pts = Math.max(200 - moves * 2, 30);
+        setRunning(false);
+        // Time-based scoring: max 300 pts, lose 1 pt per second
+        const pts = Math.max(300 - elapsed - moves * 2, 20);
         addPoints(pts);
         updateStreak("sliding");
-        toast.success(`Puzzle solved! +${pts} points`);
+        addWin("sliding");
+        toast.success(`Solved in ${formatTime(elapsed)}! +${pts} points`);
+        onComplete?.(pts);
       }
     }
   };
@@ -102,11 +123,17 @@ export const SlidingPuzzle = () => {
     }
   };
 
-  const reset = () => { setTiles(shuffle(createSolved())); setMoves(0); setWon(false); };
+  const reset = () => { setTiles(shuffle(createSolved())); setMoves(0); setWon(false); setElapsed(0); setRunning(true); };
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="text-sm text-muted-foreground">Moves: <span className="font-display text-foreground">{moves}</span></div>
+      <div className="flex gap-6 text-sm">
+        <span className="text-muted-foreground">Moves: <span className="font-display text-foreground">{moves}</span></span>
+        <span className="flex items-center gap-1 text-muted-foreground">
+          <Clock className="h-3.5 w-3.5" />
+          <span className={`font-display ${elapsed > 120 ? "text-destructive" : elapsed > 60 ? "text-accent" : "text-foreground"}`}>{formatTime(elapsed)}</span>
+        </span>
+      </div>
       <div
         className="grid grid-cols-4 gap-2 bg-card p-3 rounded-xl border border-border select-none"
         onMouseUp={handleMouseUp}

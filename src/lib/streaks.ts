@@ -2,10 +2,13 @@ const POINTS_KEY = "brainpuzzle_points";
 
 const streakKey = (gameId: string) => `brainpuzzle_streak_${gameId}`;
 const lastPlayKey = (gameId: string) => `brainpuzzle_last_play_${gameId}`;
+const winsKey = (gameId: string) => `brainpuzzle_wins_${gameId}`;
+const lossesKey = (gameId: string) => `brainpuzzle_losses_${gameId}`;
+const tutorialKey = (gameId: string) => `brainpuzzle_tutorial_shown_${gameId}`;
+const levelKey = (gameId: string) => `brainpuzzle_level_${gameId}`;
 
 export const getStreak = (gameId?: string): number => {
   if (!gameId) {
-    // Sum all game streaks for total display
     const allKeys = Object.keys(localStorage).filter(k => k.startsWith("brainpuzzle_streak_"));
     return allKeys.reduce((sum, k) => sum + parseInt(localStorage.getItem(k) || "0", 10), 0);
   }
@@ -50,3 +53,57 @@ export const getAllGameStreaks = (): Record<string, number> => {
   }
   return streaks;
 };
+
+// Win/Loss tracking
+export const getWins = (gameId: string): number =>
+  parseInt(localStorage.getItem(winsKey(gameId)) || "0", 10);
+
+export const getLosses = (gameId: string): number =>
+  parseInt(localStorage.getItem(lossesKey(gameId)) || "0", 10);
+
+export const addWin = (gameId: string) => {
+  localStorage.setItem(winsKey(gameId), String(getWins(gameId) + 1));
+};
+
+export const addLoss = (gameId: string) => {
+  localStorage.setItem(lossesKey(gameId), String(getLosses(gameId) + 1));
+};
+
+export const getTotalWins = (): number => {
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake"];
+  return gameIds.reduce((sum, id) => sum + getWins(id), 0);
+};
+
+export const getTotalLosses = (): number => {
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake"];
+  return gameIds.reduce((sum, id) => sum + getLosses(id), 0);
+};
+
+// Tutorial tracking
+export const isTutorialShown = (gameId: string): boolean =>
+  localStorage.getItem(tutorialKey(gameId)) === "true";
+
+export const markTutorialShown = (gameId: string) =>
+  localStorage.setItem(tutorialKey(gameId), "true");
+
+// Level tracking
+export const getGameLevel = (gameId: string): number =>
+  parseInt(localStorage.getItem(levelKey(gameId)) || "1", 10);
+
+export const setGameLevel = (gameId: string, level: number) =>
+  localStorage.setItem(levelKey(gameId), String(level));
+
+export const incrementLevel = (gameId: string): number => {
+  const next = getGameLevel(gameId) + 1;
+  setGameLevel(gameId, next);
+  return next;
+};
+
+// Player ID for multiplayer
+const PLAYER_ID_KEY = "brainpuzzle_player_id";
+const PLAYER_NAME_KEY = "brainpuzzle_player_name";
+
+export const getPlayerId = (): string | null => localStorage.getItem(PLAYER_ID_KEY);
+export const setPlayerId = (id: string) => localStorage.setItem(PLAYER_ID_KEY, id);
+export const getPlayerName = (): string => localStorage.getItem(PLAYER_NAME_KEY) || "";
+export const setPlayerName = (name: string) => localStorage.setItem(PLAYER_NAME_KEY, name);

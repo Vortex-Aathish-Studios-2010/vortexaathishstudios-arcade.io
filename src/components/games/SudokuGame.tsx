@@ -1,8 +1,16 @@
 import { useState, useMemo } from "react";
-import { addPoints, updateStreak } from "@/lib/streaks";
+import { addPoints, updateStreak, getGameLevel, incrementLevel, addWin } from "@/lib/streaks";
 import { toast } from "sonner";
 
-const generateSudoku = (): { puzzle: number[][]; solution: number[][] } => {
+const getDifficulty = (level: number): { removed: number; label: string } => {
+  if (level <= 1) return { removed: 30, label: "Easy" };
+  if (level === 2) return { removed: 38, label: "Medium" };
+  if (level === 3) return { removed: 45, label: "Hard" };
+  if (level === 4) return { removed: 52, label: "Expert" };
+  return { removed: Math.min(58, 45 + level * 2), label: "Master" };
+};
+
+const generateSudoku = (removedCount: number): { puzzle: number[][]; solution: number[][] } => {
   const board: number[][] = Array.from({ length: 9 }, () => Array(9).fill(0));
   const isValid = (b: number[][], r: number, c: number, n: number) => {
     for (let i = 0; i < 9; i++) if (b[r][i] === n || b[i][c] === n) return false;
@@ -24,12 +32,19 @@ const generateSudoku = (): { puzzle: number[][]; solution: number[][] } => {
   const solution = board.map((r) => [...r]);
   const cells = Array.from({ length: 81 }, (_, i) => i).sort(() => Math.random() - 0.5);
   let removed = 0;
-  for (const idx of cells) { if (removed >= 45) break; board[Math.floor(idx / 9)][idx % 9] = 0; removed++; }
+  for (const idx of cells) { if (removed >= removedCount) break; board[Math.floor(idx / 9)][idx % 9] = 0; removed++; }
   return { puzzle: board, solution };
 };
 
-export const SudokuGame = () => {
-  const { puzzle: initialPuzzle, solution } = useMemo(() => generateSudoku(), []);
+interface Props {
+  level?: number;
+  onComplete?: (score: number) => void;
+}
+
+export const SudokuGame = ({ level: propLevel, onComplete }: Props) => {
+  const currentLevel = propLevel || getGameLevel("sudoku");
+  const difficulty = getDifficulty(currentLevel);
+  const { puzzle: initialPuzzle, solution } = useMemo(() => generateSudoku(difficulty.removed), [currentLevel]);
   const [board, setBoard] = useState<number[][]>(() => initialPuzzle.map((r) => [...r]));
   const [fixed] = useState<boolean[][]>(() => initialPuzzle.map((r) => r.map((v) => v !== 0)));
   const [selected, setSelected] = useState<[number, number] | null>(null);
@@ -44,9 +59,13 @@ export const SudokuGame = () => {
     setBoard(newBoard);
     if (newBoard.every((row, ri) => row.every((v, ci) => v === solution[ri][ci]))) {
       setWon(true);
-      addPoints(150);
+      const pts = 100 + currentLevel * 50;
+      addPoints(pts);
       updateStreak("sudoku");
-      toast.success("Sudoku solved! +150 points");
+      addWin("sudoku");
+      incrementLevel("sudoku");
+      toast.success(`${difficulty.label} Sudoku solved! +${pts} points`);
+      onComplete?.(pts);
     }
   };
 
@@ -54,6 +73,10 @@ export const SudokuGame = () => {
 
   return (
     <div className="flex flex-col items-center gap-4">
+      <div className="flex gap-4 text-sm">
+        <span className="text-muted-foreground">Difficulty: <span className="font-display text-primary">{difficulty.label}</span></span>
+        <span className="text-muted-foreground">Level: <span className="font-display text-accent">{currentLevel}</span></span>
+      </div>
       <div className="bg-card border border-border p-2 rounded-xl inline-block">
         {board.map((row, r) => (
           <div key={r} className="flex">
@@ -88,7 +111,7 @@ export const SudokuGame = () => {
       </div>
       {won && (
         <button onClick={() => window.location.reload()} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary">
-          NEW GAME
+          NEXT LEVEL →
         </button>
       )}
     </div>

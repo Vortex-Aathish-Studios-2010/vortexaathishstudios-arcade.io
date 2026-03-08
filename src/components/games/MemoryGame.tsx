@@ -1,9 +1,17 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { addPoints, updateStreak } from "@/lib/streaks";
+import { addPoints, updateStreak, getGameLevel, incrementLevel, addWin } from "@/lib/streaks";
 import { toast } from "sonner";
 
-const emojis = ["🎯", "🚀", "⚡", "🔥", "💎", "🌟", "🎪", "🎨"];
+const allEmojis = ["🎯", "🚀", "⚡", "🔥", "💎", "🌟", "🎪", "🎨", "🎵", "🎮", "🏆", "🧩", "🔮", "🌈", "🎲", "🎸", "🦄", "🍀"];
+
+const getLevelConfig = (level: number) => {
+  if (level <= 1) return { cols: 4, pairs: 6 };
+  if (level === 2) return { cols: 4, pairs: 8 };
+  if (level === 3) return { cols: 5, pairs: 10 };
+  if (level === 4) return { cols: 6, pairs: 12 };
+  return { cols: 6, pairs: Math.min(15, 6 + level) };
+};
 
 interface Card {
   id: number;
@@ -12,13 +20,21 @@ interface Card {
   matched: boolean;
 }
 
-export const MemoryGame = () => {
+interface Props {
+  level?: number;
+  onComplete?: (score: number) => void;
+}
+
+export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
+  const currentLevel = propLevel || getGameLevel("memory");
+  const config = getLevelConfig(currentLevel);
   const [cards, setCards] = useState<Card[]>([]);
   const [flipped, setFlipped] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
   const [gameWon, setGameWon] = useState(false);
 
   const initGame = () => {
+    const emojis = allEmojis.slice(0, config.pairs);
     const shuffled = [...emojis, ...emojis]
       .sort(() => Math.random() - 0.5)
       .map((emoji, i) => ({ id: i, emoji, flipped: false, matched: false }));
@@ -28,10 +44,10 @@ export const MemoryGame = () => {
     setGameWon(false);
   };
 
-  useEffect(() => { initGame(); }, []);
+  useEffect(() => { initGame(); }, [currentLevel]);
 
   const handleFlip = (id: number) => {
-    if (flipped.length === 2) return;
+    if (flipped.length === 2 || gameWon) return;
     const card = cards[id];
     if (card.flipped || card.matched) return;
 
@@ -52,10 +68,13 @@ export const MemoryGame = () => {
         setFlipped([]);
         if (newCards.every((c) => c.matched)) {
           setGameWon(true);
-          const pts = Math.max(100 - moves * 3, 20);
+          const pts = Math.max(150 - moves * 2, 30) + currentLevel * 20;
           addPoints(pts);
           updateStreak("memory");
-          toast.success(`You won! +${pts} points`);
+          addWin("memory");
+          incrementLevel("memory");
+          toast.success(`Level ${currentLevel} complete! +${pts} points`);
+          onComplete?.(pts);
         }
       } else {
         setTimeout(() => {
@@ -72,14 +91,15 @@ export const MemoryGame = () => {
     <div className="flex flex-col items-center gap-6">
       <div className="flex gap-6 text-sm">
         <span className="text-muted-foreground">Moves: <span className="font-display text-foreground">{moves}</span></span>
+        <span className="text-muted-foreground">Level: <span className="font-display text-primary">{currentLevel}</span></span>
       </div>
-      <div className="grid grid-cols-4 gap-3 max-w-xs">
+      <div className={`grid gap-2.5`} style={{ gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))` }}>
         {cards.map((card) => (
           <motion.div
             key={card.id}
             whileTap={{ scale: 0.95 }}
             onClick={() => handleFlip(card.id)}
-            className={`w-16 h-16 rounded-xl flex items-center justify-center text-2xl cursor-pointer transition-all duration-300 border-2 ${
+            className={`w-14 h-14 rounded-xl flex items-center justify-center text-xl cursor-pointer transition-all duration-300 border-2 ${
               card.matched
                 ? "bg-primary/20 border-primary glow-primary"
                 : card.flipped
@@ -103,7 +123,7 @@ export const MemoryGame = () => {
           onClick={initGame}
           className="px-8 py-3 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary hover:brightness-110 transition-all"
         >
-          PLAY AGAIN
+          NEXT LEVEL →
         </motion.button>
       )}
     </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { addPoints, updateStreak } from "@/lib/streaks";
+import { addPoints, updateStreak, addLoss } from "@/lib/streaks";
 import { toast } from "sonner";
 
 const COLS = 10;
@@ -63,41 +63,58 @@ const randomPiece = (): Piece => {
   return { shape: SHAPES[idx], x: Math.floor(COLS / 2) - 1, y: 0, color: idx };
 };
 
-export const BlockStack = () => {
+interface Props {
+  level?: number;
+  onComplete?: (score: number) => void;
+}
+
+export const BlockStack = ({ onComplete }: Props) => {
   const [board, setBoard] = useState<Board>(createBoard);
   const [piece, setPiece] = useState<Piece>(randomPiece);
+  const [nextPiece, setNextPiece] = useState<Piece>(randomPiece);
   const [score, setScore] = useState(0);
+  const [lines, setLines] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
+
+  // Speed increases as lines cleared grows
+  const getSpeed = () => Math.max(100, 500 - lines * 15);
 
   const drop = useCallback(() => {
     setPiece((prev) => {
       const next = { ...prev, y: prev.y + 1 };
       if (!collides(board, next)) return next;
       const merged = merge(board, prev);
-      const [cleared, lines] = clearLines(merged);
+      const [cleared, clearedLines] = clearLines(merged);
       setBoard(cleared);
-      const pts = lines * lines * 100;
-      if (pts > 0) setScore((s) => s + pts);
-      const np = randomPiece();
+      const pts = clearedLines * clearedLines * 100;
+      if (pts > 0) {
+        setScore((s) => s + pts);
+        setLines((l) => l + clearedLines);
+      }
+      const np = nextPiece;
+      setNextPiece(randomPiece());
       if (collides(cleared, np)) {
         setGameOver(true);
         setScore((s) => {
-          addPoints(s + pts);
+          const total = s + pts;
+          addPoints(total);
           updateStreak("tetris");
-          toast.info(`Game Over! +${s + pts} points`);
-          return s + pts;
+          addLoss("tetris");
+          toast.info(`Game Over! +${total} points`);
+          onComplete?.(total);
+          return total;
         });
       }
       return np;
     });
-  }, [board]);
+  }, [board, nextPiece]);
 
   useEffect(() => {
     if (gameOver) { clearInterval(intervalRef.current); return; }
-    intervalRef.current = setInterval(drop, 500);
+    intervalRef.current = setInterval(drop, getSpeed());
     return () => clearInterval(intervalRef.current);
-  }, [drop, gameOver]);
+  }, [drop, gameOver, lines]);
 
   const movePiece = useCallback((dx: number, dy: number, rot = false) => {
     if (gameOver) return;
@@ -134,10 +151,22 @@ export const BlockStack = () => {
     return () => window.removeEventListener("keydown", handler);
   }, [movePiece, hardDrop]);
 
-  const reset = () => { setBoard(createBoard()); setPiece(randomPiece()); setScore(0); setGameOver(false); };
+  const reset = () => { setBoard(createBoard()); setPiece(randomPiece()); setNextPiece(randomPiece()); setScore(0); setLines(0); setGameOver(false); };
 
   const renderBoard = () => {
     const display = board.map((r) => [...r]);
+    // Ghost piece
+    let ghostY = piece.y;
+    while (!collides(board, { ...piece, y: ghostY + 1 })) ghostY++;
+    if (ghostY !== piece.y) {
+      for (let r = 0; r < piece.shape.length; r++)
+        for (let c = 0; c < piece.shape[r].length; c++)
+          if (piece.shape[r][c]) {
+            const nr = ghostY + r, nc = piece.x + c;
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && !display[nr][nc])
+              display[nr][nc] = -1; // ghost
+          }
+    }
     for (let r = 0; r < piece.shape.length; r++)
       for (let c = 0; c < piece.shape[r].length; c++)
         if (piece.shape[r][c]) {
@@ -147,17 +176,45 @@ export const BlockStack = () => {
     return display;
   };
 
-  return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="text-sm text-muted-foreground">Score: <span className="font-display text-foreground">{score}</span></div>
-      <div className="bg-card border border-border p-1 rounded-xl inline-block">
-        {renderBoard().map((row, r) => (
+  // Render next piece preview
+  const renderNext = () => {
+    const s = nextPiece.shape;
+    return (
+      <div className="bg-card border border-border rounded-lg p-2">
+        <p className="text-[10px] font-display text-muted-foreground mb-1">NEXT</p>
+        {s.map((row, r) => (
           <div key={r} className="flex">
             {row.map((cell, c) => (
-              <div key={c} className={`w-5 h-5 border border-border/10 rounded-sm transition-colors ${cell ? `${COLORS[cell - 1]} shadow-[0_0_6px_hsl(var(--primary)/0.3)]` : "bg-background/30"}`} />
+              <div key={c} className={`w-4 h-4 rounded-sm ${cell ? COLORS[nextPiece.color] : "bg-transparent"}`} />
             ))}
           </div>
         ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex gap-6 text-sm">
+        <span className="text-muted-foreground">Score: <span className="font-display text-foreground">{score}</span></span>
+        <span className="text-muted-foreground">Lines: <span className="font-display text-primary">{lines}</span></span>
+        <span className="text-muted-foreground">Speed: <span className="font-display text-accent">{Math.round((1 - getSpeed() / 500) * 100)}%</span></span>
+      </div>
+      <div className="flex gap-3 items-start">
+        <div className="bg-card border border-border p-1 rounded-xl inline-block">
+          {renderBoard().map((row, r) => (
+            <div key={r} className="flex">
+              {row.map((cell, c) => (
+                <div key={c} className={`w-5 h-5 border border-border/10 rounded-sm transition-colors ${
+                  cell === -1 ? "border-primary/20 bg-primary/5"
+                  : cell > 0 ? `${COLORS[cell - 1]} shadow-[0_0_6px_hsl(var(--primary)/0.3)]`
+                  : "bg-background/30"
+                }`} />
+              ))}
+            </div>
+          ))}
+        </div>
+        {renderNext()}
       </div>
       <div className="flex gap-2">
         <button onClick={() => movePiece(-1, 0)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-primary/50 transition-colors">←</button>
