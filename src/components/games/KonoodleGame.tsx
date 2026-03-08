@@ -262,6 +262,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
 
       setTimeout(() => {
         setShuffling(false);
+        setHasShuffled(true);
         sfx.place();
       }, 300);
     });
