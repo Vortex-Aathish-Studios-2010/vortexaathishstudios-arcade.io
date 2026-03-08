@@ -26,9 +26,9 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     description: "Flick and pocket the coins",
     icon: "🎯",
     color: "sport-secondary",
-    available: false,
+    available: true,
     difficulty: "Medium",
-    tutorial: ["Coming soon!"],
+    tutorial: ["Drag the striker to aim and set power.", "White coins = 10pts, Black = 5pts, Red = 20pts.", "Click the baseline area to reposition the striker.", "Pocket all coins with the fewest shots!"],
   },
   {
     id: "archery",
