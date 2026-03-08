@@ -54,6 +54,7 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
     const newCards = [...cards];
     newCards[id].flipped = true;
     setCards(newCards);
+    sfx.flip();
 
     const newFlipped = [...flipped, id];
     setFlipped(newFlipped);
