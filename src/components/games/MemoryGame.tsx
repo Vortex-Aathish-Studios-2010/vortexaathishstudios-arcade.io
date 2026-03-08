@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { addPoints, updateStreak, getGameLevel, incrementLevel, addWin } from "@/lib/streaks";
+import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
 
 const allEmojis = ["🎯", "🚀", "⚡", "🔥", "💎", "🌟", "🎪", "🎨", "🎵", "🎮", "🏆", "🧩", "🔮", "🌈", "🎲", "🎸", "🦄", "🍀"];
@@ -53,6 +54,7 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
     const newCards = [...cards];
     newCards[id].flipped = true;
     setCards(newCards);
+    sfx.flip();
 
     const newFlipped = [...flipped, id];
     setFlipped(newFlipped);
@@ -65,6 +67,7 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
         newCards[b].matched = true;
         setCards([...newCards]);
         setFlipped([]);
+        sfx.match();
         if (newCards.every((c) => c.matched)) {
           setGameWon(true);
           const pts = Math.max(150 - moves * 2, 30) + currentLevel * 20;
@@ -72,10 +75,12 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
           updateStreak("memory");
           addWin("memory");
           incrementLevel("memory");
-          toast.success(`Level ${currentLevel} complete! +${pts} points`);
+          sfx.levelComplete();
+          toast.success(`Level complete! +${pts} points`);
           onComplete?.(pts);
         }
       } else {
+        sfx.mismatch();
         setTimeout(() => {
           newCards[a].flipped = false;
           newCards[b].flipped = false;
