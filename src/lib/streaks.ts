@@ -1,4 +1,5 @@
 const POINTS_KEY = "brainpuzzle_points";
+const ENT_POINTS_KEY = "entertainment_points";
 
 const streakKey = (gameId: string) => `brainpuzzle_streak_${gameId}`;
 const lastPlayKey = (gameId: string) => `brainpuzzle_last_play_${gameId}`;
