@@ -121,15 +121,7 @@ const EntertainmentPage = () => {
           ))}
         </div>
 
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={() => navigate("/?mode=select")}
-            className="flex items-center gap-2 text-[hsl(var(--sport-muted))] hover:text-[hsl(var(--sport-text))] transition-colors bg-white border border-[hsl(var(--sport-border))] rounded-xl px-5 py-2.5 shadow-sm hover:shadow-md font-sport-body"
-          >
-            <ArrowLeftRight className="h-4 w-4" />
-            <span className="text-sm font-bold">Switch Arcade</span>
-          </button>
-        </div>
+
       </main>
     </div>
   );
