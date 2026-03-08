@@ -203,10 +203,10 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setShuffling(true);
     sfx.shake();
 
-    setTimeout(() => {
+    // Use a web worker-like approach: compute synchronously but with minimal delay
+    requestAnimationFrame(() => {
       const boardWithout = board.map(row => row.map(cell => cell === lastPlacedId ? null : cell));
 
-      // Collect all valid (orientation, position) combos
       type Candidate = { cells: number[][]; r: number; c: number };
       const candidates: Candidate[] = [];
       for (const orientation of piece.orientations) {
@@ -216,56 +216,53 @@ export const KonoodleGame = ({ onComplete }: Props) => {
               candidates.push({ cells: orientation, r, c });
       }
 
-      // Shuffle candidates randomly, then pick first solvable one
+      // Shuffle candidates randomly
       for (let i = candidates.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
       }
 
-      let found = false;
+      // Pick first solvable candidate (use low step limit for speed)
+      let foundBoard: BoardState | null = null;
+      let foundCells: [number, number][] = [];
       for (const cand of candidates) {
         const testBoard = boardWithout.map(row => [...row]);
-        const placedCells: [number, number][] = [];
+        const pc: [number, number][] = [];
         cand.cells.forEach(([dr, dc]) => {
           testBoard[cand.r + dr][cand.c + dc] = lastPlacedId;
-          placedCells.push([cand.r + dr, cand.c + dc]);
+          pc.push([cand.r + dr, cand.c + dc]);
         });
-
         const currentPlacedIds = new Set(placed.keys());
-        const solution = solvePuzzle(testBoard, currentPlacedIds);
-        if (solution !== null) {
-          setBoard(testBoard);
-          const newPlaced = new Map(placed);
-          newPlaced.set(lastPlacedId, placedCells);
-          setPlaced(newPlaced);
-          found = true;
+        if (solvePuzzle(testBoard, currentPlacedIds, 500000) !== null) {
+          foundBoard = testBoard;
+          foundCells = pc;
           break;
         }
       }
 
-      if (!found) {
-        // Fallback: just pick any valid position (extremely rare edge case)
-        if (candidates.length > 0) {
-          const cand = candidates[0];
-          const testBoard = boardWithout.map(row => [...row]);
-          const placedCells: [number, number][] = [];
-          cand.cells.forEach(([dr, dc]) => {
-            testBoard[cand.r + dr][cand.c + dc] = lastPlacedId;
-            placedCells.push([cand.r + dr, cand.c + dc]);
-          });
-          setBoard(testBoard);
-          const newPlaced = new Map(placed);
-          newPlaced.set(lastPlacedId, placedCells);
-          setPlaced(newPlaced);
-        }
+      // Fallback: just pick first candidate
+      if (!foundBoard && candidates.length > 0) {
+        const cand = candidates[0];
+        foundBoard = boardWithout.map(row => [...row]);
+        foundCells = [];
+        cand.cells.forEach(([dr, dc]) => {
+          foundBoard![cand.r + dr][cand.c + dc] = lastPlacedId;
+          foundCells.push([cand.r + dr, cand.c + dc]);
+        });
+      }
+
+      if (foundBoard) {
+        setBoard(foundBoard);
+        const newPlaced = new Map(placed);
+        newPlaced.set(lastPlacedId, foundCells);
+        setPlaced(newPlaced);
       }
 
       setTimeout(() => {
         setShuffling(false);
         sfx.place();
-        toast.success(`Repositioned "${lastPlacedId}"!`);
-      }, 400);
-    }, 500);
+      }, 300);
+    });
   }, [board, placed, lastPlacedId]);
 
   // Solve puzzle
