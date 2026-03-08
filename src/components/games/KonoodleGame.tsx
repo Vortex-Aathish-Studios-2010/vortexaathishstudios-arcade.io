@@ -110,7 +110,6 @@ export const KonoodleGame = ({ onComplete }: Props) => {
       addPoints(200);
       updateStreak("konoodle");
       addWin("konoodle");
-      toast.success("Konoodle solved! +200 points");
       onComplete?.(200);
     }
   };
@@ -136,12 +135,38 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setShuffling(false);
   };
 
-  // Drag and drop handlers
+  // Drag and drop — create a custom drag image matching board cell size
   const handleDragStart = (e: React.DragEvent, piece: PieceDef) => {
     setSelectedPiece(piece);
     setRotation(0);
     e.dataTransfer.setData("text/plain", piece.id);
     e.dataTransfer.effectAllowed = "move";
+
+    // Build a canvas drag image sized to board cells (28px each)
+    const cells = piece.orientations[0];
+    const maxR = Math.max(...cells.map(([r]) => r)) + 1;
+    const maxC = Math.max(...cells.map(([, c]) => c)) + 1;
+    const cellSize = 28;
+    const canvas = document.createElement("canvas");
+    canvas.width = maxC * cellSize;
+    canvas.height = maxR * cellSize;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      // Get computed color from the piece's tailwind class
+      const tempDiv = document.createElement("div");
+      tempDiv.className = piece.color;
+      document.body.appendChild(tempDiv);
+      const color = getComputedStyle(tempDiv).backgroundColor;
+      document.body.removeChild(tempDiv);
+
+      cells.forEach(([r, c]) => {
+        ctx.fillStyle = color || "#8b5cf6";
+        ctx.beginPath();
+        ctx.roundRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2, 3);
+        ctx.fill();
+      });
+    }
+    e.dataTransfer.setDragImage(canvas, cellSize / 2, cellSize / 2);
   };
 
   const handleBoardDragOver = (e: React.DragEvent, r: number, c: number) => {
@@ -178,10 +203,10 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setShuffling(true);
     sfx.shake();
 
-    setTimeout(() => {
+    // Use a web worker-like approach: compute synchronously but with minimal delay
+    requestAnimationFrame(() => {
       const boardWithout = board.map(row => row.map(cell => cell === lastPlacedId ? null : cell));
 
-      // Collect all valid (orientation, position) combos
       type Candidate = { cells: number[][]; r: number; c: number };
       const candidates: Candidate[] = [];
       for (const orientation of piece.orientations) {
@@ -191,68 +216,77 @@ export const KonoodleGame = ({ onComplete }: Props) => {
               candidates.push({ cells: orientation, r, c });
       }
 
-      // Shuffle candidates randomly, then pick first solvable one
+      // Shuffle candidates randomly
       for (let i = candidates.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
       }
 
-      let found = false;
+      // Pick first solvable candidate (use low step limit for speed)
+      let foundBoard: BoardState | null = null;
+      let foundCells: [number, number][] = [];
       for (const cand of candidates) {
         const testBoard = boardWithout.map(row => [...row]);
-        const placedCells: [number, number][] = [];
+        const pc: [number, number][] = [];
         cand.cells.forEach(([dr, dc]) => {
           testBoard[cand.r + dr][cand.c + dc] = lastPlacedId;
-          placedCells.push([cand.r + dr, cand.c + dc]);
+          pc.push([cand.r + dr, cand.c + dc]);
         });
-
         const currentPlacedIds = new Set(placed.keys());
-        const solution = solvePuzzle(testBoard, currentPlacedIds);
-        if (solution !== null) {
-          setBoard(testBoard);
-          const newPlaced = new Map(placed);
-          newPlaced.set(lastPlacedId, placedCells);
-          setPlaced(newPlaced);
-          found = true;
+        if (solvePuzzle(testBoard, currentPlacedIds, 500000) !== null) {
+          foundBoard = testBoard;
+          foundCells = pc;
           break;
         }
       }
 
-      if (!found) {
-        // Fallback: just pick any valid position (extremely rare edge case)
-        if (candidates.length > 0) {
-          const cand = candidates[0];
-          const testBoard = boardWithout.map(row => [...row]);
-          const placedCells: [number, number][] = [];
-          cand.cells.forEach(([dr, dc]) => {
-            testBoard[cand.r + dr][cand.c + dc] = lastPlacedId;
-            placedCells.push([cand.r + dr, cand.c + dc]);
-          });
-          setBoard(testBoard);
-          const newPlaced = new Map(placed);
-          newPlaced.set(lastPlacedId, placedCells);
-          setPlaced(newPlaced);
-        }
+      // Fallback: just pick first candidate
+      if (!foundBoard && candidates.length > 0) {
+        const cand = candidates[0];
+        foundBoard = boardWithout.map(row => [...row]);
+        foundCells = [];
+        cand.cells.forEach(([dr, dc]) => {
+          foundBoard![cand.r + dr][cand.c + dc] = lastPlacedId;
+          foundCells.push([cand.r + dr, cand.c + dc]);
+        });
+      }
+
+      if (foundBoard) {
+        setBoard(foundBoard);
+        const newPlaced = new Map(placed);
+        newPlaced.set(lastPlacedId, foundCells);
+        setPlaced(newPlaced);
       }
 
       setTimeout(() => {
         setShuffling(false);
         sfx.place();
-        toast.success(`Repositioned "${lastPlacedId}"!`);
-      }, 400);
-    }, 500);
+      }, 300);
+    });
   }, [board, placed, lastPlacedId]);
 
   // Solve puzzle
   const handleSolve = useCallback(() => {
     setSolving(true);
-    toast.info("Solving... this may take a moment.");
     setTimeout(() => {
-      const solution = solvePuzzle(board, placedIds);
+      // Try current arrangement first, then retry with higher limit, then solve from scratch
+      let solution = solvePuzzle(board, placedIds);
+      if (!solution || (solution.length === 0 && !board.every(r => r.every(c => c)))) {
+        solution = solvePuzzle(board, placedIds, 10000000);
+      }
+      if (!solution) {
+        // Reset and solve from scratch
+        const freshBoard = createEmptyBoard();
+        solution = solvePuzzle(freshBoard, new Set(), 10000000);
+        if (solution) {
+          setBoard(createEmptyBoard());
+          setPlaced(new Map());
+        }
+      }
+
       setSolving(false);
       if (solution && solution.length > 0) {
         setShowingSolution(true);
-        toast.success(`Solution found! Placing ${solution.length} pieces.`);
         solution.forEach((step, i) => {
           setTimeout(() => {
             setBoard(prev => {
@@ -266,69 +300,11 @@ export const KonoodleGame = ({ onComplete }: Props) => {
               return p;
             });
             sfx.place();
-            if (i === solution.length - 1) {
-              setTimeout(() => {
-                sfx.levelComplete();
-                toast.success("Board complete!");
-              }, 200);
+            if (i === solution!.length - 1) {
+              setTimeout(() => sfx.levelComplete(), 200);
             }
           }, (i + 1) * 350);
         });
-      } else if (solution && solution.length === 0) {
-        toast.success("Board is already complete!");
-      } else {
-        // Solver couldn't find solution within step limit — retry with higher limit
-        const retryResult = solvePuzzle(board, placedIds, 10000000);
-        if (retryResult && retryResult.length > 0) {
-          setShowingSolution(true);
-          toast.success(`Solution found! Placing ${retryResult.length} pieces.`);
-          retryResult.forEach((step, i) => {
-            setTimeout(() => {
-              setBoard(prev => {
-                const b = prev.map(r => [...r]);
-                step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
-                return b;
-              });
-              setPlaced(prev => {
-                const p = new Map(prev);
-                p.set(step.pieceId, step.cells);
-                return p;
-              });
-              sfx.place();
-              if (i === retryResult.length - 1) {
-                setTimeout(() => { sfx.levelComplete(); toast.success("Board complete!"); }, 200);
-              }
-            }, (i + 1) * 350);
-          });
-        } else {
-          toast.info("Resetting and solving from scratch...");
-          // Reset board keeping no pieces, solve fresh
-          const freshBoard = createEmptyBoard();
-          const freshSolution = solvePuzzle(freshBoard, new Set(), 10000000);
-          if (freshSolution) {
-            setBoard(createEmptyBoard());
-            setPlaced(new Map());
-            setShowingSolution(true);
-            freshSolution.forEach((step, i) => {
-              setTimeout(() => {
-                setBoard(prev => {
-                  const b = prev.map(r => [...r]);
-                  step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
-                  return b;
-                });
-                setPlaced(prev => {
-                  const p = new Map(prev);
-                  p.set(step.pieceId, step.cells);
-                  return p;
-                });
-                sfx.place();
-                if (i === freshSolution.length - 1) {
-                  setTimeout(() => { sfx.levelComplete(); toast.success("Board complete!"); }, 200);
-                }
-              }, (i + 1) * 350);
-            });
-          }
-        }
       }
     }, 50);
   }, [board, placedIds]);
@@ -391,7 +367,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
               exit={{ scaleY: 0 }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
               style={{ originY: 0 }}
-              className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary/80 via-secondary/60 to-accent/80 backdrop-blur-sm flex items-center justify-center z-10"
+              className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary via-secondary to-accent flex items-center justify-center z-10"
             >
               <motion.div
                 animate={{ rotate: 360 }}
