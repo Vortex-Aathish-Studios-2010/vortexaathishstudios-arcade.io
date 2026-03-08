@@ -35,10 +35,10 @@ const isDraw = (board: Board) => board.every((c) => c !== null);
 // --- Bot AI ---
 const getEmptyCells = (board: Board) => board.map((c, i) => (c === null ? i : -1)).filter((i) => i !== -1);
 
-const minimax = (board: Board, isMax: boolean): number => {
+const minimax = (board: Board, isMax: boolean, depth: number = 0): number => {
   const { winner } = checkWinner(board);
-  if (winner === "O") return 10;
-  if (winner === "X") return -10;
+  if (winner === "O") return 10 - depth;
+  if (winner === "X") return -10 + depth;
   if (isDraw(board)) return 0;
 
   const empty = getEmptyCells(board);
@@ -46,7 +46,7 @@ const minimax = (board: Board, isMax: boolean): number => {
     let best = -Infinity;
     for (const i of empty) {
       board[i] = "O";
-      best = Math.max(best, minimax(board, false));
+      best = Math.max(best, minimax(board, false, depth + 1));
       board[i] = null;
     }
     return best;
@@ -54,11 +54,30 @@ const minimax = (board: Board, isMax: boolean): number => {
     let best = Infinity;
     for (const i of empty) {
       board[i] = "X";
-      best = Math.min(best, minimax(board, true));
+      best = Math.min(best, minimax(board, true, depth + 1));
       board[i] = null;
     }
     return best;
   }
+};
+
+// Find a losing move — intentionally pick a move that lets the player win
+const findLosingMove = (board: Board): number => {
+  const empty = getEmptyCells(board);
+  // First: check if player can win next turn, and DON'T block
+  // Pick the move with the worst outcome for the bot
+  let worstScore = Infinity;
+  let worstMove = empty[0];
+  for (const i of empty) {
+    board[i] = "O";
+    const score = minimax(board, false, 0);
+    board[i] = null;
+    if (score < worstScore) {
+      worstScore = score;
+      worstMove = i;
+    }
+  }
+  return worstMove;
 };
 
 const botMove = (board: Board, difficulty: Difficulty): number => {
