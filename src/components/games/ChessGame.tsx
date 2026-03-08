@@ -183,10 +183,10 @@ export const ChessGame = () => {
         animate={{ opacity: 1, y: 0 }}
         className={`font-sport-body text-lg font-bold px-4 py-2 rounded-lg ${
           state.isCheckmate
-            ? "bg-red-100 text-red-800"
+            ? "bg-red-900/60 text-red-300"
             : state.isCheck
-            ? "bg-yellow-100 text-yellow-800"
-            : "bg-white/80 text-[hsl(var(--sport-text))]"
+            ? "bg-yellow-900/60 text-yellow-300"
+            : "bg-[hsl(var(--sport-card))] text-[hsl(var(--sport-text))]"
         } shadow-sm`}
       >
         {statusText}
