@@ -85,10 +85,6 @@ const GamePage = () => {
             <span className="font-display text-sm">BACK</span>
           </button>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-card border border-border rounded-lg px-3 py-1.5">
-              <Flame className="h-4 w-4 text-accent" />
-              <span className="font-display text-sm font-bold text-foreground">{gameStreak}</span>
-            </div>
             <button onClick={() => setShowMultiplayer(true)} className="flex items-center gap-1.5 bg-card border border-secondary/30 rounded-lg px-3 py-1.5 text-secondary hover:border-secondary/60 hover:glow-secondary transition-all">
               <Users className="h-4 w-4" />
               <span className="font-display text-xs">VS</span>
