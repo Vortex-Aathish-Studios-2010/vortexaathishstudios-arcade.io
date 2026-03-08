@@ -61,6 +61,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   const [solving, setSolving] = useState(false);
   const [showingSolution, setShowingSolution] = useState(false);
   const [shuffling, setShuffling] = useState(false);
+  const [hasShuffled, setHasShuffled] = useState(false);
   const [dragOverCell, setDragOverCell] = useState<[number, number] | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
@@ -133,6 +134,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setLastPlacedId(null);
     setShowingSolution(false);
     setShuffling(false);
+    setHasShuffled(false);
   };
 
   // Drag and drop — create a custom drag image matching board cell size
@@ -260,6 +262,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
 
       setTimeout(() => {
         setShuffling(false);
+        setHasShuffled(true);
         sfx.place();
       }, 300);
     });
@@ -416,14 +419,16 @@ export const KonoodleGame = ({ onComplete }: Props) => {
             SHUFFLE "{lastPlacedId}"
           </button>
         )}
-        <button
-          onClick={handleSolve}
-          disabled={solving || showingSolution}
-          className="flex items-center gap-1.5 px-4 py-2 bg-primary/10 border border-primary/30 text-primary rounded-xl font-display text-xs hover:border-primary/60 transition-all disabled:opacity-40"
-        >
-          <Eye className="h-3.5 w-3.5" />
-          {solving ? "SOLVING..." : "SHOW SOLUTION"}
-        </button>
+        {hasShuffled && (
+          <button
+            onClick={handleSolve}
+            disabled={solving || showingSolution}
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary/10 border border-primary/30 text-primary rounded-xl font-display text-xs hover:border-primary/60 transition-all disabled:opacity-40"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            {solving ? "SOLVING..." : "SHOW SOLUTION"}
+          </button>
+        )}
         <button onClick={reset} className="px-6 py-2 bg-card border border-border text-foreground rounded-xl font-display text-sm hover:border-primary/50 transition-all">
           RESET
         </button>
