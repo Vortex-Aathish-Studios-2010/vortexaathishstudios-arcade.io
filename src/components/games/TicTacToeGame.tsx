@@ -35,10 +35,10 @@ const isDraw = (board: Board) => board.every((c) => c !== null);
 // --- Bot AI ---
 const getEmptyCells = (board: Board) => board.map((c, i) => (c === null ? i : -1)).filter((i) => i !== -1);
 
-const minimax = (board: Board, isMax: boolean): number => {
+const minimax = (board: Board, isMax: boolean, depth: number = 0): number => {
   const { winner } = checkWinner(board);
-  if (winner === "O") return 10;
-  if (winner === "X") return -10;
+  if (winner === "O") return 10 - depth;
+  if (winner === "X") return -10 + depth;
   if (isDraw(board)) return 0;
 
   const empty = getEmptyCells(board);
@@ -46,7 +46,7 @@ const minimax = (board: Board, isMax: boolean): number => {
     let best = -Infinity;
     for (const i of empty) {
       board[i] = "O";
-      best = Math.max(best, minimax(board, false));
+      best = Math.max(best, minimax(board, false, depth + 1));
       board[i] = null;
     }
     return best;
@@ -54,27 +54,46 @@ const minimax = (board: Board, isMax: boolean): number => {
     let best = Infinity;
     for (const i of empty) {
       board[i] = "X";
-      best = Math.min(best, minimax(board, true));
+      best = Math.min(best, minimax(board, true, depth + 1));
       board[i] = null;
     }
     return best;
   }
 };
 
+// Find a losing move — intentionally pick a move that lets the player win
+const findLosingMove = (board: Board): number => {
+  const empty = getEmptyCells(board);
+  // First: check if player can win next turn, and DON'T block
+  // Pick the move with the worst outcome for the bot
+  let worstScore = Infinity;
+  let worstMove = empty[0];
+  for (const i of empty) {
+    board[i] = "O";
+    const score = minimax(board, false, 0);
+    board[i] = null;
+    if (score < worstScore) {
+      worstScore = score;
+      worstMove = i;
+    }
+  }
+  return worstMove;
+};
+
 const botMove = (board: Board, difficulty: Difficulty): number => {
   const empty = getEmptyCells(board);
   if (empty.length === 0) return -1;
 
+  // On easy/medium, the bot intentionally loses to avoid draws
   if (difficulty === "easy") {
-    // 80% random → user wins ~80%
-    if (Math.random() < 0.8) return empty[Math.floor(Math.random() * empty.length)];
+    // 80% intentionally lose, 20% best move
+    if (Math.random() < 0.8) return findLosingMove([...board]);
   } else if (difficulty === "medium") {
-    // 50% random → user wins ~50%
-    if (Math.random() < 0.5) return empty[Math.floor(Math.random() * empty.length)];
-  }
-  // Hard: 99.9% best move, 0.1% random → user wins ~0.1%
-  if (difficulty === "hard" && Math.random() < 0.001) {
-    return empty[Math.floor(Math.random() * empty.length)];
+    // 50% intentionally lose, 50% best move
+    if (Math.random() < 0.5) return findLosingMove([...board]);
+  } else {
+    // Hard: 0.1% intentionally lose
+    if (Math.random() < 0.001) return findLosingMove([...board]);
   }
 
   // Hard: always best move
