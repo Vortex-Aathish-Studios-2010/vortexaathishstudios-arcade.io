@@ -8,6 +8,18 @@ import { getTotalWins, getTotalLosses } from "@/lib/streaks";
 
 const EntertainmentPage = () => {
   const navigate = useNavigate();
+  const [wins, setWins] = useState(0);
+  const [losses, setLosses] = useState(0);
+
+  useEffect(() => {
+    setWins(getTotalWins());
+    setLosses(getTotalLosses());
+    const interval = setInterval(() => {
+      setWins(getTotalWins());
+      setLosses(getTotalLosses());
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="entertainment-theme min-h-screen bg-[hsl(var(--sport-bg))]">
