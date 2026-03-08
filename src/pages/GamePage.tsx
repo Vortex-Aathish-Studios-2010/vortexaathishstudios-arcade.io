@@ -41,7 +41,6 @@ const GamePage = () => {
   const [multiplayerRoom, setMultiplayerRoom] = useState<{ roomId: string; playerId: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
   const level = id ? getGameLevel(id) : 1;
-  const gameStreak = id ? getStreak(id) : 0;
 
   const handleTutorialClose = useCallback(() => {
     setShowTutorial(false);
