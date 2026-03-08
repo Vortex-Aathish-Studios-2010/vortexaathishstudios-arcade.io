@@ -90,7 +90,6 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
     <div className="flex flex-col items-center gap-6">
       <div className="flex gap-6 text-sm">
         <span className="text-muted-foreground">Moves: <span className="font-display text-foreground">{moves}</span></span>
-        <span className="text-muted-foreground">Level: <span className="font-display text-primary">{currentLevel}</span></span>
       </div>
       <div className={`grid gap-2.5`} style={{ gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))` }}>
         {cards.map((card) => (
