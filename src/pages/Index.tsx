@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
 import { StatsBar } from "@/components/StatsBar";
