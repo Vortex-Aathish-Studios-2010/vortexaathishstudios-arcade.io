@@ -164,7 +164,7 @@ const GamePage = () => {
           />
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
