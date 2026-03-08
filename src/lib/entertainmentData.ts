@@ -16,9 +16,9 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     description: "The classic strategy board game",
     icon: "♟️",
     color: "sport-primary",
-    available: false,
+    available: true,
     difficulty: "Hard",
-    tutorial: ["Coming soon!"],
+    tutorial: ["Choose to play against a hard bot or a friend locally.", "Click a piece to select it, then click a highlighted square to move.", "Capture enemy pieces by moving to their square.", "Put the opponent's king in checkmate to win!"],
   },
   {
     id: "carroms",
