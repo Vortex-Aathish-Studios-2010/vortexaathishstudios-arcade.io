@@ -135,12 +135,38 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setShuffling(false);
   };
 
-  // Drag and drop handlers
+  // Drag and drop — create a custom drag image matching board cell size
   const handleDragStart = (e: React.DragEvent, piece: PieceDef) => {
     setSelectedPiece(piece);
     setRotation(0);
     e.dataTransfer.setData("text/plain", piece.id);
     e.dataTransfer.effectAllowed = "move";
+
+    // Build a canvas drag image sized to board cells (28px each)
+    const cells = piece.orientations[0];
+    const maxR = Math.max(...cells.map(([r]) => r)) + 1;
+    const maxC = Math.max(...cells.map(([, c]) => c)) + 1;
+    const cellSize = 28;
+    const canvas = document.createElement("canvas");
+    canvas.width = maxC * cellSize;
+    canvas.height = maxR * cellSize;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      // Get computed color from the piece's tailwind class
+      const tempDiv = document.createElement("div");
+      tempDiv.className = piece.color;
+      document.body.appendChild(tempDiv);
+      const color = getComputedStyle(tempDiv).backgroundColor;
+      document.body.removeChild(tempDiv);
+
+      cells.forEach(([r, c]) => {
+        ctx.fillStyle = color || "#8b5cf6";
+        ctx.beginPath();
+        ctx.roundRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2, 3);
+        ctx.fill();
+      });
+    }
+    e.dataTransfer.setDragImage(canvas, cellSize / 2, cellSize / 2);
   };
 
   const handleBoardDragOver = (e: React.DragEvent, r: number, c: number) => {
