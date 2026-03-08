@@ -84,7 +84,7 @@ const EntertainmentPage = () => {
             GAME ON!
           </h2>
           <p className="text-[hsl(var(--sport-muted))] font-sport-body text-lg">
-            Sports & action games — coming to your arena soon!
+            Sports & action games
           </p>
         </motion.div>
 
