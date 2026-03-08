@@ -46,7 +46,7 @@ const EntertainmentPage = () => {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-3 bg-white border border-[hsl(var(--sport-border))] rounded-lg px-3 py-1.5 shadow-sm">
+            <div className="flex items-center gap-3 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-lg px-3 py-1.5 shadow-sm">
               <div className="flex items-center gap-1">
                 <Trophy className="h-3.5 w-3.5 text-[hsl(var(--sport-primary))]" />
                 <span className="font-sport text-xs text-[hsl(var(--sport-text))]">{wins}</span>

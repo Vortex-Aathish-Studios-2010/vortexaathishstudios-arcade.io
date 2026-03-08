@@ -85,17 +85,17 @@
 
 /* Entertainment Arcade — Bright Sporty Theme */
 .entertainment-theme {
-  --sport-primary: 145 70% 40%;
-  --sport-secondary: 210 90% 55%;
+  --sport-primary: 145 70% 50%;
+  --sport-secondary: 210 90% 60%;
   --sport-accent: 35 95% 55%;
-  --sport-bg: 120 30% 96%;
-  --sport-card: 0 0% 100%;
-  --sport-text: 210 20% 15%;
-  --sport-muted: 210 10% 55%;
-  --sport-border: 210 15% 85%;
-  --sport-glow-primary: 0 4px 20px hsl(145 70% 40% / 0.25);
-  --sport-glow-secondary: 0 4px 20px hsl(210 90% 55% / 0.25);
-  --sport-glow-accent: 0 4px 20px hsl(35 95% 55% / 0.25);
+  --sport-bg: 0 0% 6%;
+  --sport-card: 0 0% 12%;
+  --sport-text: 0 0% 93%;
+  --sport-muted: 0 0% 50%;
+  --sport-border: 0 0% 20%;
+  --sport-glow-primary: 0 4px 20px hsl(145 70% 50% / 0.3);
+  --sport-glow-secondary: 0 4px 20px hsl(210 90% 60% / 0.3);
+  --sport-glow-accent: 0 4px 20px hsl(35 95% 55% / 0.3);
 }
 
 @keyframes stadium-wave {

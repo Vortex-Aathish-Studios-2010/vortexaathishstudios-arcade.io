@@ -42,7 +42,7 @@ export const EntertainmentCard = ({ game, index }: { game: EntertainmentGameInfo
       whileHover={!clicked ? { scale: 1.06, y: -6, transition: { type: "spring", stiffness: 300 } } : undefined}
       whileTap={!clicked && game.available ? { scale: 0.97 } : undefined}
       onClick={handleClick}
-      className={`relative ${game.available ? "cursor-pointer" : "cursor-default"} rounded-2xl border-2 bg-white/80 backdrop-blur-sm p-6 transition-shadow duration-300 ${colorMap[game.color]} shadow-lg hover:shadow-xl overflow-hidden`}
+      className={`relative ${game.available ? "cursor-pointer" : "cursor-default"} rounded-2xl border-2 bg-[hsl(var(--sport-card))]/80 backdrop-blur-sm p-6 transition-shadow duration-300 ${colorMap[game.color]} shadow-lg hover:shadow-xl overflow-hidden`}
       style={clicked ? { zIndex: 50 } : undefined}
     >
       {/* Glow effect on click */}
@@ -64,13 +64,13 @@ export const EntertainmentCard = ({ game, index }: { game: EntertainmentGameInfo
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: index * 0.07 + 0.3 }}
-          className="absolute inset-0 bg-white/40 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-2xl"
+          className="absolute inset-0 bg-black/50 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-2xl"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: index * 0.07 + 0.4, type: "spring", stiffness: 200 }}
-            className="flex items-center gap-2 bg-white/90 rounded-full px-4 py-2 shadow-md"
+            className="flex items-center gap-2 bg-[hsl(var(--sport-card))]/90 rounded-full px-4 py-2 shadow-md border border-[hsl(var(--sport-border))]"
           >
             <Lock className="h-4 w-4 text-[hsl(var(--sport-primary))]" />
             <span className="font-sport text-sm font-bold text-[hsl(var(--sport-primary))]">COMING SOON</span>
@@ -86,8 +86,8 @@ export const EntertainmentCard = ({ game, index }: { game: EntertainmentGameInfo
       >
         {game.icon}
       </motion.div>
-      <h3 className="font-sport text-lg font-bold text-gray-800 mb-1 relative z-10">{game.name}</h3>
-      <p className="text-sm text-gray-500 mb-3 relative z-10">{game.description}</p>
+      <h3 className="font-sport text-lg font-bold text-[hsl(var(--sport-text))] mb-1 relative z-10">{game.name}</h3>
+      <p className="text-sm text-[hsl(var(--sport-muted))] mb-3 relative z-10">{game.description}</p>
     </motion.div>
   );
 };
