@@ -7,19 +7,12 @@ const BASE_GRID = 8;
 const DIRECTIONS = [[0, 1], [1, 0], [1, 1], [0, -1], [1, -1]];
 
 const ALL_WORDS = [
-  // 3-4 letter
   ["CODE", "TYPE", "LOOP", "NODE", "DATA", "GAME"],
-  // 4-5 letter
   ["REACT", "BRAIN", "SCORE", "LEVEL", "LOGIC", "THINK"],
-  // 5 letter
   ["PUZZLE", "QUEST", "POWER", "SMART", "FOCUS", "SHARP"],
-  // 5-6 letter
   ["SKILL", "SPEED", "TRAIN", "LEARN", "BUILD", "CRAFT"],
-  // 6 letter
   ["MEMORY", "ARCADE", "SEARCH", "HIDDEN", "TARGET", "MASTER"],
-  // 6-7 letter
   ["GENIUS", "NEURAL", "CODING", "GAMING", "PLAYER", "WINNER"],
-  // 7+ letter
   ["CHAMPION", "DISCOVER", "TREASURE", "CREATIVE", "ADVANCED", "STRATEGY"],
   ["CHALLENGE", "BRILLIANT", "KNOWLEDGE", "DEVELOPER", "ALGORITHM", "ARCHITECT"],
   ["INNOVATION", "INCREDIBLE", "TECHNOLOGY", "MASTERPLAN", "EXPERIENCE"],
@@ -66,7 +59,7 @@ interface Props {
 export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
   const [currentLevel, setCurrentLevel] = useState(propLevel || getGameLevel("wordsearch"));
   const config = useMemo(() => getConfig(currentLevel), [currentLevel]);
-  const { grid, placements } = useMemo(() => generateGrid(config.words, config.gridSize), [currentLevel, config]);
+  const { grid, placements } = useMemo(() => generateGrid(config.words, config.gridSize), [currentLevel]);
   const [found, setFound] = useState<Set<string>>(new Set());
   const [selecting, setSelecting] = useState<[number, number][]>([]);
   const [isMouseDown, setIsMouseDown] = useState(false);
@@ -118,7 +111,7 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="text-xs font-display text-muted-foreground">
-        Grid: {config.gridSize}×{config.gridSize} · Words up to {Math.max(...config.words.map(w => w.length))} letters
+        Level {currentLevel} · Grid: {config.gridSize}×{config.gridSize} · Words up to {Math.max(...config.words.map(w => w.length))} letters
       </div>
       <div
         className="bg-card border border-border p-2 rounded-xl select-none"

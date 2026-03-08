@@ -1,8 +1,10 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { GameInfo } from "@/lib/gameData";
 import { Flame } from "lucide-react";
 import { getStreak } from "@/lib/streaks";
+import { sfx } from "@/lib/sounds";
 
 const colorMap = {
   primary: "border-primary/30 hover:border-primary/60 hover:glow-primary",
@@ -16,23 +18,56 @@ const badgeMap = {
   accent: "bg-accent/20 text-accent",
 };
 
+const glowColors = {
+  primary: "hsl(var(--primary))",
+  secondary: "hsl(var(--secondary))",
+  accent: "hsl(var(--accent))",
+};
+
 export const GameCard = ({ game, index }: { game: GameInfo; index: number }) => {
   const navigate = useNavigate();
   const streak = getStreak(game.id);
+  const [clicked, setClicked] = useState(false);
+
+  const handleClick = () => {
+    if (clicked) return;
+    setClicked(true);
+    sfx.click();
+    setTimeout(() => navigate(`/game/${game.id}`), 400);
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.08, duration: 0.4 }}
-      whileHover={{ scale: 1.04, y: -4 }}
-      onClick={() => navigate(`/game/${game.id}`)}
-      className={`relative cursor-pointer rounded-xl border-2 bg-card p-6 transition-all duration-300 ${colorMap[game.color]}`}
+      animate={clicked
+        ? { scale: 1.12, opacity: 0, boxShadow: `0 0 40px ${glowColors[game.color]}` }
+        : { opacity: 1, y: 0 }
+      }
+      transition={clicked
+        ? { duration: 0.35, ease: "easeIn" }
+        : { delay: index * 0.08, duration: 0.4 }
+      }
+      whileHover={!clicked ? { scale: 1.04, y: -4 } : undefined}
+      onClick={handleClick}
+      className={`relative cursor-pointer rounded-xl border-2 bg-card p-6 transition-all duration-300 ${colorMap[game.color]} overflow-hidden`}
     >
-      <div className="text-4xl mb-3">{game.icon}</div>
-      <h3 className="font-display text-lg font-bold text-foreground mb-1">{game.name}</h3>
-      <p className="text-sm text-muted-foreground mb-3">{game.description}</p>
-      <div className="flex items-center justify-between">
+      {/* Ripple effect on click */}
+      <AnimatePresence>
+        {clicked && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0.6 }}
+            animate={{ scale: 4, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="absolute inset-0 m-auto w-16 h-16 rounded-full"
+            style={{ backgroundColor: glowColors[game.color] }}
+          />
+        )}
+      </AnimatePresence>
+      <div className="text-4xl mb-3 relative z-10">{game.icon}</div>
+      <h3 className="font-display text-lg font-bold text-foreground mb-1 relative z-10">{game.name}</h3>
+      <p className="text-sm text-muted-foreground mb-3 relative z-10">{game.description}</p>
+      <div className="flex items-center justify-between relative z-10">
         <span className={`text-xs font-semibold px-2 py-1 rounded-full ${badgeMap[game.color]}`}>
           {game.difficulty}
         </span>

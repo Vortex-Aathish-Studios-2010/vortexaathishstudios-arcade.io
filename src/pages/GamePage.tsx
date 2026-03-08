@@ -26,6 +26,9 @@ const gameComponents: Record<string, React.FC<{ level?: number; onComplete?: (sc
   snake: SnakeGame,
 };
 
+// Games that manage their own level internally or don't use levels
+const HIDE_LEVEL_IDS = new Set(["tetris", "snake", "konoodle"]);
+
 const GamePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -61,6 +64,8 @@ const GamePage = () => {
     return null;
   }
 
+  const showLevel = id && !HIDE_LEVEL_IDS.has(id);
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-lg mx-auto">
@@ -89,7 +94,9 @@ const GamePage = () => {
           <span className="text-4xl mb-2 block">{game.icon}</span>
           <h1 className="text-2xl font-display font-bold text-foreground">{game.name}</h1>
           <p className="text-sm text-muted-foreground mt-1">{game.description}</p>
-          <span className="text-xs font-display text-primary mt-1 block">Level {level}</span>
+          {showLevel && (
+            <span className="text-xs font-display text-primary mt-1 block">Level {level}</span>
+          )}
         </motion.div>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
