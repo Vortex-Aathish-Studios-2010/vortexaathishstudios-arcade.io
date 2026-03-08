@@ -139,15 +139,7 @@ const Index = () => {
           ))}
         </div>
 
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={() => { setMode("select"); setSearchParams({}); }}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors bg-card border border-border rounded-xl px-5 py-2.5"
-          >
-            <ArrowLeftRight className="h-4 w-4" />
-            <span className="font-display text-sm">Switch Arcade</span>
-          </button>
-        </div>
+
       </main>
     </div>
   );
