@@ -98,16 +98,17 @@ const Index = () => {
           <div className="flex items-center gap-3">
             {/* Entertainment Arcade button */}
             <button
-              className="relative overflow-hidden rounded-lg px-3 py-1.5 bg-white border border-border cursor-not-allowed opacity-70"
-              title="Coming Soon"
+              onClick={() => navigate("/entertainment")}
+              className="relative overflow-hidden rounded-lg px-3 py-1.5 bg-card border border-border hover:border-[hsl(35,95%,55%)]/60 transition-all cursor-pointer"
+              title="Entertainment Arcade"
             >
               <div className="absolute top-0 left-0 right-0 h-[3px] flex">
-                <div className="flex-1 bg-destructive" />
-                <div className="flex-1 bg-primary" />
-                <div className="flex-1 bg-[hsl(142,71%,45%)]" />
+                <div className="flex-1 bg-[hsl(145,70%,40%)]" />
+                <div className="flex-1 bg-[hsl(210,90%,55%)]" />
+                <div className="flex-1 bg-[hsl(35,95%,55%)]" />
               </div>
               <span className="font-display text-xs text-foreground flex items-center gap-1">
-                🎮 <Lock className="h-3 w-3" />
+                🎮
               </span>
             </button>
             <div className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-1.5">
