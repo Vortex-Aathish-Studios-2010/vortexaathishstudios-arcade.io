@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { addPoints, updateStreak, getGameLevel, incrementLevel, addWin } from "@/lib/streaks";
+import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
 
 const getDifficulty = (level: number): { removed: number; label: string } => {
@@ -57,8 +58,12 @@ export const SudokuGame = ({ level: propLevel, onComplete }: Props) => {
     const newBoard = board.map((row) => [...row]);
     newBoard[r][c] = n;
     setBoard(newBoard);
+    if (n !== 0 && n === solution[r][c]) sfx.correct();
+    else if (n !== 0) sfx.error();
+    else sfx.click();
     if (newBoard.every((row, ri) => row.every((v, ci) => v === solution[ri][ci]))) {
       setWon(true);
+      sfx.levelComplete();
       const pts = 100 + currentLevel * 50;
       addPoints(pts);
       updateStreak("sudoku");
@@ -83,7 +88,7 @@ export const SudokuGame = ({ level: propLevel, onComplete }: Props) => {
             {row.map((val, c) => (
               <div
                 key={c}
-                onClick={() => setSelected([r, c])}
+                onClick={() => { setSelected([r, c]); sfx.click(); }}
                 className={`w-8 h-8 flex items-center justify-center text-sm font-display cursor-pointer transition-all
                   ${r % 3 === 0 ? "border-t-2 border-t-border" : "border-t border-t-border/20"}
                   ${c % 3 === 0 ? "border-l-2 border-l-border" : "border-l border-l-border/20"}

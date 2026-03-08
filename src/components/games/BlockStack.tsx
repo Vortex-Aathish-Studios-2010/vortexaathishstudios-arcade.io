@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { addPoints, updateStreak, addLoss } from "@/lib/streaks";
+import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
+import { ChevronUp, ChevronDown } from "lucide-react";
 
 const COLS = 10;
 const ROWS = 20;
@@ -18,6 +20,17 @@ const SHAPES = [
 const COLORS = [
   "bg-primary", "bg-secondary", "bg-accent",
   "bg-primary/70", "bg-secondary/70", "bg-accent/70", "bg-primary/50",
+];
+
+const SPEED_LEVELS = [
+  { label: "1", ms: 600, multiplier: 1 },
+  { label: "2", ms: 450, multiplier: 1.2 },
+  { label: "3", ms: 350, multiplier: 1.5 },
+  { label: "4", ms: 250, multiplier: 2 },
+  { label: "5", ms: 180, multiplier: 2.5 },
+  { label: "6", ms: 120, multiplier: 3 },
+  { label: "7", ms: 80, multiplier: 4 },
+  { label: "8", ms: 50, multiplier: 5 },
 ];
 
 type Board = number[][];
@@ -75,20 +88,31 @@ export const BlockStack = ({ onComplete }: Props) => {
   const [score, setScore] = useState(0);
   const [lines, setLines] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [speedLevel, setSpeedLevel] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
-  // Speed increases as lines cleared grows
-  const getSpeed = () => Math.max(100, 500 - lines * 15);
+  const currentSpeed = SPEED_LEVELS[speedLevel];
+
+  const changeSpeed = (delta: number) => {
+    setSpeedLevel(prev => {
+      const next = Math.max(0, Math.min(SPEED_LEVELS.length - 1, prev + delta));
+      if (next > prev) sfx.speedUp();
+      if (next < prev) sfx.speedDown();
+      return next;
+    });
+  };
 
   const drop = useCallback(() => {
     setPiece((prev) => {
       const next = { ...prev, y: prev.y + 1 };
       if (!collides(board, next)) return next;
+      sfx.place();
       const merged = merge(board, prev);
       const [cleared, clearedLines] = clearLines(merged);
       setBoard(cleared);
-      const pts = clearedLines * clearedLines * 100;
+      const pts = Math.round(clearedLines * clearedLines * 100 * currentSpeed.multiplier);
       if (pts > 0) {
+        sfx.clear();
         setScore((s) => s + pts);
         setLines((l) => l + clearedLines);
       }
@@ -96,38 +120,40 @@ export const BlockStack = ({ onComplete }: Props) => {
       setNextPiece(randomPiece());
       if (collides(cleared, np)) {
         setGameOver(true);
+        sfx.gameOver();
         setScore((s) => {
           const total = s + pts;
           addPoints(total);
           updateStreak("tetris");
           addLoss("tetris");
-          toast.info(`Game Over! +${total} points`);
+          toast.info(`Game Over! +${total} points (${currentSpeed.multiplier}x speed bonus)`);
           onComplete?.(total);
           return total;
         });
       }
       return np;
     });
-  }, [board, nextPiece]);
+  }, [board, nextPiece, currentSpeed.multiplier]);
 
   useEffect(() => {
     if (gameOver) { clearInterval(intervalRef.current); return; }
-    intervalRef.current = setInterval(drop, getSpeed());
+    intervalRef.current = setInterval(drop, currentSpeed.ms);
     return () => clearInterval(intervalRef.current);
-  }, [drop, gameOver, lines]);
+  }, [drop, gameOver, currentSpeed.ms]);
 
   const movePiece = useCallback((dx: number, dy: number, rot = false) => {
     if (gameOver) return;
     setPiece((prev) => {
       let next = { ...prev };
-      if (rot) next = { ...next, shape: rotate(prev.shape) };
-      else next = { ...next, x: prev.x + dx, y: prev.y + dy };
+      if (rot) { next = { ...next, shape: rotate(prev.shape) }; sfx.rotate(); }
+      else { next = { ...next, x: prev.x + dx, y: prev.y + dy }; sfx.move(); }
       return collides(board, next) ? prev : next;
     });
   }, [board, gameOver]);
 
   const hardDrop = useCallback(() => {
     if (gameOver) return;
+    sfx.drop();
     setPiece((prev) => {
       let y = prev.y;
       while (!collides(board, { ...prev, y: y + 1 })) y++;
@@ -155,7 +181,6 @@ export const BlockStack = ({ onComplete }: Props) => {
 
   const renderBoard = () => {
     const display = board.map((r) => [...r]);
-    // Ghost piece
     let ghostY = piece.y;
     while (!collides(board, { ...piece, y: ghostY + 1 })) ghostY++;
     if (ghostY !== piece.y) {
@@ -164,7 +189,7 @@ export const BlockStack = ({ onComplete }: Props) => {
           if (piece.shape[r][c]) {
             const nr = ghostY + r, nc = piece.x + c;
             if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && !display[nr][nc])
-              display[nr][nc] = -1; // ghost
+              display[nr][nc] = -1;
           }
     }
     for (let r = 0; r < piece.shape.length; r++)
@@ -176,7 +201,6 @@ export const BlockStack = ({ onComplete }: Props) => {
     return display;
   };
 
-  // Render next piece preview
   const renderNext = () => {
     const s = nextPiece.shape;
     return (
@@ -198,8 +222,25 @@ export const BlockStack = ({ onComplete }: Props) => {
       <div className="flex gap-6 text-sm">
         <span className="text-muted-foreground">Score: <span className="font-display text-foreground">{score}</span></span>
         <span className="text-muted-foreground">Lines: <span className="font-display text-primary">{lines}</span></span>
-        <span className="text-muted-foreground">Speed: <span className="font-display text-accent">{Math.round((1 - getSpeed() / 500) * 100)}%</span></span>
       </div>
+      
+      {/* Speed control */}
+      <div className="flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-2">
+        <span className="text-xs font-display text-muted-foreground">SPEED</span>
+        <button onClick={() => changeSpeed(-1)} disabled={speedLevel === 0} className="p-1 rounded-lg border border-border hover:border-primary/50 transition-colors disabled:opacity-30">
+          <ChevronDown className="h-4 w-4 text-foreground" />
+        </button>
+        <div className="flex gap-1">
+          {SPEED_LEVELS.map((s, i) => (
+            <div key={i} className={`w-3 h-3 rounded-sm transition-all ${i <= speedLevel ? "bg-primary glow-primary" : "bg-muted/30"}`} />
+          ))}
+        </div>
+        <button onClick={() => changeSpeed(1)} disabled={speedLevel === SPEED_LEVELS.length - 1} className="p-1 rounded-lg border border-border hover:border-primary/50 transition-colors disabled:opacity-30">
+          <ChevronUp className="h-4 w-4 text-foreground" />
+        </button>
+        <span className="text-xs font-display text-accent">{currentSpeed.multiplier}x pts</span>
+      </div>
+
       <div className="flex gap-3 items-start">
         <div className="bg-card border border-border p-1 rounded-xl inline-block">
           {renderBoard().map((row, r) => (
@@ -223,7 +264,7 @@ export const BlockStack = ({ onComplete }: Props) => {
         <button onClick={() => movePiece(0, 1)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-accent/50 transition-colors">↓</button>
         <button onClick={hardDrop} className="px-3 py-2 bg-primary/20 border border-primary/40 text-primary rounded-lg font-display text-xs hover:glow-primary transition-all">DROP</button>
       </div>
-      <p className="text-xs text-muted-foreground">Arrow keys + Space to drop</p>
+      <p className="text-xs text-muted-foreground">Arrow keys + Space to drop · ↑↓ buttons to change speed</p>
       {gameOver && (
         <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} onClick={reset} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary">
           PLAY AGAIN
