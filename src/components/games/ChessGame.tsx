@@ -251,7 +251,7 @@ export const ChessGame = () => {
                       : isLight ? "#F0D9B5" : "#B58863",
                     transition: "background 0.15s ease",
                   }}
-                  whileHover={{ brightness: 1.1 }}
+                  whileHover={{ opacity: 0.85 }}
                 >
                   {/* Legal move indicator */}
                   {isLegalTarget && !piece && (
