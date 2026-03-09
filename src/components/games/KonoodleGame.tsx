@@ -140,13 +140,17 @@ export const KonoodleGame = ({ onComplete }: Props) => {
 
   // Drag and drop — create a custom drag image matching board cell size
   const handleDragStart = (e: React.DragEvent, piece: PieceDef) => {
-    setSelectedPiece(piece);
-    setRotation(0);
+    const isNewPiece = selectedPiece?.id !== piece.id;
+    if (isNewPiece) {
+      setSelectedPiece(piece);
+      setRotation(0);
+    }
     e.dataTransfer.setData("text/plain", piece.id);
     e.dataTransfer.effectAllowed = "move";
 
     // Build a canvas drag image sized to board cells (28px each)
-    const cells = piece.orientations[0];
+    const currentRot = isNewPiece ? 0 : rotation;
+    const cells = piece.orientations[currentRot % piece.orientations.length];
     const maxR = Math.max(...cells.map(([r]) => r)) + 1;
     const maxC = Math.max(...cells.map(([, c]) => c)) + 1;
     const cellSize = 28;
