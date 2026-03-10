@@ -23,7 +23,7 @@ const EntertainmentPage = () => {
     exit: { opacity: 0, scale: 1.04, filter: "blur(12px)" },
   };
 
-  const pageTransition = { duration: 0.45, ease: [0.4, 0, 0.2, 1] };
+  const pageTransition = { duration: 0.45, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] };
 
   return (
     <motion.div
