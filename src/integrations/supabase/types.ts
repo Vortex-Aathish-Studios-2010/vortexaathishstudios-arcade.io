@@ -52,6 +52,33 @@ export type Database = {
           },
         ]
       }
+      leaderboard: {
+        Row: {
+          created_at: string | null
+          id: string
+          losses: number
+          player_name: string
+          updated_at: string | null
+          wins: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          losses?: number
+          player_name: string
+          updated_at?: string | null
+          wins?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          losses?: number
+          player_name?: string
+          updated_at?: string | null
+          wins?: number
+        }
+        Relationships: []
+      }
       players: {
         Row: {
           created_at: string | null
