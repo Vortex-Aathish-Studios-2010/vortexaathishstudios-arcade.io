@@ -410,21 +410,26 @@ export const KonoodleGame = ({ onComplete }: Props) => {
       <div ref={boardRef} className="relative bg-card border border-border p-2 rounded-xl">
         {board.map((row, r) => (
           <div key={r} className="flex">
-            {row.map((cell, c) => (
-              <div
-                key={c}
-                onClick={() => cell ? removePiece(cell) : placePiece(r, c)}
-                onDragOver={(e) => handleBoardDragOver(e, r, c)}
-                onDrop={(e) => handleBoardDrop(e, r, c)}
-                onDragLeave={handleBoardDragLeave}
-                className={`w-7 h-7 border border-border/20 rounded-sm cursor-pointer transition-all ${
-                  cell ? `${pieceColor(cell)} shadow-[0_0_6px_rgba(0,0,0,0.15)]`
-                  : dragPreviewSet.has(`${r},${c}`)
-                    ? (dragPreviewCells?.valid ? "bg-primary/20 border-primary/40" : "bg-destructive/20 border-destructive/40")
-                    : "bg-background/30 hover:bg-muted/50"
-                }`}
-              />
-            ))}
+            {row.map((cell, c) => {
+              const isRemoving = cell ? removingPieces.has(cell) : false;
+              return (
+                <motion.div
+                  key={c}
+                  animate={isRemoving ? { scale: 0, opacity: 0, rotate: 180 } : { scale: 1, opacity: 1, rotate: 0 }}
+                  transition={isRemoving ? { duration: 0.5, ease: "easeIn" } : { duration: 0.2 }}
+                  onClick={() => cell && !isRemoving ? removePiece(cell) : placePiece(r, c)}
+                  onDragOver={(e) => handleBoardDragOver(e, r, c)}
+                  onDrop={(e) => handleBoardDrop(e, r, c)}
+                  onDragLeave={handleBoardDragLeave}
+                  className={`w-7 h-7 border border-border/20 rounded-sm cursor-pointer transition-colors ${
+                    cell ? `${pieceColor(cell)} shadow-[0_0_6px_rgba(0,0,0,0.15)]`
+                    : dragPreviewSet.has(`${r},${c}`)
+                      ? (dragPreviewCells?.valid ? "bg-primary/20 border-primary/40" : "bg-destructive/20 border-destructive/40")
+                      : "bg-background/30 hover:bg-muted/50"
+                  }`}
+                />
+              );
+            })}
           </div>
         ))}
 
