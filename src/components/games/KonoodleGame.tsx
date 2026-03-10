@@ -269,43 +269,115 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     }, 400);
   }, [board, placed, lastPlacedId]);
 
-  // Solve puzzle — use cached solution from shuffle if available
+  // Solve puzzle — remove player-placed blocks first (keep shuffled), then show solution
   const handleSolve = useCallback(() => {
     setSolving(true);
-    setTimeout(() => {
-      // Use cached solution from shuffle first, then try solving fresh
-      let solution = cachedSolutionRef.current;
-      if (!solution || solution.length === 0) {
-        solution = solvePuzzle(board, placedIds, 20000000);
-      }
 
+    // Identify player-placed pieces (everything except the shuffled piece)
+    const shuffledId = shuffledPieceIdRef.current;
+    const playerPieceIds = Array.from(placed.keys()).filter(id => id !== shuffledId);
+
+    if (playerPieceIds.length > 0) {
+      // Animate removal of player pieces
+      setRemovingPieces(new Set(playerPieceIds));
+
+      // After animation, actually remove them from board state
+      setTimeout(() => {
+        setBoard(prev => {
+          const b = prev.map(r => [...r]);
+          for (let r = 0; r < BOARD_ROWS; r++) {
+            for (let c = 0; c < BOARD_COLS; c++) {
+              if (b[r][c] && playerPieceIds.includes(b[r][c]!)) {
+                b[r][c] = null;
+              }
+            }
+          }
+          return b;
+        });
+        setPlaced(prev => {
+          const p = new Map(prev);
+          playerPieceIds.forEach(id => p.delete(id));
+          return p;
+        });
+        setRemovingPieces(new Set());
+
+        // Now solve from the clean state
+        setTimeout(() => startSolving(), 200);
+      }, 600);
+    } else {
+      startSolving();
+    }
+  }, [placed]);
+
+  const startSolving = useCallback(() => {
+    // Use cached solution from shuffle first, then try solving fresh
+    let solution = cachedSolutionRef.current;
+    if (!solution || solution.length === 0) {
+      // Need to re-read board state at this point
+      setBoard(currentBoard => {
+        const currentPlacedIds = new Set<string>();
+        for (let r = 0; r < BOARD_ROWS; r++) {
+          for (let c = 0; c < BOARD_COLS; c++) {
+            if (currentBoard[r][c]) currentPlacedIds.add(currentBoard[r][c]!);
+          }
+        }
+        solution = solvePuzzle(currentBoard, currentPlacedIds, 20000000);
+
+        if (solution && solution.length > 0) {
+          setSolving(false);
+          cachedSolutionRef.current = null;
+          setShowingSolution(true);
+
+          solution.forEach((step, i) => {
+            setTimeout(() => {
+              setBoard(prev => {
+                const b = prev.map(r => [...r]);
+                step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
+                return b;
+              });
+              setPlaced(prev => {
+                const p = new Map(prev);
+                p.set(step.pieceId, step.cells);
+                return p;
+              });
+              sfx.place();
+              if (i === solution!.length - 1) {
+                setTimeout(() => sfx.levelComplete(), 200);
+              }
+            }, (i + 1) * 350);
+          });
+        } else {
+          setSolving(false);
+          cachedSolutionRef.current = null;
+        }
+
+        return currentBoard; // Don't modify
+      });
+    } else {
       setSolving(false);
       cachedSolutionRef.current = null;
+      setShowingSolution(true);
 
-      if (solution && solution.length > 0) {
-        setShowingSolution(true);
-
-        solution.forEach((step, i) => {
-          setTimeout(() => {
-            setBoard(prev => {
-              const b = prev.map(r => [...r]);
-              step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
-              return b;
-            });
-            setPlaced(prev => {
-              const p = new Map(prev);
-              p.set(step.pieceId, step.cells);
-              return p;
-            });
-            sfx.place();
-            if (i === solution!.length - 1) {
-              setTimeout(() => sfx.levelComplete(), 200);
-            }
-          }, (i + 1) * 350);
-        });
-      }
-    }, 50);
-  }, [board, placedIds]);
+      solution.forEach((step, i) => {
+        setTimeout(() => {
+          setBoard(prev => {
+            const b = prev.map(r => [...r]);
+            step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
+            return b;
+          });
+          setPlaced(prev => {
+            const p = new Map(prev);
+            p.set(step.pieceId, step.cells);
+            return p;
+          });
+          sfx.place();
+          if (i === solution!.length - 1) {
+            setTimeout(() => sfx.levelComplete(), 200);
+          }
+        }, (i + 1) * 350);
+      });
+    }
+  }, []);
 
   const pieceColor = (id: string) => PIECES.find((p) => p.id === id)?.color || "bg-muted";
 
