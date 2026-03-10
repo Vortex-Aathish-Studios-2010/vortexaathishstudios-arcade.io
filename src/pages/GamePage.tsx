@@ -67,9 +67,9 @@ const GamePage = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      initial={{ opacity: 0, scale: 0.96, filter: "blur(8px)" }}
+      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+      transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
       className="min-h-screen bg-background p-6"
     >
       <div className="max-w-lg mx-auto">

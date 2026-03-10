@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { entertainmentGames } from "@/lib/entertainmentData";
 import { EntertainmentCard } from "@/components/EntertainmentCard";
-import { Star } from "lucide-react";
+import { Star, Brain, Trophy } from "lucide-react";
 import { getEntertainmentPoints } from "@/lib/streaks";
 
 const EntertainmentPage = () => {
@@ -16,16 +16,29 @@ const EntertainmentPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Shared page transition
+  const pageVariants = {
+    initial: { opacity: 0, scale: 0.96, filter: "blur(8px)" },
+    animate: { opacity: 1, scale: 1, filter: "blur(0px)" },
+    exit: { opacity: 0, scale: 1.04, filter: "blur(12px)" },
+  };
+
+  const pageTransition = { duration: 0.45, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] };
+
   return (
-    <div className="entertainment-theme min-h-screen bg-[hsl(var(--sport-bg))]">
+    <motion.div
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={pageTransition}
+      className="entertainment-theme min-h-screen bg-[hsl(var(--sport-bg))]"
+    >
       {/* Decorative background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-[hsl(var(--sport-primary))]/10 blur-3xl" />
         <div className="absolute top-1/3 -left-20 w-80 h-80 rounded-full bg-[hsl(var(--sport-secondary))]/10 blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-72 h-72 rounded-full bg-[hsl(var(--sport-accent))]/10 blur-3xl" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-full bg-[hsl(var(--sport-primary))]/5" />
-        <div className="absolute top-1/2 left-0 w-full h-px bg-[hsl(var(--sport-primary))]/5" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full border border-[hsl(var(--sport-primary))]/5" />
       </div>
 
       <header className="relative z-10 border-b border-[hsl(var(--sport-border))]">
@@ -35,8 +48,8 @@ const EntertainmentPage = () => {
               ← BACK
             </button>
             <h1 className="text-2xl font-sport tracking-wider">
-              <span className="text-[hsl(var(--sport-primary))]">ENTERTAINMENT</span>
-              <span className="text-[hsl(var(--sport-secondary))]"> ARCADE</span>
+              <span className="text-[hsl(var(--sport-primary))]">ARCADE</span>
+              <span className="text-[hsl(var(--sport-accent))]">.IO</span>
             </h1>
           </div>
           <div className="flex items-center gap-3">
@@ -46,14 +59,20 @@ const EntertainmentPage = () => {
               <span className="font-sport text-sm text-[hsl(var(--sport-text))]">{points}</span>
               <span className="font-sport-body text-[10px] text-[hsl(var(--sport-muted))]">PTS</span>
             </div>
+            {/* Leaderboard */}
+            <button
+              onClick={() => navigate("/leaderboard")}
+              className="rounded-lg px-3 py-1.5 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-accent))]/30 hover:border-[hsl(var(--sport-accent))]/60 transition-all"
+              title="Leaderboard"
+            >
+              <Trophy className="h-4 w-4 text-[hsl(var(--sport-accent))]" />
+            </button>
             {/* Brain Arcade switch */}
             <button
               onClick={() => navigate("/?mode=brain")}
-              className="rounded-lg px-3 py-1.5 bg-gray-900 border border-gray-700 hover:border-gray-500 transition-all"
+              className="rounded-lg px-3 py-1.5 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] hover:border-[hsl(var(--sport-primary))]/60 transition-all"
             >
-              <span className="font-display text-xs text-cyan-400 flex items-center gap-1">
-                🧠
-              </span>
+              <Brain className="h-4 w-4 text-[hsl(var(--sport-primary))]" />
             </button>
           </div>
         </div>
@@ -77,7 +96,7 @@ const EntertainmentPage = () => {
           </p>
         </motion.div>
 
-        {/* Stadium wave decoration */}
+        {/* Stadium wave decoration — same spring animation style */}
         <div className="flex justify-center gap-1 mb-10">
           {Array.from({ length: 15 }).map((_, i) => (
             <motion.div
@@ -107,7 +126,7 @@ const EntertainmentPage = () => {
           ))}
         </div>
       </main>
-    </div>
+    </motion.div>
   );
 };
 

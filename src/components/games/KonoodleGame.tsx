@@ -62,6 +62,8 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   const [showingSolution, setShowingSolution] = useState(false);
   const [shuffling, setShuffling] = useState(false);
   const [hasShuffled, setHasShuffled] = useState(false);
+  const [removingPieces, setRemovingPieces] = useState<Set<string>>(new Set());
+  const shuffledPieceIdRef = useRef<string | null>(null);
   const cachedSolutionRef = useRef<Placement[] | null>(null);
   const [dragOverCell, setDragOverCell] = useState<[number, number] | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -136,6 +138,8 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setShowingSolution(false);
     setShuffling(false);
     setHasShuffled(false);
+    setRemovingPieces(new Set());
+    shuffledPieceIdRef.current = null;
   };
 
   // Drag and drop — create a custom drag image matching board cell size
@@ -261,48 +265,121 @@ export const KonoodleGame = ({ onComplete }: Props) => {
       setTimeout(() => {
         setShuffling(false);
         setHasShuffled(true);
+        shuffledPieceIdRef.current = lastPlacedId;
         sfx.place();
       }, 400);
     }, 400);
   }, [board, placed, lastPlacedId]);
 
-  // Solve puzzle — use cached solution from shuffle if available
+  // Solve puzzle — remove player-placed blocks first (keep shuffled), then show solution
   const handleSolve = useCallback(() => {
     setSolving(true);
-    setTimeout(() => {
-      // Use cached solution from shuffle first, then try solving fresh
-      let solution = cachedSolutionRef.current;
-      if (!solution || solution.length === 0) {
-        solution = solvePuzzle(board, placedIds, 20000000);
-      }
 
+    // Identify player-placed pieces (everything except the shuffled piece)
+    const shuffledId = shuffledPieceIdRef.current;
+    const playerPieceIds = Array.from(placed.keys()).filter(id => id !== shuffledId);
+
+    if (playerPieceIds.length > 0) {
+      // Animate removal of player pieces
+      setRemovingPieces(new Set(playerPieceIds));
+
+      // After animation, actually remove them from board state
+      setTimeout(() => {
+        setBoard(prev => {
+          const b = prev.map(r => [...r]);
+          for (let r = 0; r < BOARD_ROWS; r++) {
+            for (let c = 0; c < BOARD_COLS; c++) {
+              if (b[r][c] && playerPieceIds.includes(b[r][c]!)) {
+                b[r][c] = null;
+              }
+            }
+          }
+          return b;
+        });
+        setPlaced(prev => {
+          const p = new Map(prev);
+          playerPieceIds.forEach(id => p.delete(id));
+          return p;
+        });
+        setRemovingPieces(new Set());
+
+        // Now solve from the clean state
+        setTimeout(() => startSolving(), 200);
+      }, 600);
+    } else {
+      startSolving();
+    }
+  }, [placed]);
+
+  const startSolving = useCallback(() => {
+    // Use cached solution from shuffle first, then try solving fresh
+    let solution = cachedSolutionRef.current;
+    if (!solution || solution.length === 0) {
+      // Need to re-read board state at this point
+      setBoard(currentBoard => {
+        const currentPlacedIds = new Set<string>();
+        for (let r = 0; r < BOARD_ROWS; r++) {
+          for (let c = 0; c < BOARD_COLS; c++) {
+            if (currentBoard[r][c]) currentPlacedIds.add(currentBoard[r][c]!);
+          }
+        }
+        solution = solvePuzzle(currentBoard, currentPlacedIds, 20000000);
+
+        if (solution && solution.length > 0) {
+          setSolving(false);
+          cachedSolutionRef.current = null;
+          setShowingSolution(true);
+
+          solution.forEach((step, i) => {
+            setTimeout(() => {
+              setBoard(prev => {
+                const b = prev.map(r => [...r]);
+                step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
+                return b;
+              });
+              setPlaced(prev => {
+                const p = new Map(prev);
+                p.set(step.pieceId, step.cells);
+                return p;
+              });
+              sfx.place();
+              if (i === solution!.length - 1) {
+                setTimeout(() => sfx.levelComplete(), 200);
+              }
+            }, (i + 1) * 350);
+          });
+        } else {
+          setSolving(false);
+          cachedSolutionRef.current = null;
+        }
+
+        return currentBoard; // Don't modify
+      });
+    } else {
       setSolving(false);
       cachedSolutionRef.current = null;
+      setShowingSolution(true);
 
-      if (solution && solution.length > 0) {
-        setShowingSolution(true);
-
-        solution.forEach((step, i) => {
-          setTimeout(() => {
-            setBoard(prev => {
-              const b = prev.map(r => [...r]);
-              step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
-              return b;
-            });
-            setPlaced(prev => {
-              const p = new Map(prev);
-              p.set(step.pieceId, step.cells);
-              return p;
-            });
-            sfx.place();
-            if (i === solution!.length - 1) {
-              setTimeout(() => sfx.levelComplete(), 200);
-            }
-          }, (i + 1) * 350);
-        });
-      }
-    }, 50);
-  }, [board, placedIds]);
+      solution.forEach((step, i) => {
+        setTimeout(() => {
+          setBoard(prev => {
+            const b = prev.map(r => [...r]);
+            step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
+            return b;
+          });
+          setPlaced(prev => {
+            const p = new Map(prev);
+            p.set(step.pieceId, step.cells);
+            return p;
+          });
+          sfx.place();
+          if (i === solution!.length - 1) {
+            setTimeout(() => sfx.levelComplete(), 200);
+          }
+        }, (i + 1) * 350);
+      });
+    }
+  }, []);
 
   const pieceColor = (id: string) => PIECES.find((p) => p.id === id)?.color || "bg-muted";
 
@@ -335,21 +412,26 @@ export const KonoodleGame = ({ onComplete }: Props) => {
       <div ref={boardRef} className="relative bg-card border border-border p-2 rounded-xl">
         {board.map((row, r) => (
           <div key={r} className="flex">
-            {row.map((cell, c) => (
-              <div
-                key={c}
-                onClick={() => cell ? removePiece(cell) : placePiece(r, c)}
-                onDragOver={(e) => handleBoardDragOver(e, r, c)}
-                onDrop={(e) => handleBoardDrop(e, r, c)}
-                onDragLeave={handleBoardDragLeave}
-                className={`w-7 h-7 border border-border/20 rounded-sm cursor-pointer transition-all ${
-                  cell ? `${pieceColor(cell)} shadow-[0_0_6px_rgba(0,0,0,0.15)]`
-                  : dragPreviewSet.has(`${r},${c}`)
-                    ? (dragPreviewCells?.valid ? "bg-primary/20 border-primary/40" : "bg-destructive/20 border-destructive/40")
-                    : "bg-background/30 hover:bg-muted/50"
-                }`}
-              />
-            ))}
+            {row.map((cell, c) => {
+              const isRemoving = cell ? removingPieces.has(cell) : false;
+              return (
+                <motion.div
+                  key={c}
+                  animate={isRemoving ? { scale: 0, opacity: 0, rotate: 180 } : { scale: 1, opacity: 1, rotate: 0 }}
+                  transition={isRemoving ? { duration: 0.5, ease: "easeIn" } : { duration: 0.2 }}
+                  onClick={() => cell && !isRemoving ? removePiece(cell) : placePiece(r, c)}
+                  onDragOver={(e) => handleBoardDragOver(e, r, c)}
+                  onDrop={(e) => handleBoardDrop(e, r, c)}
+                  onDragLeave={handleBoardDragLeave}
+                  className={`w-7 h-7 border border-border/20 rounded-sm cursor-pointer transition-colors ${
+                    cell ? `${pieceColor(cell)} shadow-[0_0_6px_rgba(0,0,0,0.15)]`
+                    : dragPreviewSet.has(`${r},${c}`)
+                      ? (dragPreviewCells?.valid ? "bg-primary/20 border-primary/40" : "bg-destructive/20 border-destructive/40")
+                      : "bg-background/30 hover:bg-muted/50"
+                  }`}
+                />
+              );
+            })}
           </div>
         ))}
 
