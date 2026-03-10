@@ -138,6 +138,8 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setShowingSolution(false);
     setShuffling(false);
     setHasShuffled(false);
+    setRemovingPieces(new Set());
+    shuffledPieceIdRef.current = null;
   };
 
   // Drag and drop — create a custom drag image matching board cell size
