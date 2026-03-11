@@ -84,16 +84,28 @@ const Index = () => {
               whileHover={{ scale: 1.04, y: -4 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate("/entertainment")}
-              className="relative rounded-2xl border-2 border-[hsl(35,95%,55%)]/40 bg-card p-8 text-center hover:border-[hsl(35,95%,55%)] transition-all"
+              className="group relative rounded-2xl border-2 border-accent/40 bg-card p-8 text-center hover:border-accent hover:glow-accent transition-all overflow-hidden"
             >
-              <div className="absolute top-0 left-0 right-0 h-[4px] flex rounded-t-2xl overflow-hidden">
-                <div className="flex-1 bg-[hsl(145,70%,40%)]" />
-                <div className="flex-1 bg-[hsl(210,90%,55%)]" />
-                <div className="flex-1 bg-[hsl(35,95%,55%)]" />
+              {/* Animated gradient background on hover */}
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-accent/5 blur-2xl"
+              />
+              <div className="relative z-10">
+                <div className="h-16 w-16 mx-auto mb-4 flex items-center justify-center">
+                  <motion.span
+                    className="text-5xl"
+                    animate={{ y: [0, -4, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    🎮
+                  </motion.span>
+                </div>
+                <h2 className="font-display text-xl font-bold text-foreground mb-2">Entertainment Arcade</h2>
+                <p className="text-sm text-muted-foreground">Sports & action games</p>
               </div>
-              <div className="h-16 w-16 mx-auto mb-4 flex items-center justify-center text-4xl">🎮</div>
-              <h2 className="font-display text-xl font-bold text-foreground mb-2">Entertainment Arcade</h2>
-              <p className="text-sm text-muted-foreground">Sports & action games</p>
             </motion.button>
           </div>
 
