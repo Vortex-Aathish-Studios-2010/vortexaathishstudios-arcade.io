@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Trophy, TrendingUp, TrendingDown } from "lucide-react";
+import { Brain, Trophy, TrendingUp, TrendingDown, Gamepad2 } from "lucide-react";
 import { StatsBar } from "@/components/StatsBar";
 import { getTotalWins, getTotalLosses, getPoints } from "@/lib/streaks";
 
@@ -94,15 +94,7 @@ const Index = () => {
                 className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-accent/5 blur-2xl"
               />
               <div className="relative z-10">
-                <div className="h-16 w-16 mx-auto mb-4 flex items-center justify-center">
-                  <motion.span
-                    className="text-5xl"
-                    animate={{ y: [0, -4, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    🎮
-                  </motion.span>
-                </div>
+                <Gamepad2 className="h-16 w-16 text-accent mx-auto mb-4" style={{ filter: "drop-shadow(0 0 12px hsl(45 100% 60% / 0.6))" }} />
                 <h2 className="font-display text-xl font-bold text-foreground mb-2">Entertainment Arcade</h2>
                 <p className="text-sm text-muted-foreground">Sports & action games</p>
               </div>
