@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Trophy, TrendingUp, TrendingDown } from "lucide-react";
+import { Brain, Trophy, TrendingUp, TrendingDown, Gamepad2 } from "lucide-react";
 import { StatsBar } from "@/components/StatsBar";
 import { getTotalWins, getTotalLosses, getPoints } from "@/lib/streaks";
 
