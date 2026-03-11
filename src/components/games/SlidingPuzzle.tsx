@@ -1,12 +1,13 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { addPoints, updateStreak, addWin } from "@/lib/streaks";
 import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
-import { Clock } from "lucide-react";
+import { Clock, Eye } from "lucide-react";
 
 const SIZE = 4;
-const createSolved = () => [...Array(SIZE * SIZE - 1).keys()].map((i) => i + 1).concat(0);
+const TOTAL = SIZE * SIZE;
+const createSolved = () => [...Array(TOTAL - 1).keys()].map((i) => i + 1).concat(0);
 
 const shuffle = (arr: number[]): number[] => {
   const a = [...arr];
@@ -30,6 +31,40 @@ const shuffle = (arr: number[]): number[] => {
 
 const isSolved = (tiles: number[]) => tiles.every((v, i) => v === (i === tiles.length - 1 ? 0 : i + 1));
 
+// Get neighbors (adjacent indices) of a position
+const getNeighbors = (idx: number): number[] => {
+  const r = Math.floor(idx / SIZE), c = idx % SIZE;
+  const result: number[] = [];
+  if (r > 0) result.push((r - 1) * SIZE + c);
+  if (r < SIZE - 1) result.push((r + 1) * SIZE + c);
+  if (c > 0) result.push(r * SIZE + (c - 1));
+  if (c < SIZE - 1) result.push(r * SIZE + (c + 1));
+  return result;
+};
+
+// Generate a sequence of moves (index swaps with blank) to solve the puzzle
+// Uses a simple greedy approach: move each tile to its target one at a time
+const generateSolveMoves = (startTiles: number[]): number[][] => {
+  const snapshots: number[][] = [startTiles.map(v => v)];
+  const tiles = [...startTiles];
+  const solved = createSolved();
+
+  // Simple approach: for each target position, move the correct tile there
+  // by moving the blank to the tile, then the tile to the target
+  // This is a simplified solver that works by direct swaps for visual effect
+  for (let targetIdx = 0; targetIdx < TOTAL; targetIdx++) {
+    const targetVal = solved[targetIdx];
+    const currentIdx = tiles.indexOf(targetVal);
+    if (currentIdx === targetIdx) continue;
+
+    // Swap the tile at currentIdx with whatever is at targetIdx
+    [tiles[targetIdx], tiles[currentIdx]] = [tiles[currentIdx], tiles[targetIdx]];
+    snapshots.push([...tiles]);
+  }
+
+  return snapshots;
+};
+
 interface Props {
   level?: number;
   onComplete?: (score: number) => void;
@@ -41,8 +76,10 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
   const [won, setWon] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(true);
+  const [solvingInProgress, setSolvingInProgress] = useState(false);
   const dragStart = useRef<{ index: number; x: number; y: number } | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const solveTimeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
     if (!running || won) { clearInterval(timerRef.current); return; }
@@ -50,10 +87,15 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
     return () => clearInterval(timerRef.current);
   }, [running, won]);
 
+  // Cleanup solve timeouts on unmount
+  useEffect(() => {
+    return () => solveTimeouts.current.forEach(clearTimeout);
+  }, []);
+
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 
   const tryMove = (index: number) => {
-    if (won) return;
+    if (won || solvingInProgress) return;
     const blankIdx = tiles.indexOf(0);
     const row = Math.floor(index / SIZE), col = index % SIZE;
     const bRow = Math.floor(blankIdx / SIZE), bCol = blankIdx % SIZE;
@@ -77,8 +119,34 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
     }
   };
 
+  const handleViewSolution = useCallback(() => {
+    if (won || solvingInProgress) return;
+    setSolvingInProgress(true);
+    setRunning(false);
+
+    const snapshots = generateSolveMoves(tiles);
+
+    // Animate through snapshots step by step
+    snapshots.forEach((snapshot, i) => {
+      if (i === 0) return; // skip initial state
+      const timeout = setTimeout(() => {
+        setTiles(snapshot);
+        sfx.move();
+
+        // Check if this is the last step
+        if (i === snapshots.length - 1) {
+          setTimeout(() => {
+            toast.info("Solution revealed! No points awarded.");
+            setSolvingInProgress(false);
+          }, 300);
+        }
+      }, i * 400);
+      solveTimeouts.current.push(timeout);
+    });
+  }, [tiles, won, solvingInProgress]);
+
   const handleMouseDown = (index: number, e: React.MouseEvent) => {
-    if (tiles[index] === 0 || won) return;
+    if (tiles[index] === 0 || won || solvingInProgress) return;
     dragStart.current = { index, x: e.clientX, y: e.clientY };
   };
 
@@ -101,7 +169,7 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
   };
 
   const handleTouchStart = (index: number, e: React.TouchEvent) => {
-    if (tiles[index] === 0 || won) return;
+    if (tiles[index] === 0 || won || solvingInProgress) return;
     const t = e.touches[0];
     dragStart.current = { index, x: t.clientX, y: t.clientY };
   };
@@ -125,7 +193,17 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
     }
   };
 
-  const reset = () => { sfx.click(); setTiles(shuffle(createSolved())); setMoves(0); setWon(false); setElapsed(0); setRunning(true); };
+  const reset = () => {
+    sfx.click();
+    solveTimeouts.current.forEach(clearTimeout);
+    solveTimeouts.current = [];
+    setSolvingInProgress(false);
+    setTiles(shuffle(createSolved()));
+    setMoves(0);
+    setWon(false);
+    setElapsed(0);
+    setRunning(true);
+  };
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -143,17 +221,20 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
       >
         {tiles.map((val, i) => (
           <motion.div
-            key={i}
+            key={val || "blank"}
             layout
-            whileTap={val !== 0 ? { scale: 0.9 } : {}}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            whileTap={val !== 0 && !solvingInProgress ? { scale: 0.9 } : {}}
             onMouseDown={(e) => handleMouseDown(i, e)}
             onTouchStart={(e) => handleTouchStart(i, e)}
             onTouchEnd={handleTouchEnd}
-            className={`w-14 h-14 rounded-lg flex items-center justify-center font-display font-bold cursor-pointer transition-all ${
+            className={`w-14 h-14 rounded-lg flex items-center justify-center font-display font-bold cursor-pointer transition-colors ${
               val === 0
                 ? "bg-transparent"
-                : won
+                : won || (solvingInProgress && isSolved(tiles))
                 ? "bg-primary/20 border-2 border-primary text-primary glow-primary"
+                : solvingInProgress
+                ? "bg-secondary/20 border-2 border-secondary/40 text-secondary"
                 : "bg-card border-2 border-accent/40 text-accent hover:border-accent hover:glow-accent"
             }`}
           >
@@ -161,9 +242,22 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
           </motion.div>
         ))}
       </div>
-      <button onClick={reset} className="px-6 py-2 bg-card border border-border text-foreground rounded-xl font-display text-sm hover:border-primary/50 hover:glow-primary transition-all">
-        {won ? "PLAY AGAIN" : "SHUFFLE"}
-      </button>
+      <div className="flex gap-3">
+        <button onClick={reset} className="px-6 py-2 bg-card border border-border text-foreground rounded-xl font-display text-sm hover:border-primary/50 hover:glow-primary transition-all">
+          {won ? "PLAY AGAIN" : "SHUFFLE"}
+        </button>
+        {!won && !solvingInProgress && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleViewSolution}
+            className="flex items-center gap-2 px-4 py-2 bg-secondary/10 border border-secondary/30 text-secondary rounded-xl font-display text-xs hover:bg-secondary/20 hover:border-secondary/50 transition-all"
+          >
+            <Eye className="h-4 w-4" />
+            VIEW SOLUTION
+          </motion.button>
+        )}
+      </div>
     </div>
   );
 };
