@@ -201,6 +201,22 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
           </span>
         ))}
       </div>
+      {clickMode && selecting.length > 0 && (
+        <div className="flex gap-2">
+          <button
+            onClick={submitSelection}
+            className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary hover:brightness-110 transition-all"
+          >
+            CHECK ({selecting.map(([r, c]) => grid[r][c]).join("")})
+          </button>
+          <button
+            onClick={() => { setSelecting([]); setClickMode(false); }}
+            className="px-4 py-2 bg-card border border-border text-foreground rounded-xl font-display text-sm hover:border-destructive/50 transition-all"
+          >
+            CLEAR
+          </button>
+        </div>
+      )}
       {levelComplete && (
         <button
           onClick={handleNextLevel}
