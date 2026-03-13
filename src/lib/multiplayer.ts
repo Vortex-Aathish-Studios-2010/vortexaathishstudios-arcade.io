@@ -67,8 +67,14 @@ export const reportScore = async (roomId: string, playerId: string, score: numbe
     .eq("room_id", roomId);
 
   if (players && players.every((p: any) => p.finished)) {
-    // Determine winner (highest score)
-    const winner = players.reduce((best: any, p: any) => (!best || p.score > best.score ? p : best), null);
+    // Winner = player who finished first (earliest finished_at) with score > 0
+    const validPlayers = players.filter((p: any) => p.score > 0);
+    const winner = validPlayers.length > 0
+      ? validPlayers.reduce((best: any, p: any) => {
+          if (!best) return p;
+          return new Date(p.finished_at) < new Date(best.finished_at) ? p : best;
+        }, null)
+      : null;
     if (winner) {
       await supabase.from("room_players").update({ is_winner: true }).eq("id", winner.id);
     }

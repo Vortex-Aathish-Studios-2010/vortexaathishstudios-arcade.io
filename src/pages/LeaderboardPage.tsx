@@ -66,13 +66,9 @@ const LeaderboardPage = () => {
       .maybeSingle();
 
     if (existing) {
-      // Update if new wins are higher
-      if (wins > existing.wins || losses > existing.losses) {
-        await supabase.from("leaderboard").update({ wins, losses, updated_at: new Date().toISOString() }).eq("id", existing.id);
-        toast.success("Score updated!");
-      } else {
-        toast.info("Your score is already up to date");
-      }
+      // Always update with latest local stats
+      await supabase.from("leaderboard").update({ wins, losses, updated_at: new Date().toISOString() }).eq("id", existing.id);
+      toast.success("Score updated!");
     } else {
       const { error } = await supabase.from("leaderboard").insert({ player_name: name.trim(), wins, losses });
       if (error) {
@@ -129,7 +125,7 @@ const LeaderboardPage = () => {
             className="flex items-center gap-1.5 px-4 py-2 bg-accent/10 border border-accent/30 text-accent rounded-xl font-display text-xs hover:border-accent/60 transition-all"
           >
             <Plus className="h-3.5 w-3.5" />
-            SUBMIT MY SCORE
+            SUBMIT / UPDATE SCORE
           </button>
         </motion.div>
 

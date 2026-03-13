@@ -1,10 +1,10 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { addPoints, updateStreak, getGameLevel, incrementLevel, addWin } from "@/lib/streaks";
 import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
 
 const BASE_GRID = 8;
-const DIRECTIONS = [[0, 1], [1, 0], [1, 1], [0, -1], [1, -1]];
+const DIRECTIONS = [[0, 1], [1, 0], [1, 1], [0, -1], [1, -1], [-1, 0], [-1, -1], [-1, 1]];
 
 const ALL_WORDS = [
   ["CODE", "TYPE", "LOOP", "NODE", "DATA", "GAME"],
@@ -62,9 +62,9 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
   const { grid, placements } = useMemo(() => generateGrid(config.words, config.gridSize), [currentLevel]);
   const [found, setFound] = useState<Set<string>>(new Set());
   const [selecting, setSelecting] = useState<[number, number][]>([]);
-  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [levelComplete, setLevelComplete] = useState(false);
-  const [clickMode, setClickMode] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const cellKey = (r: number, c: number) => `${r},${c}`;
   const foundCells = useMemo(() => {
@@ -74,25 +74,25 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
   }, [found, placements]);
   const selectingSet = useMemo(() => new Set(selecting.map(([r, c]) => cellKey(r, c))), [selecting]);
 
-  const handleCellClick = useCallback((r: number, c: number) => {
-    sfx.click();
-    if (clickMode) {
-      // In click mode, toggle cells in selection
-      const key = cellKey(r, c);
-      if (selectingSet.has(key)) {
-        setSelecting(prev => prev.filter(([pr, pc]) => cellKey(pr, pc) !== key));
-      } else {
-        setSelecting(prev => [...prev, [r, c]]);
-      }
-    } else {
-      // Start click mode with first cell
-      setClickMode(true);
-      setSelecting([[r, c]]);
+  // Check if adding a cell keeps selection in a straight line
+  const isValidLineCell = useCallback((r: number, c: number, current: [number, number][]) => {
+    if (current.length === 0) return true;
+    if (current.length === 1) {
+      const [r0, c0] = current[0];
+      const dr = Math.abs(r - r0), dc = Math.abs(c - c0);
+      return dr <= 1 && dc <= 1 && (dr + dc > 0); // adjacent
     }
-  }, [clickMode, selectingSet]);
+    // Must continue same direction
+    const [r0, c0] = current[0];
+    const [r1, c1] = current[1];
+    const dirR = Math.sign(r1 - r0), dirC = Math.sign(c1 - c0);
+    const last = current[current.length - 1];
+    return r === last[0] + dirR && c === last[1] + dirC;
+  }, []);
 
-  const submitSelection = useCallback(() => {
-    const selected = selecting.map(([r, c]) => grid[r][c]).join("");
+  const tryMatchWord = useCallback((sel: [number, number][]) => {
+    if (sel.length < 2) return;
+    const selected = sel.map(([r, c]) => grid[r][c]).join("");
     const reversed = selected.split("").reverse().join("");
     for (const word of config.words) {
       if (!found.has(word) && (selected === word || reversed === word)) {
@@ -111,40 +111,90 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
           onComplete?.(pts);
         } else toast.success(`Found "${word}"!`);
         setSelecting([]);
-        setClickMode(false);
         return;
       }
     }
-    // Not a word - clear
     setSelecting([]);
-    setClickMode(false);
-  }, [selecting, grid, config.words, found, currentLevel, onComplete]);
+  }, [grid, config.words, found, currentLevel, onComplete]);
 
-  const checkSelection = useCallback(() => {
-    if (clickMode) return; // Don't auto-check in click mode
-    const selected = selecting.map(([r, c]) => grid[r][c]).join("");
-    const reversed = selected.split("").reverse().join("");
-    for (const word of config.words) {
-      if (!found.has(word) && (selected === word || reversed === word)) {
-        const newFound = new Set([...found, word]);
-        setFound(newFound);
-        sfx.wordFound();
-        if (newFound.size === config.words.length) {
-          const pts = 80 + currentLevel * 30;
-          addPoints(pts);
-          updateStreak("wordsearch");
-          addWin("wordsearch");
-          incrementLevel("wordsearch");
-          sfx.levelComplete();
-          toast.success(`All words found! +${pts} points`);
-          setLevelComplete(true);
-          onComplete?.(pts);
-        } else toast.success(`Found "${word}"!`);
-      }
+  // Click-to-select: builds a line one cell at a time
+  const handleCellClick = useCallback((r: number, c: number) => {
+    if (isDragging) return; // Don't handle click after drag
+    sfx.click();
+    
+    if (selecting.length === 0) {
+      setSelecting([[r, c]]);
+      return;
     }
-    setSelecting([]);
-    setIsMouseDown(false);
-  }, [selecting, grid, config.words, found, currentLevel, onComplete, clickMode]);
+    
+    // If clicking the same cell, deselect
+    if (selecting.length > 0 && selecting[selecting.length - 1][0] === r && selecting[selecting.length - 1][1] === c) {
+      setSelecting(prev => prev.slice(0, -1));
+      return;
+    }
+    
+    if (isValidLineCell(r, c, selecting)) {
+      const newSel = [...selecting, [r, c] as [number, number]];
+      setSelecting(newSel);
+      // Auto-check on each addition
+      const selected = newSel.map(([rr, cc]) => grid[rr][cc]).join("");
+      const reversed = selected.split("").reverse().join("");
+      for (const word of config.words) {
+        if (!found.has(word) && (selected === word || reversed === word)) {
+          const newFound = new Set([...found, word]);
+          setFound(newFound);
+          sfx.wordFound();
+          if (newFound.size === config.words.length) {
+            const pts = 80 + currentLevel * 30;
+            addPoints(pts);
+            updateStreak("wordsearch");
+            addWin("wordsearch");
+            incrementLevel("wordsearch");
+            sfx.levelComplete();
+            toast.success(`All words found! +${pts} points`);
+            setLevelComplete(true);
+            onComplete?.(pts);
+          } else toast.success(`Found "${word}"!`);
+          setSelecting([]);
+          return;
+        }
+      }
+    } else {
+      // Reset and start new selection
+      setSelecting([[r, c]]);
+    }
+  }, [selecting, isDragging, isValidLineCell, grid, config.words, found, currentLevel, onComplete]);
+
+  // Drag selection
+  const handleDragStart = useCallback((r: number, c: number) => {
+    setIsDragging(true);
+    setSelecting([[r, c]]);
+    sfx.click();
+  }, []);
+
+  const handleDragEnter = useCallback((r: number, c: number) => {
+    if (!isDragging) return;
+    if (selectingSet.has(cellKey(r, c))) return;
+    if (isValidLineCell(r, c, selecting)) {
+      setSelecting(prev => [...prev, [r, c]]);
+    }
+  }, [isDragging, selectingSet, isValidLineCell, selecting]);
+
+  const handleDragEnd = useCallback(() => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    tryMatchWord(selecting);
+  }, [isDragging, selecting, tryMatchWord]);
+
+  const getCellFromTouch = useCallback((touch: { clientX: number; clientY: number }): [number, number] | null => {
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const rc = el?.getAttribute("data-rc");
+    if (rc) {
+      const [r, c] = rc.split(",").map(Number);
+      return [r, c];
+    }
+    return null;
+  }, []);
 
   const handleNextLevel = () => {
     const next = currentLevel + 1;
@@ -159,31 +209,31 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="text-xs font-display text-muted-foreground">
-        Level {currentLevel} · Grid: {config.gridSize}×{config.gridSize} · Words up to {Math.max(...config.words.map(w => w.length))} letters
+        Level {currentLevel} · Grid: {config.gridSize}×{config.gridSize}
       </div>
+      <p className="text-[10px] text-muted-foreground/60">Click letters in a line or drag to select</p>
       <div
-        className="bg-card border border-border p-2 rounded-xl select-none"
-        onMouseUp={checkSelection}
-        onMouseLeave={() => { if (isMouseDown) checkSelection(); }}
-        onTouchEnd={checkSelection}
+        ref={gridRef}
+        className="bg-card border border-border p-2 rounded-xl select-none touch-none"
+        onMouseUp={handleDragEnd}
+        onMouseLeave={handleDragEnd}
+        onTouchEnd={handleDragEnd}
       >
         {grid.map((row, r) => (
           <div key={r} className="flex">
             {row.map((letter, c) => (
               <div
                 key={c}
-                onMouseDown={() => { if (!clickMode) { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); } }}
-                onMouseEnter={() => { if (isMouseDown && !clickMode && !selectingSet.has(cellKey(r, c))) setSelecting((prev) => [...prev, [r, c]]); }}
-                onClick={() => handleCellClick(r, c)}
-                onTouchStart={() => { if (!clickMode) { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); } }}
-                onTouchMove={(e) => {
-                  if (clickMode) return;
-                  const touch = e.touches[0];
-                  const el = document.elementFromPoint(touch.clientX, touch.clientY);
-                  const rc = el?.getAttribute("data-rc");
-                  if (rc) { const [rr, cc] = rc.split(",").map(Number); if (!selectingSet.has(cellKey(rr, cc))) setSelecting((prev) => [...prev, [rr, cc]]); }
-                }}
                 data-rc={`${r},${c}`}
+                onMouseDown={(e) => { e.preventDefault(); handleDragStart(r, c); }}
+                onMouseEnter={() => handleDragEnter(r, c)}
+                onClick={() => { if (!isDragging) handleCellClick(r, c); }}
+                onTouchStart={(e) => { e.preventDefault(); handleDragStart(r, c); }}
+                onTouchMove={(e) => {
+                  const touch = e.touches[0];
+                  const cell = getCellFromTouch(touch);
+                  if (cell) handleDragEnter(cell[0], cell[1]);
+                }}
                 className={`${cellSize} flex items-center justify-center font-display font-bold cursor-pointer transition-all rounded-sm
                   ${foundCells.has(cellKey(r, c)) ? "bg-primary/30 text-primary text-glow-primary" : selectingSet.has(cellKey(r, c)) ? "bg-accent/30 text-accent" : "text-foreground/80 hover:bg-muted/50"}
                 `}
@@ -201,17 +251,14 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
           </span>
         ))}
       </div>
-      {clickMode && selecting.length > 0 && (
+      {selecting.length > 0 && !isDragging && (
         <div className="flex gap-2">
+          <span className="px-4 py-1.5 bg-accent/10 border border-accent/30 rounded-lg font-display text-xs text-accent">
+            {selecting.map(([r, c]) => grid[r][c]).join("")}
+          </span>
           <button
-            onClick={submitSelection}
-            className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary hover:brightness-110 transition-all"
-          >
-            CHECK ({selecting.map(([r, c]) => grid[r][c]).join("")})
-          </button>
-          <button
-            onClick={() => { setSelecting([]); setClickMode(false); }}
-            className="px-4 py-2 bg-card border border-border text-foreground rounded-xl font-display text-sm hover:border-destructive/50 transition-all"
+            onClick={() => setSelecting([])}
+            className="px-3 py-1.5 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-destructive/50 transition-all"
           >
             CLEAR
           </button>
