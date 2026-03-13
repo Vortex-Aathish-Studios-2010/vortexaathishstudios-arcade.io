@@ -64,6 +64,7 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
   const [selecting, setSelecting] = useState<[number, number][]>([]);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [levelComplete, setLevelComplete] = useState(false);
+  const [clickMode, setClickMode] = useState(false);
 
   const cellKey = (r: number, c: number) => `${r},${c}`;
   const foundCells = useMemo(() => {
