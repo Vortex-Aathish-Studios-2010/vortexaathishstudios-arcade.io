@@ -186,7 +186,7 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
     tryMatchWord(selecting);
   }, [isDragging, selecting, tryMatchWord]);
 
-  const getCellFromTouch = useCallback((touch: Touch): [number, number] | null => {
+  const getCellFromTouch = useCallback((touch: { clientX: number; clientY: number }): [number, number] | null => {
     const el = document.elementFromPoint(touch.clientX, touch.clientY);
     const rc = el?.getAttribute("data-rc");
     if (rc) {
