@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { MemoryGame } from "@/components/games/MemoryGame";
@@ -12,7 +12,7 @@ import { TicTacToeGame } from "@/components/games/TicTacToeGame";
 import { GameTutorial } from "@/components/GameTutorial";
 import { MultiplayerLobby, MultiplayerResult } from "@/components/MultiplayerLobby";
 import { ArrowLeft, HelpCircle, Users } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { isTutorialShown, markTutorialShown, getGameLevel } from "@/lib/streaks";
 import { reportScore } from "@/lib/multiplayer";
 
@@ -39,6 +39,8 @@ const GamePage = () => {
   const [showMultiplayer, setShowMultiplayer] = useState(false);
   const [multiplayerRoom, setMultiplayerRoom] = useState<{ roomId: string; playerId: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [gameReady, setGameReady] = useState(false);
   const level = id ? getGameLevel(id) : 1;
 
   const handleTutorialClose = useCallback(() => {
@@ -49,7 +51,20 @@ const GamePage = () => {
   const handleMultiplayerStart = useCallback((roomId: string, playerId: string, _diff: number) => {
     setMultiplayerRoom({ roomId, playerId });
     setShowMultiplayer(false);
+    setCountdown(3);
+    setGameReady(false);
   }, []);
+
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      setCountdown(null);
+      setGameReady(true);
+      return;
+    }
+    const timer = setTimeout(() => setCountdown(c => (c !== null ? c - 1 : null)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   const handleGameComplete = useCallback((score: number) => {
     if (multiplayerRoom) {
