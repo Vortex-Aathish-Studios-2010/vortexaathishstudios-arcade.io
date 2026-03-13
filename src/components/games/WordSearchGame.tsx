@@ -172,10 +172,12 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
             {row.map((letter, c) => (
               <div
                 key={c}
-                onMouseDown={() => { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); }}
-                onMouseEnter={() => { if (isMouseDown && !selectingSet.has(cellKey(r, c))) setSelecting((prev) => [...prev, [r, c]]); }}
-                onTouchStart={() => { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); }}
+                onMouseDown={() => { if (!clickMode) { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); } }}
+                onMouseEnter={() => { if (isMouseDown && !clickMode && !selectingSet.has(cellKey(r, c))) setSelecting((prev) => [...prev, [r, c]]); }}
+                onClick={() => handleCellClick(r, c)}
+                onTouchStart={() => { if (!clickMode) { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); } }}
                 onTouchMove={(e) => {
+                  if (clickMode) return;
                   const touch = e.touches[0];
                   const el = document.elementFromPoint(touch.clientX, touch.clientY);
                   const rc = el?.getAttribute("data-rc");
