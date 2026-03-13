@@ -135,13 +135,39 @@ const GamePage = () => {
           <h1 className="text-xl font-display font-bold text-foreground">{game.name}</h1>
         </motion.div>
 
-        {/* Game component */}
+        {/* Game component with countdown overlay */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5, type: "spring", stiffness: 120 }}
+          className="relative"
         >
-          <GameComponent level={level} onComplete={multiplayerRoom ? handleGameComplete : undefined} />
+          <div className={countdown !== null ? "blur-md pointer-events-none" : ""}>
+            <GameComponent level={level} onComplete={multiplayerRoom && gameReady ? handleGameComplete : undefined} />
+          </div>
+
+          {/* Countdown overlay */}
+          <AnimatePresence>
+            {countdown !== null && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <motion.span
+                  key={countdown}
+                  initial={{ scale: 2, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  transition={{ duration: 0.4, type: "spring", stiffness: 200 }}
+                  className="text-8xl font-display font-black text-primary text-glow-primary"
+                >
+                  {countdown === 0 ? "GO!" : countdown}
+                </motion.span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         <GameTutorial game={game} open={showTutorial} onClose={handleTutorialClose} />
