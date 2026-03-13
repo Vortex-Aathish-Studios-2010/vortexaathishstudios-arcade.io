@@ -66,13 +66,9 @@ const LeaderboardPage = () => {
       .maybeSingle();
 
     if (existing) {
-      // Update if new wins are higher
-      if (wins > existing.wins || losses > existing.losses) {
-        await supabase.from("leaderboard").update({ wins, losses, updated_at: new Date().toISOString() }).eq("id", existing.id);
-        toast.success("Score updated!");
-      } else {
-        toast.info("Your score is already up to date");
-      }
+      // Always update with latest local stats
+      await supabase.from("leaderboard").update({ wins, losses, updated_at: new Date().toISOString() }).eq("id", existing.id);
+      toast.success("Score updated!");
     } else {
       const { error } = await supabase.from("leaderboard").insert({ player_name: name.trim(), wins, losses });
       if (error) {
