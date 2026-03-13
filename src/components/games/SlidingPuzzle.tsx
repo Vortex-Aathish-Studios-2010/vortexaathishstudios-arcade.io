@@ -246,17 +246,6 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
         <button onClick={reset} className="px-6 py-2 bg-card border border-border text-foreground rounded-xl font-display text-sm hover:border-primary/50 hover:glow-primary transition-all">
           {won ? "PLAY AGAIN" : "SHUFFLE"}
         </button>
-        {!won && !solvingInProgress && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleViewSolution}
-            className="flex items-center gap-2 px-4 py-2 bg-secondary/10 border border-secondary/30 text-secondary rounded-xl font-display text-xs hover:bg-secondary/20 hover:border-secondary/50 transition-all"
-          >
-            <Eye className="h-4 w-4" />
-            VIEW SOLUTION
-          </motion.button>
-        )}
       </div>
     </div>
   );

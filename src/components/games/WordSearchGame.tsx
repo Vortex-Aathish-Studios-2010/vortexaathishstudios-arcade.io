@@ -64,6 +64,7 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
   const [selecting, setSelecting] = useState<[number, number][]>([]);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [levelComplete, setLevelComplete] = useState(false);
+  const [clickMode, setClickMode] = useState(false);
 
   const cellKey = (r: number, c: number) => `${r},${c}`;
   const foundCells = useMemo(() => {
@@ -73,7 +74,54 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
   }, [found, placements]);
   const selectingSet = useMemo(() => new Set(selecting.map(([r, c]) => cellKey(r, c))), [selecting]);
 
+  const handleCellClick = useCallback((r: number, c: number) => {
+    sfx.click();
+    if (clickMode) {
+      // In click mode, toggle cells in selection
+      const key = cellKey(r, c);
+      if (selectingSet.has(key)) {
+        setSelecting(prev => prev.filter(([pr, pc]) => cellKey(pr, pc) !== key));
+      } else {
+        setSelecting(prev => [...prev, [r, c]]);
+      }
+    } else {
+      // Start click mode with first cell
+      setClickMode(true);
+      setSelecting([[r, c]]);
+    }
+  }, [clickMode, selectingSet]);
+
+  const submitSelection = useCallback(() => {
+    const selected = selecting.map(([r, c]) => grid[r][c]).join("");
+    const reversed = selected.split("").reverse().join("");
+    for (const word of config.words) {
+      if (!found.has(word) && (selected === word || reversed === word)) {
+        const newFound = new Set([...found, word]);
+        setFound(newFound);
+        sfx.wordFound();
+        if (newFound.size === config.words.length) {
+          const pts = 80 + currentLevel * 30;
+          addPoints(pts);
+          updateStreak("wordsearch");
+          addWin("wordsearch");
+          incrementLevel("wordsearch");
+          sfx.levelComplete();
+          toast.success(`All words found! +${pts} points`);
+          setLevelComplete(true);
+          onComplete?.(pts);
+        } else toast.success(`Found "${word}"!`);
+        setSelecting([]);
+        setClickMode(false);
+        return;
+      }
+    }
+    // Not a word - clear
+    setSelecting([]);
+    setClickMode(false);
+  }, [selecting, grid, config.words, found, currentLevel, onComplete]);
+
   const checkSelection = useCallback(() => {
+    if (clickMode) return; // Don't auto-check in click mode
     const selected = selecting.map(([r, c]) => grid[r][c]).join("");
     const reversed = selected.split("").reverse().join("");
     for (const word of config.words) {
@@ -96,7 +144,7 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
     }
     setSelecting([]);
     setIsMouseDown(false);
-  }, [selecting, grid, config.words, found, currentLevel, onComplete]);
+  }, [selecting, grid, config.words, found, currentLevel, onComplete, clickMode]);
 
   const handleNextLevel = () => {
     const next = currentLevel + 1;
@@ -124,10 +172,12 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
             {row.map((letter, c) => (
               <div
                 key={c}
-                onMouseDown={() => { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); }}
-                onMouseEnter={() => { if (isMouseDown && !selectingSet.has(cellKey(r, c))) setSelecting((prev) => [...prev, [r, c]]); }}
-                onTouchStart={() => { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); }}
+                onMouseDown={() => { if (!clickMode) { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); } }}
+                onMouseEnter={() => { if (isMouseDown && !clickMode && !selectingSet.has(cellKey(r, c))) setSelecting((prev) => [...prev, [r, c]]); }}
+                onClick={() => handleCellClick(r, c)}
+                onTouchStart={() => { if (!clickMode) { setIsMouseDown(true); setSelecting([[r, c]]); sfx.click(); } }}
                 onTouchMove={(e) => {
+                  if (clickMode) return;
                   const touch = e.touches[0];
                   const el = document.elementFromPoint(touch.clientX, touch.clientY);
                   const rc = el?.getAttribute("data-rc");
@@ -151,6 +201,22 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
           </span>
         ))}
       </div>
+      {clickMode && selecting.length > 0 && (
+        <div className="flex gap-2">
+          <button
+            onClick={submitSelection}
+            className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary hover:brightness-110 transition-all"
+          >
+            CHECK ({selecting.map(([r, c]) => grid[r][c]).join("")})
+          </button>
+          <button
+            onClick={() => { setSelecting([]); setClickMode(false); }}
+            className="px-4 py-2 bg-card border border-border text-foreground rounded-xl font-display text-sm hover:border-destructive/50 transition-all"
+          >
+            CLEAR
+          </button>
+        </div>
+      )}
       {levelComplete && (
         <button
           onClick={handleNextLevel}

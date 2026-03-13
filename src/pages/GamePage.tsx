@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { MemoryGame } from "@/components/games/MemoryGame";
@@ -12,7 +12,7 @@ import { TicTacToeGame } from "@/components/games/TicTacToeGame";
 import { GameTutorial } from "@/components/GameTutorial";
 import { MultiplayerLobby, MultiplayerResult } from "@/components/MultiplayerLobby";
 import { ArrowLeft, HelpCircle, Users } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { isTutorialShown, markTutorialShown, getGameLevel } from "@/lib/streaks";
 import { reportScore } from "@/lib/multiplayer";
 
@@ -39,6 +39,8 @@ const GamePage = () => {
   const [showMultiplayer, setShowMultiplayer] = useState(false);
   const [multiplayerRoom, setMultiplayerRoom] = useState<{ roomId: string; playerId: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [gameReady, setGameReady] = useState(false);
   const level = id ? getGameLevel(id) : 1;
 
   const handleTutorialClose = useCallback(() => {
@@ -49,7 +51,20 @@ const GamePage = () => {
   const handleMultiplayerStart = useCallback((roomId: string, playerId: string, _diff: number) => {
     setMultiplayerRoom({ roomId, playerId });
     setShowMultiplayer(false);
+    setCountdown(3);
+    setGameReady(false);
   }, []);
+
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      setCountdown(null);
+      setGameReady(true);
+      return;
+    }
+    const timer = setTimeout(() => setCountdown(c => (c !== null ? c - 1 : null)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   const handleGameComplete = useCallback((score: number) => {
     if (multiplayerRoom) {
@@ -120,13 +135,39 @@ const GamePage = () => {
           <h1 className="text-xl font-display font-bold text-foreground">{game.name}</h1>
         </motion.div>
 
-        {/* Game component */}
+        {/* Game component with countdown overlay */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5, type: "spring", stiffness: 120 }}
+          className="relative"
         >
-          <GameComponent level={level} onComplete={multiplayerRoom ? handleGameComplete : undefined} />
+          <div className={countdown !== null ? "blur-md pointer-events-none" : ""}>
+            <GameComponent level={level} onComplete={multiplayerRoom && gameReady ? handleGameComplete : undefined} />
+          </div>
+
+          {/* Countdown overlay */}
+          <AnimatePresence>
+            {countdown !== null && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <motion.span
+                  key={countdown}
+                  initial={{ scale: 2, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.5, opacity: 0 }}
+                  transition={{ duration: 0.4, type: "spring", stiffness: 200 }}
+                  className="text-8xl font-display font-black text-primary text-glow-primary"
+                >
+                  {countdown === 0 ? "GO!" : countdown}
+                </motion.span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         <GameTutorial game={game} open={showTutorial} onClose={handleTutorialClose} />

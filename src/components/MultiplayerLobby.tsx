@@ -24,6 +24,15 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
 
   useEffect(() => {
     if (!roomId) return;
+    // Initial fetch of players
+    const fetchPlayers = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: ps } = await supabase.from("room_players").select("*, players(display_name)").eq("room_id", roomId);
+      const { data: room } = await supabase.from("game_rooms").select("status").eq("id", roomId).single();
+      if (ps) setPlayers(ps);
+      if (room) setRoomStatus(room.status || "waiting");
+    };
+    fetchPlayers();
     const unsub = subscribeToRoom(roomId, (ps, status) => {
       setPlayers(ps);
       setRoomStatus(status);
