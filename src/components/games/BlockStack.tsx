@@ -4,6 +4,7 @@ import { addPoints, updateStreak, addLoss } from "@/lib/streaks";
 import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { useDevice } from "@/lib/DeviceContext";
 
 const COLS = 10;
 const ROWS = 20;
@@ -90,6 +91,7 @@ export const BlockStack = ({ onComplete }: Props) => {
   const [gameOver, setGameOver] = useState(false);
   const [speedLevel, setSpeedLevel] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const { device } = useDevice();
 
   const currentSpeed = SPEED_LEVELS[speedLevel];
 
@@ -257,14 +259,18 @@ export const BlockStack = ({ onComplete }: Props) => {
         </div>
         {renderNext()}
       </div>
-      <div className="flex gap-2">
-        <button onClick={() => movePiece(-1, 0)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-primary/50 transition-colors">←</button>
-        <button onClick={() => movePiece(0, 0, true)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-secondary/50 transition-colors">↻</button>
-        <button onClick={() => movePiece(1, 0)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-primary/50 transition-colors">→</button>
-        <button onClick={() => movePiece(0, 1)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-accent/50 transition-colors">↓</button>
-        <button onClick={hardDrop} className="px-3 py-2 bg-primary/20 border border-primary/40 text-primary rounded-lg font-display text-xs hover:glow-primary transition-all">DROP</button>
-      </div>
-      <p className="text-xs text-muted-foreground">Arrow keys + Space to drop · ↑↓ buttons to change speed</p>
+      {(!device || device === "laptop") && (
+        <>
+          <div className="flex gap-2">
+            <button onClick={() => movePiece(-1, 0)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-primary/50 transition-colors">←</button>
+            <button onClick={() => movePiece(0, 0, true)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-secondary/50 transition-colors">↻</button>
+            <button onClick={() => movePiece(1, 0)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-primary/50 transition-colors">→</button>
+            <button onClick={() => movePiece(0, 1)} className="px-3 py-2 bg-card border border-border text-foreground rounded-lg font-display text-xs hover:border-accent/50 transition-colors">↓</button>
+            <button onClick={hardDrop} className="px-3 py-2 bg-primary/20 border border-primary/40 text-primary rounded-lg font-display text-xs hover:glow-primary transition-all">DROP</button>
+          </div>
+          <p className="text-xs text-muted-foreground">Arrow keys + Space to drop · ↑↓ buttons to change speed</p>
+        </>
+      )}
       {gameOver && (
         <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} onClick={reset} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary">
           PLAY AGAIN

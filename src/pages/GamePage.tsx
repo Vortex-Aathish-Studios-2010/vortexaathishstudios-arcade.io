@@ -15,6 +15,9 @@ import { ArrowLeft, HelpCircle, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { isTutorialShown, markTutorialShown, getGameLevel } from "@/lib/streaks";
 import { reportScore } from "@/lib/multiplayer";
+import { useDevice } from "@/lib/DeviceContext";
+import { OnScreenControls } from "@/components/OnScreenControls";
+import { Monitor, Smartphone, Tablet } from "lucide-react";
 
 const gameComponents: Record<string, React.FC<{ level?: number; onComplete?: (score: number) => void }>> = {
   memory: MemoryGame,
@@ -42,6 +45,7 @@ const GamePage = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [gameReady, setGameReady] = useState(false);
   const level = id ? getGameLevel(id) : 1;
+  const { device, setDevice } = useDevice();
 
   const handleTutorialClose = useCallback(() => {
     setShowTutorial(false);
@@ -79,6 +83,7 @@ const GamePage = () => {
   }
 
   const showLevel = id && !HIDE_LEVEL_IDS.has(id);
+  const showDeviceToggle = id === "snake" || id === "tetris";
 
   return (
     <motion.div
@@ -107,6 +112,19 @@ const GamePage = () => {
               <span className="text-xs font-display text-primary bg-primary/10 border border-primary/20 rounded-lg px-3 py-1.5">
                 LVL {level}
               </span>
+            )}
+            {showDeviceToggle && (
+              <div className="hidden sm:flex bg-card border border-border rounded-lg p-0.5 ml-1">
+                <button title="Phone controls" onClick={() => setDevice("phone")} className={`p-1 rounded-md transition-colors ${device === "phone" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+                  <Smartphone className="w-3.5 h-3.5" />
+                </button>
+                <button title="Tablet controls" onClick={() => setDevice("tablet")} className={`p-1 rounded-md transition-colors ${device === "tablet" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+                  <Tablet className="w-3.5 h-3.5" />
+                </button>
+                <button title="Laptop controls" onClick={() => setDevice("laptop")} className={`p-1 rounded-md transition-colors ${device === "laptop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+                  <Monitor className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
             <button
               onClick={() => setShowMultiplayer(true)}
@@ -189,6 +207,8 @@ const GamePage = () => {
           />
         )}
       </div>
+      
+      <OnScreenControls gameId={id} />
     </motion.div>
   );
 };

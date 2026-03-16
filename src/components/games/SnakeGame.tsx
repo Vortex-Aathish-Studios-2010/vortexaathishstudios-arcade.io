@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { addPoints, updateStreak, addLoss } from "@/lib/streaks";
 import { sfx } from "@/lib/sounds";
 import { toast } from "sonner";
+import { useDevice } from "@/lib/DeviceContext";
 
 const COLS = 25;
 const ROWS = 20;
@@ -46,6 +47,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
   const [obstacles, setObstacles] = useState<Set<string>>(new Set());
   const dirRef = useRef<Pos>([0, 1]);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const { device } = useDevice();
 
   // Points per food increase with length, obstacles appear as snake grows
   const getPointsPerFood = () => 10 + Math.floor(snake.length / 5) * 5;
@@ -170,9 +172,13 @@ export const SnakeGame = ({ onComplete }: Props) => {
         ))}
       </div>
       {!started && !gameOver && (
-        <p className="text-sm text-muted-foreground font-display animate-pulse">Press any arrow key or swipe to start</p>
+        <p className="text-sm text-muted-foreground font-display animate-pulse">
+          {(!device || device === "laptop") ? "Press any arrow key or swipe to start" : "Use virtual controls or swipe to start"}
+        </p>
       )}
-      <p className="text-xs text-muted-foreground">Arrow keys or swipe · Obstacles appear as you grow!</p>
+      <p className="text-xs text-muted-foreground">
+        {(!device || device === "laptop") ? "Arrow keys or swipe" : "Virtual controls" } · Obstacles appear as you grow!
+      </p>
       {gameOver && (
         <button onClick={reset} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary">
           PLAY AGAIN

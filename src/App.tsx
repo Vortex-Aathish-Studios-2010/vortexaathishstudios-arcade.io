@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SplashScreen } from "@/components/SplashScreen";
 import { DeviceSelector, getDeviceType, DeviceType } from "@/components/DeviceSelector";
+import { DeviceProvider } from "@/lib/DeviceContext";
 import Index from "./pages/Index";
 import GamePage from "./pages/GamePage";
 import EntertainmentPage from "./pages/EntertainmentPage";
@@ -36,22 +37,24 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
-        {showDeviceSelector && <DeviceSelector onSelect={handleDeviceSelect} />}
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/game/:id" element={<GamePage />} />
-            <Route path="/entertainment" element={<EntertainmentPage />} />
-            <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
-            <Route path="/leaderboard" element={<LeaderboardPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <DeviceProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+          {showDeviceSelector && <DeviceSelector onSelect={handleDeviceSelect} />}
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/game/:id" element={<GamePage />} />
+              <Route path="/entertainment" element={<EntertainmentPage />} />
+              <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </DeviceProvider>
     </QueryClientProvider>
   );
 };

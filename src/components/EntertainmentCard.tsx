@@ -6,9 +6,15 @@ import { Lock } from "lucide-react";
 import { sfx } from "@/lib/sounds";
 
 const colorMap = {
-  "sport-primary": "border-[hsl(var(--sport-primary))]/30 hover:border-[hsl(var(--sport-primary))]/60",
-  "sport-secondary": "border-[hsl(var(--sport-secondary))]/30 hover:border-[hsl(var(--sport-secondary))]/60",
-  "sport-accent": "border-[hsl(var(--sport-accent))]/30 hover:border-[hsl(var(--sport-accent))]/60",
+  "sport-primary": "border-[hsl(var(--sport-primary))]/40 hover:border-[hsl(var(--sport-primary))]/80 hover:shadow-[0_0_30px_hsl(var(--sport-primary)/0.3)] bg-[hsl(var(--sport-primary))]/5",
+  "sport-secondary": "border-[hsl(var(--sport-secondary))]/40 hover:border-[hsl(var(--sport-secondary))]/80 hover:shadow-[0_0_30px_hsl(var(--sport-secondary)/0.3)] bg-[hsl(var(--sport-secondary))]/5",
+  "sport-accent": "border-[hsl(var(--sport-accent))]/40 hover:border-[hsl(var(--sport-accent))]/80 hover:shadow-[0_0_30px_hsl(var(--sport-accent)/0.3)] bg-[hsl(var(--sport-accent))]/5",
+};
+
+const iconGlow = {
+  "sport-primary": "bg-[hsl(var(--sport-primary))]/20 text-[hsl(var(--sport-primary))] shadow-[0_0_15px_hsl(var(--sport-primary)/0.4)]",
+  "sport-secondary": "bg-[hsl(var(--sport-secondary))]/20 text-[hsl(var(--sport-secondary))] shadow-[0_0_15px_hsl(var(--sport-secondary)/0.4)]",
+  "sport-accent": "bg-[hsl(var(--sport-accent))]/20 text-[hsl(var(--sport-accent))] shadow-[0_0_15px_hsl(var(--sport-accent)/0.4)]",
 };
 
 const glowColors = {
@@ -42,7 +48,7 @@ export const EntertainmentCard = ({ game, index }: { game: EntertainmentGameInfo
       whileHover={!clicked ? { scale: 1.06, y: -6, transition: { type: "spring", stiffness: 300 } } : undefined}
       whileTap={!clicked && game.available ? { scale: 0.97 } : undefined}
       onClick={handleClick}
-      className={`relative ${game.available ? "cursor-pointer" : "cursor-default"} rounded-2xl border-2 bg-[hsl(var(--sport-card))]/80 backdrop-blur-sm p-6 transition-shadow duration-300 ${colorMap[game.color]} shadow-lg hover:shadow-xl overflow-hidden`}
+      className={`relative ${game.available ? "cursor-pointer" : "cursor-default"} rounded-2xl border bg-[hsl(var(--sport-card))]/80 backdrop-blur-sm p-6 transition-all duration-300 ${colorMap[game.color]} shadow-lg overflow-hidden`}
       style={clicked ? { zIndex: 50 } : undefined}
     >
       {/* Glow effect on click */}
@@ -78,8 +84,11 @@ export const EntertainmentCard = ({ game, index }: { game: EntertainmentGameInfo
         </motion.div>
       )}
 
+      {/* Sporty Pattern Overlay */}
+      <div className="absolute inset-0 sporty-pattern pointer-events-none opacity-30 mix-blend-overlay" />
+
       <motion.div
-        className="text-4xl mb-3 relative z-10"
+        className={`w-14 h-14 rounded-full mb-4 relative z-10 flex items-center justify-center text-3xl ${iconGlow[game.color]} backdrop-blur-md`}
         initial={{ scale: 0, rotate: -20 }}
         animate={clicked ? { scale: 1.4, y: -10 } : { scale: 1, rotate: 0 }}
         transition={clicked ? { type: "spring", stiffness: 300 } : { delay: index * 0.07 + 0.15, type: "spring", stiffness: 200 }}

@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 const POINTS_KEY = "brainpuzzle_points";
 const ENT_POINTS_KEY = "entertainment_points";
 
@@ -72,12 +74,36 @@ export const getWins = (gameId: string): number =>
 export const getLosses = (gameId: string): number =>
   parseInt(localStorage.getItem(lossesKey(gameId)) || "0", 10);
 
+// Sync to Leaderboard
+export const syncLeaderboard = async () => {
+  const name = getPlayerName();
+  if (!name.trim()) return;
+
+  const wins = getTotalWins();
+  const losses = getTotalLosses();
+
+  const { data: existing } = await supabase
+    .from("leaderboard")
+    .select("id")
+    .eq("player_name", name.trim())
+    .maybeSingle();
+
+  if (existing) {
+    await supabase
+      .from("leaderboard")
+      .update({ wins, losses, updated_at: new Date().toISOString() })
+      .eq("id", existing.id);
+  }
+};
+
 export const addWin = (gameId: string) => {
   localStorage.setItem(winsKey(gameId), String(getWins(gameId) + 1));
+  syncLeaderboard();
 };
 
 export const addLoss = (gameId: string) => {
   localStorage.setItem(lossesKey(gameId), String(getLosses(gameId) + 1));
+  syncLeaderboard();
 };
 
 export const getTotalWins = (): number => {

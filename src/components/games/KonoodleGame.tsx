@@ -142,6 +142,71 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     shuffledPieceIdRef.current = null;
   };
 
+  const handleBoardPieceDragStart = (e: React.DragEvent, id: string) => {
+    e.stopPropagation();
+    const piece = PIECES.find(p => p.id === id);
+    if (!piece) return;
+
+    // Remove the piece from the board immediately but keep it as "selected"
+    const placement = placed.get(id);
+    if (placement) {
+      // Temporarily clear the cells so the space is empty for dropping
+      setBoard(prev => {
+        const b = prev.map(r => [...r]);
+        placement.forEach(([r, c]) => { b[r][c] = null; });
+        return b;
+      });
+      // We don't remove it from `placed` yet so we can restore it if the drag cancels/fails
+    }
+
+    // Set it as the currently selected piece to be dropped
+    setSelectedPiece(piece);
+    setRotation(0); // For placed pieces, we could calculate the exact rotation, but for now reset is fine since they can re-rotate before placing or while dragging if we added hotkeys. Ideally, we just preserve the shape they picked up.
+    
+    // Custom drag image
+    e.dataTransfer.setData("text/plain", piece.id);
+    e.dataTransfer.effectAllowed = "move";
+
+    const cells = piece.orientations[0];
+    const maxR = Math.max(...cells.map(([r]) => r)) + 1;
+    const maxC = Math.max(...cells.map(([, c]) => c)) + 1;
+    const cellSize = 28;
+    const canvas = document.createElement("canvas");
+    canvas.width = maxC * cellSize;
+    canvas.height = maxR * cellSize;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      const tempDiv = document.createElement("div");
+      tempDiv.className = piece.color;
+      document.body.appendChild(tempDiv);
+      const color = getComputedStyle(tempDiv).backgroundColor;
+      document.body.removeChild(tempDiv);
+      cells.forEach(([r, c]) => {
+        ctx.fillStyle = color || "#8b5cf6";
+        ctx.beginPath();
+        ctx.roundRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2, 3);
+        ctx.fill();
+      });
+    }
+    e.dataTransfer.setDragImage(canvas, cellSize / 2, cellSize / 2);
+  };
+  
+  const handleBoardDragEnd = (e: React.DragEvent, id: string) => {
+    // If we finished dragging and the piece is still in `selectedPiece`, the drop failed or was cancelled.
+    // Restore it to its original spot.
+    if (selectedPiece?.id === id) {
+      const placement = placed.get(id);
+      if (placement) {
+        setBoard(prev => {
+          const b = prev.map(r => [...r]);
+          placement.forEach(([r, c]) => { b[r][c] = id; });
+          return b;
+        });
+      }
+      setSelectedPiece(null);
+    }
+  };
+
   // Drag and drop — create a custom drag image matching board cell size
   const handleDragStart = (e: React.DragEvent, piece: PieceDef) => {
     const isNewPiece = selectedPiece?.id !== piece.id;
@@ -188,7 +253,18 @@ export const KonoodleGame = ({ onComplete }: Props) => {
 
   const handleBoardDrop = (e: React.DragEvent, r: number, c: number) => {
     e.preventDefault();
-    if (selectedPiece) placePiece(r, c);
+    if (selectedPiece) {
+      // If the piece was coming from the board, cleanly remove it first before re-placing
+      if (placed.has(selectedPiece.id)) {
+        const newPlaced = new Map(placed);
+        newPlaced.delete(selectedPiece.id);
+        setPlaced(newPlaced);
+        // Temporarily re-point `placed` so `canPlace` logic inside `placePiece` works correctly
+        const tempOldPlaced = placed;
+        placedIds.delete(selectedPiece.id); // hacky context fix
+      }
+      placePiece(r, c);
+    }
     setDragOverCell(null);
   };
 
@@ -420,14 +496,17 @@ export const KonoodleGame = ({ onComplete }: Props) => {
                   animate={isRemoving ? { scale: 0, opacity: 0, rotate: 180 } : { scale: 1, opacity: 1, rotate: 0 }}
                   transition={isRemoving ? { duration: 0.5, ease: "easeIn" } : { duration: 0.2 }}
                   onClick={() => cell && !isRemoving ? removePiece(cell) : placePiece(r, c)}
+                  draggable={!!cell && !isRemoving}
+                  onDragStart={(e) => cell && !isRemoving ? handleBoardPieceDragStart(e as unknown as React.DragEvent, cell) : undefined}
+                  onDragEnd={(e) => cell && !isRemoving ? handleBoardDragEnd(e as unknown as React.DragEvent, cell) : undefined}
                   onDragOver={(e) => handleBoardDragOver(e, r, c)}
                   onDrop={(e) => handleBoardDrop(e, r, c)}
                   onDragLeave={handleBoardDragLeave}
-                  className={`w-7 h-7 border border-border/20 rounded-sm cursor-pointer transition-colors ${
-                    cell ? `${pieceColor(cell)} shadow-[0_0_6px_rgba(0,0,0,0.15)]`
+                  className={`w-7 h-7 border border-border/20 rounded-sm transition-colors ${
+                    cell ? `cursor-grab active:cursor-grabbing ${pieceColor(cell)} shadow-[0_0_6px_rgba(0,0,0,0.15)]`
                     : dragPreviewSet.has(`${r},${c}`)
-                      ? (dragPreviewCells?.valid ? "bg-primary/20 border-primary/40" : "bg-destructive/20 border-destructive/40")
-                      : "bg-background/30 hover:bg-muted/50"
+                      ? (dragPreviewCells?.valid ? "bg-primary/20 border-primary/40 cursor-pointer" : "bg-destructive/20 border-destructive/40 cursor-default")
+                      : "bg-background/30 hover:bg-muted/50 cursor-pointer"
                   }`}
                 />
               );

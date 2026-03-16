@@ -68,14 +68,14 @@ const LeaderboardPage = () => {
     if (existing) {
       // Always update with latest local stats
       await supabase.from("leaderboard").update({ wins, losses, updated_at: new Date().toISOString() }).eq("id", existing.id);
-      toast.success("Score updated!");
+      toast.success("Score updated and auto-sync enabled!");
     } else {
       const { error } = await supabase.from("leaderboard").insert({ player_name: name.trim(), wins, losses });
       if (error) {
         toast.error("Failed to submit score");
         console.error(error);
       } else {
-        toast.success("Score submitted!");
+        toast.success("Registered! Your scores will auto-sync.");
       }
     }
 
@@ -120,13 +120,24 @@ const LeaderboardPage = () => {
             <ArrowLeft className="h-5 w-5" />
             <span className="font-display text-sm">BACK</span>
           </button>
-          <button
-            onClick={() => setShowSubmit(!showSubmit)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-accent/10 border border-accent/30 text-accent rounded-xl font-display text-xs hover:border-accent/60 transition-all"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            SUBMIT / UPDATE SCORE
-          </button>
+          
+          {getPlayerName() ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-xl text-primary font-display text-xs">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              SYNCING AS {getPlayerName().toUpperCase()}
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowSubmit(!showSubmit)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-accent/10 border border-accent/30 text-accent rounded-xl font-display text-xs hover:border-accent/60 transition-all"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              JOIN LEADERBOARD
+            </button>
+          )}
         </motion.div>
 
         {/* Title */}

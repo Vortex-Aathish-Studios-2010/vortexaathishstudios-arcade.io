@@ -1,8 +1,11 @@
+import React from "react";
+import { Crown, Target, CircleDot, Medal, Goal, Zap, Eye } from "lucide-react";
+
 export interface EntertainmentGameInfo {
   id: string;
   name: string;
   description: string;
-  icon: string;
+  icon: React.ReactNode;
   color: "sport-primary" | "sport-secondary" | "sport-accent";
   available: boolean;
   difficulty: "Easy" | "Medium" | "Hard";
@@ -14,7 +17,7 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "chess",
     name: "Chess",
     description: "The classic strategy board game",
-    icon: "♟️",
+    icon: <Crown size={40} color="hsl(var(--sport-primary))" fill="hsl(var(--sport-primary))" fillOpacity={0.6} strokeWidth={1.5} />,
     color: "sport-primary",
     available: true,
     difficulty: "Hard",
@@ -24,9 +27,9 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "archery",
     name: "Archery",
     description: "Aim for the bullseye",
-    icon: "🏹",
+    icon: <Target size={40} color="hsl(var(--sport-accent))" fill="hsl(var(--sport-accent))" fillOpacity={0.4} strokeWidth={1.5} />,
     color: "sport-accent",
-    available: false,
+    available: true,
     difficulty: "Medium",
     tutorial: ["Coming soon!"],
   },
@@ -34,9 +37,9 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "tennis",
     name: "Tennis",
     description: "Rally and smash to win",
-    icon: "🎾",
+    icon: <CircleDot size={40} color="hsl(var(--sport-primary))" fill="hsl(var(--sport-primary))" fillOpacity={0.4} strokeWidth={1.5} />,
     color: "sport-primary",
-    available: false,
+    available: true,
     difficulty: "Medium",
     tutorial: ["Coming soon!"],
   },
@@ -44,9 +47,9 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "cricket",
     name: "Cricket",
     description: "Hit sixes and take wickets",
-    icon: "🏏",
+    icon: <Medal size={40} color="hsl(var(--sport-secondary))" fill="hsl(var(--sport-secondary))" fillOpacity={0.4} strokeWidth={1.5} />,
     color: "sport-secondary",
-    available: false,
+    available: true,
     difficulty: "Hard",
     tutorial: ["Coming soon!"],
   },
@@ -54,9 +57,9 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "penalty",
     name: "Penalty Kick",
     description: "Score past the goalkeeper",
-    icon: "⚽",
+    icon: <Goal size={40} color="hsl(var(--sport-accent))" fill="hsl(var(--sport-accent))" fillOpacity={0.2} strokeWidth={1.5} />,
     color: "sport-accent",
-    available: false,
+    available: true,
     difficulty: "Easy",
     tutorial: ["Coming soon!"],
   },
@@ -64,9 +67,9 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "obstacle",
     name: "Obstacle Race",
     description: "Jump, duck and dash to the finish",
-    icon: "🏃",
+    icon: <Zap size={40} color="hsl(var(--sport-primary))" fill="hsl(var(--sport-primary))" fillOpacity={0.5} strokeWidth={1.5} />,
     color: "sport-primary",
-    available: false,
+    available: true,
     difficulty: "Medium",
     tutorial: ["Coming soon!"],
   },
@@ -74,9 +77,9 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "hideseek",
     name: "Hide & Seek",
     description: "Find or hide before time runs out",
-    icon: "👀",
+    icon: <Eye size={40} color="hsl(var(--sport-secondary))" fill="hsl(var(--sport-secondary))" fillOpacity={0.3} strokeWidth={1.5} />,
     color: "sport-secondary",
-    available: false,
+    available: true,
     difficulty: "Easy",
     tutorial: ["Coming soon!"],
   },

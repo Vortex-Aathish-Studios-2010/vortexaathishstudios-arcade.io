@@ -6,9 +6,15 @@ import { getGameLevel } from "@/lib/streaks";
 import { sfx } from "@/lib/sounds";
 
 const colorMap = {
-  primary: "border-primary/30 hover:border-primary/60 hover:glow-primary",
-  secondary: "border-secondary/30 hover:border-secondary/60 hover:glow-secondary",
-  accent: "border-accent/30 hover:border-accent/60 hover:glow-accent",
+  primary: "border-primary/40 hover:border-primary/80 hover:shadow-[0_0_30px_hsl(var(--primary)/0.25)] bg-primary/5",
+  secondary: "border-secondary/40 hover:border-secondary/80 hover:shadow-[0_0_30px_hsl(var(--secondary)/0.25)] bg-secondary/5",
+  accent: "border-accent/40 hover:border-accent/80 hover:shadow-[0_0_30px_hsl(var(--accent)/0.25)] bg-accent/5",
+};
+
+const iconGlow = {
+  primary: "bg-primary/20 text-primary shadow-[0_0_15px_hsl(var(--primary)/0.4)]",
+  secondary: "bg-secondary/20 text-secondary shadow-[0_0_15px_hsl(var(--secondary)/0.4)]",
+  accent: "bg-accent/20 text-accent shadow-[0_0_15px_hsl(var(--accent)/0.4)]",
 };
 
 const glowColors = {
@@ -46,7 +52,7 @@ export const GameCard = ({ game, index }: { game: GameInfo; index: number }) => 
       whileHover={!clicked ? { scale: 1.06, y: -6, transition: { type: "spring", stiffness: 300 } } : undefined}
       whileTap={!clicked ? { scale: 0.97 } : undefined}
       onClick={handleClick}
-      className={`relative cursor-pointer rounded-xl border-2 bg-card p-6 transition-shadow duration-300 ${colorMap[game.color]} overflow-hidden`}
+      className={`relative cursor-pointer rounded-2xl border bg-card p-6 transition-all duration-300 ${colorMap[game.color]} overflow-hidden backdrop-blur-sm`}
       style={clicked ? { zIndex: 50 } : undefined}
     >
       {/* Expanding glow ring on click */}
@@ -71,9 +77,12 @@ export const GameCard = ({ game, index }: { game: GameInfo; index: number }) => 
         )}
       </AnimatePresence>
 
+      {/* Card Background Pattern (Subtle radial gradient) */}
+      <div className="absolute top-0 right-0 -mt-16 -mr-16 w-32 h-32 bg-white/5 blur-3xl rounded-full pointer-events-none" />
+
       {/* Icon */}
       <motion.div
-        className="text-4xl mb-3 relative z-10"
+        className={`w-14 h-14 rounded-2xl mb-4 relative z-10 flex items-center justify-center text-3xl ${iconGlow[game.color]} backdrop-blur-md`}
         animate={clicked ? { scale: 1.4, y: -10 } : {}}
         transition={{ type: "spring", stiffness: 300 }}
       >
