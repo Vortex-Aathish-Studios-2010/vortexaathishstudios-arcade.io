@@ -149,7 +149,7 @@ export const ChessGame = () => {
             onClick={() => resetGame("bot")}
             className="px-6 py-3 rounded-xl bg-[hsl(var(--sport-primary))] text-[hsl(var(--sport-bg))] font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-shadow"
           >
-            🤖 vs Hard Bot
+            🤖 vs Bot
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.05 }}
