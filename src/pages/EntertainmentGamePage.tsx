@@ -1,11 +1,21 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { entertainmentGames } from "@/lib/entertainmentData";
 import { ChessGame } from "@/components/games/ChessGame";
+import { ArcheryGame } from "@/components/games/ArcheryGame";
+import { PenaltyKickGame } from "@/components/games/PenaltyKickGame";
+import { BasketballGame } from "@/components/games/BasketballGame";
+import { BoxingGame } from "@/components/games/BoxingGame";
+import { RacingGame } from "@/components/games/RacingGame";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
-const gameComponents: Record<string, React.FC> = {
+const gameComponents: Record<string, React.FC<{ onComplete?: (score: number) => void }>> = {
   chess: ChessGame,
+  archery: ArcheryGame,
+  penalty: PenaltyKickGame,
+  basketball: BasketballGame,
+  boxing: BoxingGame,
+  racing: RacingGame,
 };
 
 const EntertainmentGamePage = () => {

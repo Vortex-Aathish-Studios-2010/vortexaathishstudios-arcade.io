@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Shuffle, Eye, RotateCw } from "lucide-react";
 import { PIECES, BOARD_ROWS, BOARD_COLS, createEmptyBoard, solvePuzzle, type PieceDef, type BoardState, type Placement } from "@/lib/konoodleSolver";
 
+const isTouchDevice = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
 const PiecePreview = ({
   piece,
   selected,
@@ -21,13 +23,14 @@ const PiecePreview = ({
   const maxR = Math.max(...cells.map(([r]) => r));
   const maxC = Math.max(...cells.map(([, c]) => c));
   const cellSet = new Set(cells.map(([r, c]) => `${r},${c}`));
+  const touch = isTouchDevice();
 
   return (
     <button
-      draggable
-      onDragStart={onDragStart}
+      draggable={!touch}
+      onDragStart={!touch ? onDragStart : undefined}
       onClick={onClick}
-      className={`p-1.5 rounded-lg transition-all border-2 cursor-grab active:cursor-grabbing ${
+      className={`p-1.5 rounded-lg transition-all border-2 ${touch ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'} ${
         selected ? "border-primary ring-2 ring-primary/50 glow-primary" : "bg-card border-border hover:border-primary/40"
       }`}
     >
@@ -496,14 +499,14 @@ export const KonoodleGame = ({ onComplete }: Props) => {
                   animate={isRemoving ? { scale: 0, opacity: 0, rotate: 180 } : { scale: 1, opacity: 1, rotate: 0 }}
                   transition={isRemoving ? { duration: 0.5, ease: "easeIn" } : { duration: 0.2 }}
                   onClick={() => cell && !isRemoving ? removePiece(cell) : placePiece(r, c)}
-                  draggable={!!cell && !isRemoving}
-                  onDragStart={(e) => cell && !isRemoving ? handleBoardPieceDragStart(e as unknown as React.DragEvent, cell) : undefined}
-                  onDragEnd={(e) => cell && !isRemoving ? handleBoardDragEnd(e as unknown as React.DragEvent, cell) : undefined}
-                  onDragOver={(e) => handleBoardDragOver(e, r, c)}
-                  onDrop={(e) => handleBoardDrop(e, r, c)}
-                  onDragLeave={handleBoardDragLeave}
+                  draggable={!!cell && !isRemoving && !isTouchDevice()}
+                  onDragStart={(e) => cell && !isRemoving && !isTouchDevice() ? handleBoardPieceDragStart(e as unknown as React.DragEvent, cell) : undefined}
+                  onDragEnd={(e) => cell && !isRemoving && !isTouchDevice() ? handleBoardDragEnd(e as unknown as React.DragEvent, cell) : undefined}
+                  onDragOver={(e) => !isTouchDevice() ? handleBoardDragOver(e, r, c) : undefined}
+                  onDrop={(e) => !isTouchDevice() ? handleBoardDrop(e, r, c) : undefined}
+                  onDragLeave={!isTouchDevice() ? handleBoardDragLeave : undefined}
                   className={`w-7 h-7 border border-border/20 rounded-sm transition-colors ${
-                    cell ? `cursor-grab active:cursor-grabbing ${pieceColor(cell)} shadow-[0_0_6px_rgba(0,0,0,0.15)]`
+                    cell ? `${isTouchDevice() ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'} ${pieceColor(cell)} shadow-[0_0_6px_rgba(0,0,0,0.15)]`
                     : dragPreviewSet.has(`${r},${c}`)
                       ? (dragPreviewCells?.valid ? "bg-primary/20 border-primary/40 cursor-pointer" : "bg-destructive/20 border-destructive/40 cursor-default")
                       : "bg-background/30 hover:bg-muted/50 cursor-pointer"

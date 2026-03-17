@@ -1,5 +1,13 @@
 import React from "react";
-import { Layers, LayoutGrid, Box, Hash, Dna, Type, Activity, Crosshair } from "lucide-react";
+
+import memoryIcon from "@/assets/icons/memory.png";
+import slidingIcon from "@/assets/icons/sliding.png";
+import tetrisIcon from "@/assets/icons/tetris.png";
+import sudokuIcon from "@/assets/icons/sudoku.png";
+import konoodleIcon from "@/assets/icons/konoodle.png";
+import wordsearchIcon from "@/assets/icons/wordsearch.png";
+import snakeIcon from "@/assets/icons/snake.png";
+import tictactoeIcon from "@/assets/icons/tictactoe.png";
 
 export interface GameInfo {
   id: string;
@@ -12,12 +20,16 @@ export interface GameInfo {
   tutorial: string[];
 }
 
+const GameIcon = ({ src, alt }: { src: string; alt: string }) => (
+  <img src={src} alt={alt} className="w-10 h-10 object-contain" draggable={false} />
+);
+
 export const games: GameInfo[] = [
   {
     id: "memory",
     name: "Memory Match",
     description: "Flip cards and find matching pairs",
-    icon: <Layers size={40} color="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.4} strokeWidth={1.5} />,
+    icon: <GameIcon src={memoryIcon} alt="Memory Match" />,
     color: "primary",
     available: true,
     difficulty: "Easy",
@@ -33,7 +45,7 @@ export const games: GameInfo[] = [
     id: "sliding",
     name: "Sliding Puzzle",
     description: "Arrange numbered tiles in order",
-    icon: <LayoutGrid size={40} color="hsl(var(--accent))" fill="hsl(var(--accent))" fillOpacity={0.4} strokeWidth={1.5} />,
+    icon: <GameIcon src={slidingIcon} alt="Sliding Puzzle" />,
     color: "accent",
     available: true,
     difficulty: "Hard",
@@ -49,7 +61,7 @@ export const games: GameInfo[] = [
     id: "tetris",
     name: "Block Stack",
     description: "Stack falling blocks to clear lines",
-    icon: <Box size={40} color="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.4} strokeWidth={1.5} />,
+    icon: <GameIcon src={tetrisIcon} alt="Block Stack" />,
     color: "primary",
     available: true,
     difficulty: "Medium",
@@ -65,7 +77,7 @@ export const games: GameInfo[] = [
     id: "sudoku",
     name: "Sudoku",
     description: "Fill the grid with numbers 1-9",
-    icon: <Hash size={40} color="hsl(var(--secondary))" fill="hsl(var(--secondary))" fillOpacity={0.4} strokeWidth={2} />,
+    icon: <GameIcon src={sudokuIcon} alt="Sudoku" />,
     color: "secondary",
     available: true,
     difficulty: "Hard",
@@ -81,7 +93,7 @@ export const games: GameInfo[] = [
     id: "konoodle",
     name: "Konoodle",
     description: "Fit puzzle pieces into the board",
-    icon: <Dna size={40} color="hsl(var(--accent))" strokeWidth={2} />,
+    icon: <GameIcon src={konoodleIcon} alt="Konoodle" />,
     color: "accent",
     available: true,
     difficulty: "Hard",
@@ -97,7 +109,7 @@ export const games: GameInfo[] = [
     id: "wordsearch",
     name: "Word Search",
     description: "Find hidden words in the grid",
-    icon: <Type size={40} color="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.4} strokeWidth={2} />,
+    icon: <GameIcon src={wordsearchIcon} alt="Word Search" />,
     color: "primary",
     available: true,
     difficulty: "Easy",
@@ -113,7 +125,7 @@ export const games: GameInfo[] = [
     id: "snake",
     name: "Snake",
     description: "Grow the snake by eating food",
-    icon: <Activity size={40} color="hsl(var(--secondary))" strokeWidth={2} />,
+    icon: <GameIcon src={snakeIcon} alt="Snake" />,
     color: "secondary",
     available: true,
     difficulty: "Medium",
@@ -129,7 +141,7 @@ export const games: GameInfo[] = [
     id: "tictactoe",
     name: "Tic Tac Toe",
     description: "Get three in a row to win",
-    icon: <Crosshair size={40} color="hsl(var(--secondary))" strokeWidth={2} />,
+    icon: <GameIcon src={tictactoeIcon} alt="Tic Tac Toe" />,
     color: "secondary",
     available: true,
     difficulty: "Easy",

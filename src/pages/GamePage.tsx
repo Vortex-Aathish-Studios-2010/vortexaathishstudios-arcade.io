@@ -83,7 +83,7 @@ const GamePage = () => {
   }
 
   const showLevel = id && !HIDE_LEVEL_IDS.has(id);
-  const showDeviceToggle = id === "snake" || id === "tetris";
+  const showDeviceToggle = id === "snake" || id === "tetris" || id === "konoodle";
 
   return (
     <motion.div
@@ -113,19 +113,7 @@ const GamePage = () => {
                 LVL {level}
               </span>
             )}
-            {showDeviceToggle && (
-              <div className="hidden sm:flex bg-card border border-border rounded-lg p-0.5 ml-1">
-                <button title="Phone controls" onClick={() => setDevice("phone")} className={`p-1 rounded-md transition-colors ${device === "phone" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
-                  <Smartphone className="w-3.5 h-3.5" />
-                </button>
-                <button title="Tablet controls" onClick={() => setDevice("tablet")} className={`p-1 rounded-md transition-colors ${device === "tablet" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
-                  <Tablet className="w-3.5 h-3.5" />
-                </button>
-                <button title="Laptop controls" onClick={() => setDevice("laptop")} className={`p-1 rounded-md transition-colors ${device === "laptop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
-                  <Monitor className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
+            
             <button
               onClick={() => setShowMultiplayer(true)}
               className="flex items-center gap-1.5 bg-card border border-secondary/30 rounded-lg px-3 py-1.5 text-secondary hover:border-secondary/60 hover:glow-secondary transition-all"
@@ -209,6 +197,21 @@ const GamePage = () => {
       </div>
       
       <OnScreenControls gameId={id} />
+
+      {/* Device toggle at bottom for phone/tablet */}
+      {showDeviceToggle && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] flex bg-card border border-border rounded-lg p-0.5 shadow-lg">
+          <button title="Phone controls" onClick={() => setDevice("phone")} className={`p-2 rounded-md transition-colors ${device === "phone" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+            <Smartphone className="w-4 h-4" />
+          </button>
+          <button title="Tablet controls" onClick={() => setDevice("tablet")} className={`p-2 rounded-md transition-colors ${device === "tablet" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+            <Tablet className="w-4 h-4" />
+          </button>
+          <button title="Laptop controls" onClick={() => setDevice("laptop")} className={`p-2 rounded-md transition-colors ${device === "laptop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+            <Monitor className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };
