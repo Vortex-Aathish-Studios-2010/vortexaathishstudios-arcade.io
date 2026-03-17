@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Shuffle, Eye, RotateCw } from "lucide-react";
 import { PIECES, BOARD_ROWS, BOARD_COLS, createEmptyBoard, solvePuzzle, type PieceDef, type BoardState, type Placement } from "@/lib/konoodleSolver";
 
+const isTouchDevice = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
 const PiecePreview = ({
   piece,
   selected,
@@ -21,13 +23,14 @@ const PiecePreview = ({
   const maxR = Math.max(...cells.map(([r]) => r));
   const maxC = Math.max(...cells.map(([, c]) => c));
   const cellSet = new Set(cells.map(([r, c]) => `${r},${c}`));
+  const touch = isTouchDevice();
 
   return (
     <button
-      draggable
-      onDragStart={onDragStart}
+      draggable={!touch}
+      onDragStart={!touch ? onDragStart : undefined}
       onClick={onClick}
-      className={`p-1.5 rounded-lg transition-all border-2 cursor-grab active:cursor-grabbing ${
+      className={`p-1.5 rounded-lg transition-all border-2 ${touch ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'} ${
         selected ? "border-primary ring-2 ring-primary/50 glow-primary" : "bg-card border-border hover:border-primary/40"
       }`}
     >
