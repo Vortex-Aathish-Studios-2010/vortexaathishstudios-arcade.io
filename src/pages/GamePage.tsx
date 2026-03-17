@@ -83,7 +83,7 @@ const GamePage = () => {
   }
 
   const showLevel = id && !HIDE_LEVEL_IDS.has(id);
-  const showDeviceToggle = id === "snake" || id === "tetris";
+  const showDeviceToggle = id === "snake" || id === "tetris" || id === "konoodle";
 
   return (
     <motion.div
