@@ -113,9 +113,7 @@ const GamePage = () => {
                 LVL {level}
               </span>
             )}
-            {showDeviceToggle && (
-              {/* Device toggle moved to bottom */}
-            )}
+            
             <button
               onClick={() => setShowMultiplayer(true)}
               className="flex items-center gap-1.5 bg-card border border-secondary/30 rounded-lg px-3 py-1.5 text-secondary hover:border-secondary/60 hover:glow-secondary transition-all"
