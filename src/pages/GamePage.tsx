@@ -114,17 +114,7 @@ const GamePage = () => {
               </span>
             )}
             {showDeviceToggle && (
-              <div className="hidden sm:flex bg-card border border-border rounded-lg p-0.5 ml-1">
-                <button title="Phone controls" onClick={() => setDevice("phone")} className={`p-1 rounded-md transition-colors ${device === "phone" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
-                  <Smartphone className="w-3.5 h-3.5" />
-                </button>
-                <button title="Tablet controls" onClick={() => setDevice("tablet")} className={`p-1 rounded-md transition-colors ${device === "tablet" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
-                  <Tablet className="w-3.5 h-3.5" />
-                </button>
-                <button title="Laptop controls" onClick={() => setDevice("laptop")} className={`p-1 rounded-md transition-colors ${device === "laptop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
-                  <Monitor className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              {/* Device toggle moved to bottom */}
             )}
             <button
               onClick={() => setShowMultiplayer(true)}
