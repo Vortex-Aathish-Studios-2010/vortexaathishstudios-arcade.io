@@ -199,6 +199,21 @@ const GamePage = () => {
       </div>
       
       <OnScreenControls gameId={id} />
+
+      {/* Device toggle at bottom for phone/tablet */}
+      {showDeviceToggle && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] flex bg-card border border-border rounded-lg p-0.5 shadow-lg">
+          <button title="Phone controls" onClick={() => setDevice("phone")} className={`p-2 rounded-md transition-colors ${device === "phone" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+            <Smartphone className="w-4 h-4" />
+          </button>
+          <button title="Tablet controls" onClick={() => setDevice("tablet")} className={`p-2 rounded-md transition-colors ${device === "tablet" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+            <Tablet className="w-4 h-4" />
+          </button>
+          <button title="Laptop controls" onClick={() => setDevice("laptop")} className={`p-2 rounded-md transition-colors ${device === "laptop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+            <Monitor className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };
