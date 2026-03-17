@@ -82,17 +82,29 @@ export const syncLeaderboard = async () => {
   const wins = getTotalWins();
   const losses = getTotalLosses();
 
-  const { data: existing } = await supabase
-    .from("leaderboard")
-    .select("id")
-    .eq("player_name", name.trim())
-    .maybeSingle();
-
-  if (existing) {
-    await supabase
+  try {
+    const { data: existing } = await supabase
       .from("leaderboard")
-      .update({ wins, losses, updated_at: new Date().toISOString() })
-      .eq("id", existing.id);
+      .select("id, wins, losses")
+      .eq("player_name", name.trim())
+      .maybeSingle();
+
+    if (existing) {
+      // Only update if values changed
+      if (existing.wins !== wins || existing.losses !== losses) {
+        await supabase
+          .from("leaderboard")
+          .update({ wins, losses, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+      }
+    } else {
+      // Auto-register on first win/loss
+      await supabase
+        .from("leaderboard")
+        .insert({ player_name: name.trim(), wins, losses });
+    }
+  } catch (e) {
+    console.error("Leaderboard sync failed:", e);
   }
 };
 
