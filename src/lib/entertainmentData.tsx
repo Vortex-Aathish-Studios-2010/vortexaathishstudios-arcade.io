@@ -8,7 +8,6 @@ import penaltyIcon from "@/assets/icons/penalty.png";
 import obstacleIcon from "@/assets/icons/obstacle.png";
 import hideseekIcon from "@/assets/icons/hideseek.png";
 import basketballIcon from "@/assets/icons/basketball.png";
-import boxingIcon from "@/assets/icons/boxing.png";
 import racingIcon from "@/assets/icons/racing.png";
 
 export interface EntertainmentGameInfo {
@@ -23,7 +22,7 @@ export interface EntertainmentGameInfo {
 }
 
 const GameIcon = ({ src, alt }: { src: string; alt: string }) => (
-  <img src={src} alt={alt} className="w-10 h-10 object-contain" draggable={false} />
+  <img src={src} alt={alt} className="w-full h-full object-contain drop-shadow-lg" draggable={false} />
 );
 
 export const entertainmentGames: EntertainmentGameInfo[] = [
@@ -35,7 +34,7 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     color: "sport-primary",
     available: true,
     difficulty: "Hard",
-    tutorial: ["Choose to play against a bot or a friend locally.", "Click a piece to select it, then click a highlighted square to move.", "Capture enemy pieces by moving to their square.", "Put the opponent's king in checkmate to win!"],
+    tutorial: ["Choose to play against a bot or a friend locally.", "Pick your color — white or black.", "Click a piece to select it, then click a highlighted square to move.", "Put the opponent's king in checkmate to win!"],
   },
   {
     id: "archery",
@@ -55,7 +54,7 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     color: "sport-accent",
     available: true,
     difficulty: "Easy",
-    tutorial: ["Click or tap a zone on the goal to aim your kick.", "The goalkeeper will dive to try to save it.", "Score as many goals as you can in 5 attempts!", "Aim for the corners for the best chance of scoring."],
+    tutorial: ["Click the LEFT, CENTER, or RIGHT zone on the goal to aim your kick.", "The goalkeeper will dive to try to save it.", "Score as many goals as you can in 5 attempts!", "Aim for the corners for the best chance of scoring."],
   },
   {
     id: "basketball",
@@ -65,17 +64,7 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     color: "sport-primary",
     available: true,
     difficulty: "Medium",
-    tutorial: ["Drag to set the angle and power of your shot.", "Release to throw the ball towards the hoop.", "Score as many baskets as you can in 30 seconds!", "The hoop moves — time your shots carefully."],
-  },
-  {
-    id: "boxing",
-    name: "Boxing",
-    description: "Punch and dodge to victory",
-    icon: <GameIcon src={boxingIcon} alt="Boxing" />,
-    color: "sport-secondary",
-    available: true,
-    difficulty: "Medium",
-    tutorial: ["Tap the punch buttons to attack your opponent.", "Watch for incoming punches and tap DODGE to avoid them.", "Land combos for bonus damage!", "Reduce the opponent's HP to zero to win."],
+    tutorial: ["Drag the ball upward to set your shot power and angle.", "Release to launch the ball toward the hoop.", "Score as many baskets as you can in 30 seconds!", "The hoop moves — time your shots carefully."],
   },
   {
     id: "racing",

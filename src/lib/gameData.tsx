@@ -21,7 +21,7 @@ export interface GameInfo {
 }
 
 const GameIcon = ({ src, alt }: { src: string; alt: string }) => (
-  <img src={src} alt={alt} className="w-10 h-10 object-contain" draggable={false} />
+  <img src={src} alt={alt} className="w-full h-full object-contain drop-shadow-lg" draggable={false} />
 );
 
 export const games: GameInfo[] = [

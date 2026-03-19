@@ -90,69 +90,57 @@ const GamePage = () => {
       initial={{ opacity: 0, scale: 0.96, filter: "blur(8px)" }}
       animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
       transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
-      className="min-h-screen bg-background p-6"
+      className="min-h-screen bg-background flex flex-col"
     >
-      <div className="max-w-lg mx-auto">
-        {/* Top bar */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="flex items-center justify-between mb-6"
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.1 }}
+        className="flex items-center justify-between px-4 py-3 border-b border-border"
+      >
+        <button
+          onClick={() => navigate("/?mode=brain")}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="font-display text-sm">BACK</span>
+        </button>
+        <h1 className="font-display text-base font-bold text-foreground">{game.name}</h1>
+        <div className="flex items-center gap-2">
+          {showLevel && (
+            <span className="text-xs font-display text-primary bg-primary/10 border border-primary/20 rounded-lg px-2.5 py-1">
+              LVL {level}
+            </span>
+          )}
           <button
-            onClick={() => navigate("/?mode=brain")}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setShowMultiplayer(true)}
+            className="flex items-center gap-1.5 bg-card border border-secondary/30 rounded-lg px-2.5 py-1 text-secondary hover:border-secondary/60 transition-all"
           >
-            <ArrowLeft className="h-5 w-5" />
-            <span className="font-display text-sm">BACK</span>
+            <Users className="h-3.5 w-3.5" />
+            <span className="font-display text-xs">VS</span>
           </button>
-          <div className="flex items-center gap-2">
-            {showLevel && (
-              <span className="text-xs font-display text-primary bg-primary/10 border border-primary/20 rounded-lg px-3 py-1.5">
-                LVL {level}
-              </span>
-            )}
-            
-            <button
-              onClick={() => setShowMultiplayer(true)}
-              className="flex items-center gap-1.5 bg-card border border-secondary/30 rounded-lg px-3 py-1.5 text-secondary hover:border-secondary/60 hover:glow-secondary transition-all"
-            >
-              <Users className="h-4 w-4" />
-              <span className="font-display text-xs">VS</span>
-            </button>
-            <button
-              onClick={() => setShowTutorial(true)}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1.5"
-            >
-              <HelpCircle className="h-5 w-5" />
-            </button>
-          </div>
-        </motion.div>
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="text-muted-foreground hover:text-foreground transition-colors p-1"
+          >
+            <HelpCircle className="h-4.5 w-4.5" />
+          </button>
+        </div>
+      </motion.div>
 
-        {/* Game title */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          className="text-center mb-6"
-        >
-          <span className="text-4xl mb-2 block">{game.icon}</span>
-          <h1 className="text-xl font-display font-bold text-foreground">{game.name}</h1>
-        </motion.div>
-
-        {/* Game component with countdown overlay */}
+      {/* Game fills all remaining space */}
+      <div className="flex-1 flex items-start justify-center p-4 pt-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.5, type: "spring", stiffness: 120 }}
-          className="relative"
+          transition={{ delay: 0.2, duration: 0.5, type: "spring", stiffness: 120 }}
+          className="relative w-full max-w-3xl"
         >
           <div className={countdown !== null ? "blur-md pointer-events-none" : ""}>
             <GameComponent level={level} onComplete={multiplayerRoom && gameReady ? handleGameComplete : undefined} />
           </div>
 
-          {/* Countdown overlay */}
           <AnimatePresence>
             {countdown !== null && (
               <motion.div
@@ -175,39 +163,38 @@ const GamePage = () => {
             )}
           </AnimatePresence>
         </motion.div>
-
-        <GameTutorial game={game} open={showTutorial} onClose={handleTutorialClose} />
-
-        {showMultiplayer && (
-          <MultiplayerLobby
-            gameId={game.id}
-            onStartMultiplayer={handleMultiplayerStart}
-            onClose={() => setShowMultiplayer(false)}
-          />
-        )}
-
-        {showResult && multiplayerRoom && (
-          <MultiplayerResult
-            roomId={multiplayerRoom.roomId}
-            playerId={multiplayerRoom.playerId}
-            gameId={game.id}
-            onClose={() => { setShowResult(false); setMultiplayerRoom(null); }}
-          />
-        )}
       </div>
-      
+
+      <GameTutorial game={game} open={showTutorial} onClose={handleTutorialClose} />
+
+      {showMultiplayer && (
+        <MultiplayerLobby
+          gameId={game.id}
+          onStartMultiplayer={handleMultiplayerStart}
+          onClose={() => setShowMultiplayer(false)}
+        />
+      )}
+
+      {showResult && multiplayerRoom && (
+        <MultiplayerResult
+          roomId={multiplayerRoom.roomId}
+          playerId={multiplayerRoom.playerId}
+          gameId={game.id}
+          onClose={() => { setShowResult(false); setMultiplayerRoom(null); }}
+        />
+      )}
+
       <OnScreenControls gameId={id} />
 
-      {/* Device toggle at bottom for phone/tablet */}
       {showDeviceToggle && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] flex bg-card border border-border rounded-lg p-0.5 shadow-lg">
-          <button title="Phone controls" onClick={() => setDevice("phone")} className={`p-2 rounded-md transition-colors ${device === "phone" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+          <button title="Phone" onClick={() => setDevice("phone")} className={`p-2 rounded-md transition-colors ${device === "phone" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
             <Smartphone className="w-4 h-4" />
           </button>
-          <button title="Tablet controls" onClick={() => setDevice("tablet")} className={`p-2 rounded-md transition-colors ${device === "tablet" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+          <button title="Tablet" onClick={() => setDevice("tablet")} className={`p-2 rounded-md transition-colors ${device === "tablet" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
             <Tablet className="w-4 h-4" />
           </button>
-          <button title="Laptop controls" onClick={() => setDevice("laptop")} className={`p-2 rounded-md transition-colors ${device === "laptop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
+          <button title="Laptop" onClick={() => setDevice("laptop")} className={`p-2 rounded-md transition-colors ${device === "laptop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
             <Monitor className="w-4 h-4" />
           </button>
         </div>
