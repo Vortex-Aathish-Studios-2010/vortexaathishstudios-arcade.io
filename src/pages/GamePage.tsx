@@ -18,6 +18,7 @@ import { reportScore } from "@/lib/multiplayer";
 import { useDevice } from "@/lib/DeviceContext";
 import { OnScreenControls } from "@/components/OnScreenControls";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
+import { Starfield } from "@/components/Starfield";
 
 const gameComponents: Record<string, React.FC<{ level?: number; onComplete?: (score: number) => void }>> = {
   memory: MemoryGame,
@@ -90,8 +91,9 @@ const GamePage = () => {
       initial={{ opacity: 0, scale: 0.96, filter: "blur(8px)" }}
       animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
       transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
-      className="min-h-screen bg-background flex flex-col"
+      className="min-h-screen bg-black flex flex-col"
     >
+      <Starfield />
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -16 }}
@@ -100,7 +102,7 @@ const GamePage = () => {
         className="flex items-center justify-between px-4 py-3 border-b border-border"
       >
         <button
-          onClick={() => navigate("/?mode=brain")}
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />

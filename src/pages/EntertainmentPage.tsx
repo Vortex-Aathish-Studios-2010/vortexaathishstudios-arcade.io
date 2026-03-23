@@ -3,16 +3,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { entertainmentGames } from "@/lib/entertainmentData";
 import { EntertainmentCard } from "@/components/EntertainmentCard";
-import { Star, Brain, Trophy } from "lucide-react";
-import { getEntertainmentPoints } from "@/lib/streaks";
+import { Starfield } from "@/components/Starfield";
+import { Star, Brain, Trophy, TrendingUp, TrendingDown } from "lucide-react";
+import { getEntertainmentPoints, getTotalWins, getTotalLosses } from "@/lib/streaks";
 
 const EntertainmentPage = () => {
   const navigate = useNavigate();
   const [points, setPoints] = useState(0);
+  const [wins, setWins] = useState(0);
+  const [losses, setLosses] = useState(0);
 
   useEffect(() => {
     setPoints(getEntertainmentPoints());
-    const interval = setInterval(() => setPoints(getEntertainmentPoints()), 1000);
+    setWins(getTotalWins());
+    setLosses(getTotalLosses());
+    const interval = setInterval(() => {
+      setPoints(getEntertainmentPoints());
+      setWins(getTotalWins());
+      setLosses(getTotalLosses());
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -32,8 +41,9 @@ const EntertainmentPage = () => {
       animate="animate"
       exit="exit"
       transition={pageTransition}
-      className="entertainment-theme min-h-screen bg-[hsl(var(--sport-bg))]"
+      className="entertainment-theme min-h-screen bg-black"
     >
+      <Starfield />
       {/* Decorative background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-[hsl(var(--sport-primary))]/10 blur-3xl" />
@@ -53,6 +63,18 @@ const EntertainmentPage = () => {
             </h1>
           </div>
           <div className="flex items-center gap-3">
+            {/* Wins / Losses */}
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-lg px-3 py-1 shadow-sm">
+              <div className="flex items-center gap-1">
+                <TrendingUp className="h-3.5 w-3.5 text-[hsl(var(--sport-primary))]" />
+                <span className="font-sport text-xs text-[hsl(var(--sport-primary))]">{wins}W</span>
+              </div>
+              <span className="hidden sm:inline text-[hsl(var(--sport-muted))] text-[10px]">/</span>
+              <div className="flex items-center gap-1">
+                <TrendingDown className="h-3.5 w-3.5 text-red-500" />
+                <span className="font-sport text-xs text-red-500">{losses}L</span>
+              </div>
+            </div>
             {/* Points display */}
             <div className="flex items-center gap-2 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-lg px-3 py-1.5 shadow-sm">
               <Star className="h-3.5 w-3.5 text-[hsl(var(--sport-accent))]" />
@@ -120,7 +142,7 @@ const EntertainmentPage = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {entertainmentGames.map((game, i) => (
             <EntertainmentCard key={game.id} game={game} index={i} />
           ))}

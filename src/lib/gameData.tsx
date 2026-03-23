@@ -1,4 +1,5 @@
 import React from "react";
+import { Layers, LayoutGrid, Box, Hash, Dna, Type, Activity, Crosshair } from "lucide-react";
 
 import memoryIcon from "@/assets/icons/memory.png";
 import slidingIcon from "@/assets/icons/sliding.png";

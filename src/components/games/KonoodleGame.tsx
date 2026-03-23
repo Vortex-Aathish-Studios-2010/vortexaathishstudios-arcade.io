@@ -11,26 +11,21 @@ const isTouchDevice = () => 'ontouchstart' in window || navigator.maxTouchPoints
 const PiecePreview = ({
   piece,
   selected,
-  onClick,
-  onDragStart,
+  onPointerDown,
 }: {
   piece: PieceDef;
   selected: boolean;
-  onClick: () => void;
-  onDragStart?: (e: React.DragEvent) => void;
+  onPointerDown: (e: React.PointerEvent) => void;
 }) => {
   const cells = piece.orientations[0];
   const maxR = Math.max(...cells.map(([r]) => r));
   const maxC = Math.max(...cells.map(([, c]) => c));
   const cellSet = new Set(cells.map(([r, c]) => `${r},${c}`));
-  const touch = isTouchDevice();
 
   return (
-    <button
-      draggable={!touch}
-      onDragStart={!touch ? onDragStart : undefined}
-      onClick={onClick}
-      className={`p-1.5 rounded-lg transition-all border-2 ${touch ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'} ${
+    <div
+      onPointerDown={onPointerDown}
+      className={`p-1.5 rounded-lg transition-all border-2 cursor-grab active:cursor-grabbing touch-none ${
         selected ? "border-primary ring-2 ring-primary/50 glow-primary" : "bg-card border-border hover:border-primary/40"
       }`}
     >
@@ -46,7 +41,7 @@ const PiecePreview = ({
           ))}
         </div>
       ))}
-    </button>
+    </div>
   );
 };
 
@@ -66,10 +61,16 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   const [shuffling, setShuffling] = useState(false);
   const [hasShuffled, setHasShuffled] = useState(false);
   const [removingPieces, setRemovingPieces] = useState<Set<string>>(new Set());
+  
+  // New Drag State
+  const [draggingPiece, setDraggingPiece] = useState<PieceDef | null>(null);
+  const [dragPointerPos, setDragPointerPos] = useState({ x: 0, y: 0 });
+  const [dragOverCell, setDragOverCell] = useState<[number, number] | null>(null);
+  
   const shuffledPieceIdRef = useRef<string | null>(null);
   const cachedSolutionRef = useRef<Placement[] | null>(null);
-  const [dragOverCell, setDragOverCell] = useState<[number, number] | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const placedIds = new Set(placed.keys());
 
@@ -145,134 +146,60 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     shuffledPieceIdRef.current = null;
   };
 
-  const handleBoardPieceDragStart = (e: React.DragEvent, id: string) => {
-    e.stopPropagation();
-    const piece = PIECES.find(p => p.id === id);
-    if (!piece) return;
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!draggingPiece) return;
+    setDragPointerPos({ x: e.clientX, y: e.clientY });
 
-    // Remove the piece from the board immediately but keep it as "selected"
-    const placement = placed.get(id);
-    if (placement) {
-      // Temporarily clear the cells so the space is empty for dropping
-      setBoard(prev => {
-        const b = prev.map(r => [...r]);
-        placement.forEach(([r, c]) => { b[r][c] = null; });
-        return b;
-      });
-      // We don't remove it from `placed` yet so we can restore it if the drag cancels/fails
+    const boardRect = boardRef.current?.getBoundingClientRect();
+    if (boardRect) {
+      const x = e.clientX - boardRect.left;
+      const y = e.clientY - boardRect.top;
+      const cellSize = 30; // 28 + borders approx
+      const r = Math.floor(y / cellSize);
+      const c = Math.floor(x / cellSize);
+      
+      if (r >= 0 && r < BOARD_ROWS && c >= 0 && c < BOARD_COLS) {
+        setDragOverCell([r, c]);
+      } else {
+        setDragOverCell(null);
+      }
     }
-
-    // Set it as the currently selected piece to be dropped
-    setSelectedPiece(piece);
-    setRotation(0); // For placed pieces, we could calculate the exact rotation, but for now reset is fine since they can re-rotate before placing or while dragging if we added hotkeys. Ideally, we just preserve the shape they picked up.
-    
-    // Custom drag image
-    e.dataTransfer.setData("text/plain", piece.id);
-    e.dataTransfer.effectAllowed = "move";
-
-    const cells = piece.orientations[0];
-    const maxR = Math.max(...cells.map(([r]) => r)) + 1;
-    const maxC = Math.max(...cells.map(([, c]) => c)) + 1;
-    const cellSize = 28;
-    const canvas = document.createElement("canvas");
-    canvas.width = maxC * cellSize;
-    canvas.height = maxR * cellSize;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      const tempDiv = document.createElement("div");
-      tempDiv.className = piece.color;
-      document.body.appendChild(tempDiv);
-      const color = getComputedStyle(tempDiv).backgroundColor;
-      document.body.removeChild(tempDiv);
-      cells.forEach(([r, c]) => {
-        ctx.fillStyle = color || "#8b5cf6";
-        ctx.beginPath();
-        ctx.roundRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2, 3);
-        ctx.fill();
-      });
-    }
-    e.dataTransfer.setDragImage(canvas, cellSize / 2, cellSize / 2);
   };
-  
-  const handleBoardDragEnd = (e: React.DragEvent, id: string) => {
-    // If we finished dragging and the piece is still in `selectedPiece`, the drop failed or was cancelled.
-    // Restore it to its original spot.
-    if (selectedPiece?.id === id) {
-      const placement = placed.get(id);
+
+  const handlePointerUp = () => {
+    if (!draggingPiece) return;
+    if (dragOverCell) {
+      placePiece(dragOverCell[0], dragOverCell[1]);
+    } else {
+      // Re-place if it was dragged from board
+      const placement = placed.get(draggingPiece.id);
       if (placement) {
         setBoard(prev => {
           const b = prev.map(r => [...r]);
-          placement.forEach(([r, c]) => { b[r][c] = id; });
+          placement.forEach(([r, c]) => { b[r][c] = draggingPiece.id; });
           return b;
         });
       }
-      setSelectedPiece(null);
+      sfx.click();
     }
+    setDraggingPiece(null);
+    setDragOverCell(null);
   };
 
-  // Drag and drop — create a custom drag image matching board cell size
-  const handleDragStart = (e: React.DragEvent, piece: PieceDef) => {
-    const isNewPiece = selectedPiece?.id !== piece.id;
-    if (isNewPiece) {
-      setSelectedPiece(piece);
-      setRotation(0);
-    }
-    e.dataTransfer.setData("text/plain", piece.id);
-    e.dataTransfer.effectAllowed = "move";
-
-    // Build a canvas drag image sized to board cells (28px each)
-    const currentRot = isNewPiece ? 0 : rotation;
-    const cells = piece.orientations[currentRot % piece.orientations.length];
-    const maxR = Math.max(...cells.map(([r]) => r)) + 1;
-    const maxC = Math.max(...cells.map(([, c]) => c)) + 1;
-    const cellSize = 28;
-    const canvas = document.createElement("canvas");
-    canvas.width = maxC * cellSize;
-    canvas.height = maxR * cellSize;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      // Get computed color from the piece's tailwind class
-      const tempDiv = document.createElement("div");
-      tempDiv.className = piece.color;
-      document.body.appendChild(tempDiv);
-      const color = getComputedStyle(tempDiv).backgroundColor;
-      document.body.removeChild(tempDiv);
-
-      cells.forEach(([r, c]) => {
-        ctx.fillStyle = color || "#8b5cf6";
-        ctx.beginPath();
-        ctx.roundRect(c * cellSize + 1, r * cellSize + 1, cellSize - 2, cellSize - 2, 3);
-        ctx.fill();
-      });
-    }
-    e.dataTransfer.setDragImage(canvas, cellSize / 2, cellSize / 2);
-  };
-
-  const handleBoardDragOver = (e: React.DragEvent, r: number, c: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setDragOverCell([r, c]);
-  };
-
-  const handleBoardDrop = (e: React.DragEvent, r: number, c: number) => {
-    e.preventDefault();
-    if (selectedPiece) {
-      // If the piece was coming from the board, cleanly remove it first before re-placing
-      if (placed.has(selectedPiece.id)) {
-        const newPlaced = new Map(placed);
-        newPlaced.delete(selectedPiece.id);
-        setPlaced(newPlaced);
-        // Temporarily re-point `placed` so `canPlace` logic inside `placePiece` works correctly
-        const tempOldPlaced = placed;
-        placedIds.delete(selectedPiece.id); // hacky context fix
+  const startDragging = (piece: PieceDef, fromBoard = false) => {
+    if (fromBoard) {
+      const placement = placed.get(piece.id);
+      if (placement) {
+        setBoard(prev => {
+          const b = prev.map(r => [...r]);
+          placement.forEach(([r, c]) => { b[r][c] = null; });
+          return b;
+        });
       }
-      placePiece(r, c);
     }
-    setDragOverCell(null);
-  };
-
-  const handleBoardDragLeave = () => {
-    setDragOverCell(null);
+    setDraggingPiece(piece);
+    setSelectedPiece(piece);
+    setRotation(0);
   };
 
   // Drag preview cells
@@ -482,7 +409,13 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   })() : null;
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div 
+      ref={containerRef}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+      className="flex flex-col items-center gap-4 touch-none select-none"
+    >
       <div className="text-xs font-display text-muted-foreground">
         {PIECES.length} pieces · {BOARD_ROWS * BOARD_COLS} cells · Fill the entire board!
       </div>
@@ -498,18 +431,18 @@ export const KonoodleGame = ({ onComplete }: Props) => {
                   key={c}
                   animate={isRemoving ? { scale: 0, opacity: 0, rotate: 180 } : { scale: 1, opacity: 1, rotate: 0 }}
                   transition={isRemoving ? { duration: 0.5, ease: "easeIn" } : { duration: 0.2 }}
-                  onClick={() => cell && !isRemoving ? removePiece(cell) : placePiece(r, c)}
-                  draggable={!!cell && !isRemoving && !isTouchDevice()}
-                  onDragStart={(e) => cell && !isRemoving && !isTouchDevice() ? handleBoardPieceDragStart(e as unknown as React.DragEvent, cell) : undefined}
-                  onDragEnd={(e) => cell && !isRemoving && !isTouchDevice() ? handleBoardDragEnd(e as unknown as React.DragEvent, cell) : undefined}
-                  onDragOver={(e) => !isTouchDevice() ? handleBoardDragOver(e, r, c) : undefined}
-                  onDrop={(e) => !isTouchDevice() ? handleBoardDrop(e, r, c) : undefined}
-                  onDragLeave={!isTouchDevice() ? handleBoardDragLeave : undefined}
+                  onPointerDown={(e) => {
+                    if (cell && !isRemoving) {
+                      e.stopPropagation();
+                      const piece = PIECES.find(p => p.id === cell);
+                      if (piece) startDragging(piece, true);
+                    }
+                  }}
                   className={`w-7 h-7 border border-border/20 rounded-sm transition-colors ${
-                    cell ? `${isTouchDevice() ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'} ${pieceColor(cell)} shadow-[0_0_6px_rgba(0,0,0,0.15)]`
+                    cell ? `cursor-grab active:cursor-grabbing ${pieceColor(cell)} shadow-[0_0_6px_rgba(0,0,0,0.15)]`
                     : dragPreviewSet.has(`${r},${c}`)
-                      ? (dragPreviewCells?.valid ? "bg-primary/20 border-primary/40 cursor-pointer" : "bg-destructive/20 border-destructive/40 cursor-default")
-                      : "bg-background/30 hover:bg-muted/50 cursor-pointer"
+                      ? (dragPreviewCells?.valid ? "bg-primary/20 border-primary/40" : "bg-destructive/20 border-destructive/40")
+                      : "bg-background/30 hover:bg-muted/50"
                   }`}
                 />
               );
@@ -544,8 +477,10 @@ export const KonoodleGame = ({ onComplete }: Props) => {
               key={piece.id}
               piece={piece}
               selected={selectedPiece?.id === piece.id}
-              onClick={() => { setSelectedPiece(piece); setRotation(0); sfx.click(); }}
-              onDragStart={(e) => handleDragStart(e, piece)}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                startDragging(piece);
+              }}
             />
           ))}
         </div>
@@ -588,7 +523,42 @@ export const KonoodleGame = ({ onComplete }: Props) => {
           RESET
         </button>
       </div>
-      <p className="text-xs text-muted-foreground text-center">Drag pieces onto the board or click to place · Tap placed pieces to remove</p>
+      <p className="text-xs text-muted-foreground text-center">Drag pieces onto the board · Tap pieces to rotate before dragging</p>
+
+      {/* Dragging Piece Visual */}
+      <AnimatePresence>
+        {draggingPiece && (
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1.1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            className="fixed pointer-events-none z-[100]"
+            style={{ 
+              left: dragPointerPos.x,
+              top: dragPointerPos.y,
+              transform: "translate(-50%, -50%)"
+            }}
+          >
+             {(() => {
+                const cells = getRotatedCells(draggingPiece, rotation);
+                const maxR = Math.max(...cells.map(([r]) => r));
+                const maxC = Math.max(...cells.map(([, c]) => c));
+                const cellSet = new Set(cells.map(([r, c]) => `${r},${c}`));
+                return (
+                  <div className="flex flex-col">
+                    {Array.from({ length: maxR + 1 }, (_, r) => (
+                      <div key={r} className="flex">
+                        {Array.from({ length: maxC + 1 }, (_, c) => (
+                          <div key={c} className={`w-7 h-7 rounded-sm border border-black/10 ${cellSet.has(`${r},${c}`) ? draggingPiece.color : "bg-transparent"}`} />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                );
+             })()}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

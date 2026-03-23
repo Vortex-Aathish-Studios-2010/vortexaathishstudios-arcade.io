@@ -46,6 +46,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
   const [started, setStarted] = useState(false);
   const [obstacles, setObstacles] = useState<Set<string>>(new Set());
   const dirRef = useRef<Pos>([0, 1]);
+  const moveQueue = useRef<Pos[]>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
   const { device } = useDevice();
 
@@ -54,6 +55,10 @@ export const SnakeGame = ({ onComplete }: Props) => {
 
   const tick = useCallback(() => {
     setSnake((prev) => {
+      if (moveQueue.current.length > 0) {
+        dirRef.current = moveQueue.current.shift()!;
+        setDir(dirRef.current);
+      }
       const d = dirRef.current;
       const head: Pos = [prev[0][0] + d[0], prev[0][1] + d[1]];
       if (head[0] < 0 || head[0] >= ROWS || head[1] < 0 || head[1] >= COLS) {
@@ -106,7 +111,10 @@ export const SnakeGame = ({ onComplete }: Props) => {
         sfx.move();
         if (!started) setStarted(true);
         const [dr, dc] = map[e.key];
-        if (dirRef.current[0] + dr !== 0 || dirRef.current[1] + dc !== 0) { dirRef.current = [dr, dc]; setDir([dr, dc]); }
+        const lastQueued = moveQueue.current.length > 0 ? moveQueue.current[moveQueue.current.length - 1] : dirRef.current;
+        if (lastQueued[0] + dr !== 0 || lastQueued[1] + dc !== 0) {
+          if (moveQueue.current.length < 3) moveQueue.current.push([dr, dc]);
+        }
       }
     };
     window.addEventListener("keydown", handler);
@@ -124,7 +132,10 @@ export const SnakeGame = ({ onComplete }: Props) => {
       let nd: Pos;
       if (Math.abs(dx) > Math.abs(dy)) nd = dx > 0 ? [0, 1] : [0, -1];
       else nd = dy > 0 ? [1, 0] : [-1, 0];
-      if (dirRef.current[0] + nd[0] !== 0 || dirRef.current[1] + nd[1] !== 0) { dirRef.current = nd; setDir(nd); }
+      const lastQueued = moveQueue.current.length > 0 ? moveQueue.current[moveQueue.current.length - 1] : dirRef.current;
+      if (lastQueued[0] + nd[0] !== 0 || lastQueued[1] + nd[1] !== 0) {
+        if (moveQueue.current.length < 3) moveQueue.current.push(nd);
+      }
     };
     window.addEventListener("touchstart", onStart);
     window.addEventListener("touchend", onEnd);
@@ -133,7 +144,15 @@ export const SnakeGame = ({ onComplete }: Props) => {
 
   const reset = () => {
     sfx.click();
-    setSnake(initialSnake); setFood(randomFood(initialSnake, new Set())); dirRef.current = [0, 1]; setDir([0, 1]); setGameOver(false); setScore(0); setStarted(false); setObstacles(new Set());
+    setSnake(initialSnake); 
+    setFood(randomFood(initialSnake, new Set())); 
+    dirRef.current = [0, 1]; 
+    setDir([0, 1]); 
+    moveQueue.current = [];
+    setGameOver(false); 
+    setScore(0); 
+    setStarted(false); 
+    setObstacles(new Set());
   };
 
   const snakeSet = new Set(snake.map(([r, c]) => `${r},${c}`));

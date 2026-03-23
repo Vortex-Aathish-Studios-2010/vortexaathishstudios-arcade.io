@@ -13,6 +13,7 @@ import EntertainmentPage from "./pages/EntertainmentPage";
 import EntertainmentGamePage from "./pages/EntertainmentGamePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import NotFound from "./pages/NotFound";
+import { BigNotificationProvider } from "./components/BigNotification";
 
 const queryClient = new QueryClient();
 
@@ -38,22 +39,24 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <DeviceProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
-          {showDeviceSelector && <DeviceSelector onSelect={handleDeviceSelect} />}
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/game/:id" element={<GamePage />} />
-              <Route path="/entertainment" element={<EntertainmentPage />} />
-              <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <BigNotificationProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+            {showDeviceSelector && <DeviceSelector onSelect={handleDeviceSelect} />}
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/game/:id" element={<GamePage />} />
+                <Route path="/entertainment" element={<EntertainmentPage />} />
+                <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </BigNotificationProvider>
       </DeviceProvider>
     </QueryClientProvider>
   );

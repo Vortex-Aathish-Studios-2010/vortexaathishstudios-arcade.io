@@ -1,14 +1,11 @@
 import React from "react";
-
 import chessIcon from "@/assets/icons/chess.png";
+import boxingIcon from "@/assets/icons/boxing.png";
+import memoryIcon from "@/assets/icons/memory.png";
+import tetrisIcon from "@/assets/icons/tetris.png";
 import archeryIcon from "@/assets/icons/archery.png";
-import tennisIcon from "@/assets/icons/tennis.png";
-import cricketIcon from "@/assets/icons/cricket.png";
-import penaltyIcon from "@/assets/icons/penalty.png";
-import obstacleIcon from "@/assets/icons/obstacle.png";
-import hideseekIcon from "@/assets/icons/hideseek.png";
-import basketballIcon from "@/assets/icons/basketball.png";
 import racingIcon from "@/assets/icons/racing.png";
+import hideseekIcon from "@/assets/icons/hideseek.png";
 
 export interface EntertainmentGameInfo {
   id: string;
@@ -22,7 +19,7 @@ export interface EntertainmentGameInfo {
 }
 
 const GameIcon = ({ src, alt }: { src: string; alt: string }) => (
-  <img src={src} alt={alt} className="w-full h-full object-contain drop-shadow-lg" draggable={false} />
+  <img src={src} alt={alt} className="w-full h-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] transition-transform group-hover:scale-110" draggable={false} />
 );
 
 export const entertainmentGames: EntertainmentGameInfo[] = [
@@ -37,83 +34,63 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     tutorial: ["Choose to play against a bot or a friend locally.", "Pick your color — white or black.", "Click a piece to select it, then click a highlighted square to move.", "Put the opponent's king in checkmate to win!"],
   },
   {
-    id: "archery",
-    name: "Archery",
-    description: "Aim for the bullseye",
-    icon: <GameIcon src={archeryIcon} alt="Archery" />,
-    color: "sport-accent",
-    available: true,
-    difficulty: "Medium",
-    tutorial: ["A moving crosshair bounces across the target.", "Tap or click SHOOT when the crosshair is closest to the bullseye.", "Score points based on how close you hit to the center.", "You get 5 arrows per round — aim carefully!"],
-  },
-  {
-    id: "penalty",
-    name: "Penalty Kick",
-    description: "Score past the goalkeeper",
-    icon: <GameIcon src={penaltyIcon} alt="Penalty Kick" />,
+    id: "tap-rush",
+    name: "Tap Rush",
+    description: "Tap as fast as possible in 10s",
+    icon: <GameIcon src={boxingIcon} alt="Tap Rush" />,
     color: "sport-accent",
     available: true,
     difficulty: "Easy",
-    tutorial: ["Click the LEFT, CENTER, or RIGHT zone on the goal to aim your kick.", "The goalkeeper will dive to try to save it.", "Score as many goals as you can in 5 attempts!", "Aim for the corners for the best chance of scoring."],
+    tutorial: ["Tap the big button as fast as you can.", "You have 10 seconds to score.", "Beat your best score!"],
   },
   {
-    id: "basketball",
-    name: "Basketball",
-    description: "Shoot hoops and score points",
-    icon: <GameIcon src={basketballIcon} alt="Basketball" />,
-    color: "sport-primary",
-    available: true,
-    difficulty: "Medium",
-    tutorial: ["Drag the ball upward to set your shot power and angle.", "Release to launch the ball toward the hoop.", "Score as many baskets as you can in 30 seconds!", "The hoop moves — time your shots carefully."],
-  },
-  {
-    id: "racing",
-    name: "Racing",
-    description: "Dodge obstacles and race to the finish",
-    icon: <GameIcon src={racingIcon} alt="Racing" />,
-    color: "sport-primary",
-    available: true,
-    difficulty: "Easy",
-    tutorial: ["Use left/right controls or arrow keys to steer your car.", "Dodge oncoming obstacles and other cars.", "Collect coins for bonus points.", "Survive as long as possible — speed increases over time!"],
-  },
-  {
-    id: "tennis",
-    name: "Tennis",
-    description: "Rally and smash to win",
-    icon: <GameIcon src={tennisIcon} alt="Tennis" />,
-    color: "sport-primary",
-    available: true,
-    difficulty: "Medium",
-    tutorial: ["Move your paddle to hit the ball back.", "Try to outplay your opponent with angled shots.", "First to 5 points wins the match!", "The ball speeds up as rallies get longer."],
-  },
-  {
-    id: "cricket",
-    name: "Cricket",
-    description: "Hit sixes and take wickets",
-    icon: <GameIcon src={cricketIcon} alt="Cricket" />,
+    id: "color-switch",
+    name: "Color Switch Tap",
+    description: "Tap when the color matches the rule",
+    icon: <GameIcon src={memoryIcon} alt="Color Switch" />,
     color: "sport-secondary",
+    available: true,
+    difficulty: "Medium",
+    tutorial: ["Watch the rule at the top.", "Tap if the central color matches the rule.", "Don't tap if it doesn't match!", "Speed increases over time."],
+  },
+  {
+    id: "stack-tower",
+    name: "Stack Tower",
+    description: "Drop blocks to build a tower",
+    icon: <GameIcon src={tetrisIcon} alt="Stack Tower" />,
+    color: "sport-primary",
+    available: true,
+    difficulty: "Medium",
+    tutorial: ["Tap to drop the moving block.", "Align it perfectly to keep the tower wide.", "Misaligned parts are cut off.", "Game ends when you miss completely."],
+  },
+  {
+    id: "one-shot",
+    name: "One Shot Aim",
+    description: "Shoot the moving target",
+    icon: <GameIcon src={archeryIcon} alt="One Shot Aim" />,
+    color: "sport-accent",
+    available: true,
+    difficulty: "Medium",
+    tutorial: ["Wait for the target to align.", "Tap to shoot the ball upwards.", "Hit the target to score and increase speed.", "Miss and the game is over."],
+  },
+  {
+    id: "avoid-walls",
+    name: "Avoid the Walls",
+    description: "Dodge falling obstacles",
+    icon: <GameIcon src={racingIcon} alt="Avoid the Walls" />,
+    color: "sport-secondary",
+    available: true,
+    difficulty: "Medium",
+    tutorial: ["Hold the left/right buttons to move.", "Navigate through the gaps in the falling walls.", "Survive as long as possible.", "Walls fall faster over time."],
+  },
+  {
+    id: "three-cups",
+    name: "Shell Game",
+    description: "Follow the cup with the ball",
+    icon: <GameIcon src={hideseekIcon} alt="Three Cups" />,
+    color: "sport-primary",
     available: true,
     difficulty: "Hard",
-    tutorial: ["Coming soon!"],
-  },
-  {
-    id: "obstacle",
-    name: "Obstacle Race",
-    description: "Jump, duck and dash to the finish",
-    icon: <GameIcon src={obstacleIcon} alt="Obstacle Race" />,
-    color: "sport-primary",
-    available: true,
-    difficulty: "Medium",
-    tutorial: ["Coming soon!"],
-  },
-  {
-    id: "hideseek",
-    name: "Hide & Seek",
-    description: "Find or hide before time runs out",
-    icon: <GameIcon src={hideseekIcon} alt="Hide & Seek" />,
-    color: "sport-secondary",
-    available: true,
-    difficulty: "Easy",
-    tutorial: ["Coming soon!"],
-  },
+    tutorial: ["Watch which cup hides the ball.", "Follow it as the cups shuffle around.", "Tap the correct cup to guess.", "Speed increases with every correct guess."],
+  }
 ];

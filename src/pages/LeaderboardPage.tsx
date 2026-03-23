@@ -84,7 +84,7 @@ const LeaderboardPage = () => {
     const isOwnEntry = existing && currentPlayerName === trimmed;
 
     if (existing && !isOwnEntry) {
-      setNameError("This name is already taken — choose another!");
+      setNameError("NAME ALREADY TAKEN — CHOOSE ANOTHER!");
       setSubmitting(false);
       return;
     }
@@ -207,7 +207,8 @@ const LeaderboardPage = () => {
               <p className="font-display text-sm text-foreground mb-3">
                 Your stats:{" "}
                 <span className="text-primary">{getTotalWins()}W</span>{" / "}
-                <span className="text-destructive">{getTotalLosses()}L</span>
+                <span className="text-destructive">{getTotalLosses()}L</span>{" "}
+                <span className="text-muted-foreground ml-2 text-xs">({getTotalWins() + getTotalLosses()} Total)</span>
               </p>
               <div className="flex gap-2">
                 <div className="flex-1">
@@ -286,32 +287,37 @@ const LeaderboardPage = () => {
                         ? Math.round((entry.wins / (entry.wins + entry.losses)) * 100)
                         : 0}%
                     </span>
+                    <span className="font-display text-[10px] text-muted-foreground ml-2 hidden sm:inline-block w-16 text-right">
+                      {entry.wins + entry.losses} GAMES
+                    </span>
 
-                    {/* Delete button (only for your own entry or all visible) */}
-                    {isConfirmingDelete ? (
-                      <div className="flex items-center gap-1.5">
+                    {/* Delete button (only for your own entry) */}
+                    {isCurrentPlayer && (
+                      isConfirmingDelete ? (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleDelete(entry.id, entry.player_name)}
+                            disabled={deletingId === entry.id}
+                            className="px-2 py-1 bg-destructive text-destructive-foreground rounded text-[10px] font-display hover:opacity-90 transition-all"
+                          >
+                            {deletingId === entry.id ? "..." : "CONFIRM"}
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="px-2 py-1 bg-muted text-muted-foreground rounded text-[10px] font-display hover:bg-muted/80 transition-all"
+                          >
+                            CANCEL
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          onClick={() => handleDelete(entry.id, entry.player_name)}
-                          disabled={deletingId === entry.id}
-                          className="px-2 py-1 bg-destructive text-destructive-foreground rounded text-[10px] font-display hover:opacity-90 transition-all"
+                          onClick={() => setConfirmDeleteId(entry.id)}
+                          className="p-1.5 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded transition-all"
+                          title="Delete entry"
                         >
-                          {deletingId === entry.id ? "..." : "CONFIRM"}
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="px-2 py-1 bg-muted text-muted-foreground rounded text-[10px] font-display hover:bg-muted/80 transition-all"
-                        >
-                          CANCEL
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmDeleteId(entry.id)}
-                        className="p-1.5 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded transition-all"
-                        title="Delete entry"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      )
                     )}
                   </div>
                 </motion.div>
