@@ -57,7 +57,6 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   const [rotation, setRotation] = useState(0);
   const [lastPlacedId, setLastPlacedId] = useState<string | null>(null);
   const [solving, setSolving] = useState(false);
-  const [showingSolution, setShowingSolution] = useState(false);
   const [shuffling, setShuffling] = useState(false);
   const [hasShuffled, setHasShuffled] = useState(false);
   const [removingPieces, setRemovingPieces] = useState<Set<string>>(new Set());
@@ -107,7 +106,6 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setLastPlacedId(selectedPiece.id);
     setSelectedPiece(null);
     setRotation(0);
-    setShowingSolution(false);
     setDragOverCell(null);
     checkWin(newBoard);
   };
@@ -123,7 +121,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   };
 
   const removePiece = (id: string) => {
-    if (showingSolution) return;
+    if (solving) return;
     sfx.click();
     setBoard(board.map((row) => row.map((cell) => (cell === id ? null : cell))));
     const newPlaced = new Map(placed);
@@ -139,7 +137,6 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     setSelectedPiece(null);
     setRotation(0);
     setLastPlacedId(null);
-    setShowingSolution(false);
     setShuffling(false);
     setHasShuffled(false);
     setRemovingPieces(new Set());
@@ -277,115 +274,82 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     }, 400);
   }, [board, placed, lastPlacedId]);
 
-  // Solve puzzle — remove player-placed blocks first (keep shuffled), then show solution
-  const handleSolve = useCallback(() => {
+  // Hint system — places one piece at a time if the board is solvable
+  const handleHint = useCallback(() => {
+    if (solving) return;
     setSolving(true);
 
-    // Identify player-placed pieces (everything except the shuffled piece)
-    const shuffledId = shuffledPieceIdRef.current;
-    const playerPieceIds = Array.from(placed.keys()).filter(id => id !== shuffledId);
+    setTimeout(() => {
+      let solution = cachedSolutionRef.current;
+      
+      const currentPlacedIds = new Set<string>();
+      let emptyCells = 0;
+      for (let r = 0; r < BOARD_ROWS; r++) {
+        for (let c = 0; c < BOARD_COLS; c++) {
+          if (board[r][c]) currentPlacedIds.add(board[r][c]!);
+          else emptyCells++;
+        }
+      }
 
-    if (playerPieceIds.length > 0) {
-      // Animate removal of player pieces
-      setRemovingPieces(new Set(playerPieceIds));
+      if (emptyCells === 0) {
+        setSolving(false);
+        return; 
+      }
 
-      // After animation, actually remove them from board state
-      setTimeout(() => {
+      // If no valid cache or player added pieces, verify if current board is solvable
+      // We assume if cached solution has right number of steps, it might still be valid, 
+      // but to be safe we can just solve.
+      if (!solution || solution.length !== Math.floor(emptyCells / 5)) { // Each piece is 5 blocks typically
+         // Fast solve attempt to check viability
+         solution = solvePuzzle(board, currentPlacedIds, 1000000);
+      }
+
+      if (solution && solution.length > 0) {
+        const step = solution.shift()!; // Take first hint step
+        cachedSolutionRef.current = solution; // Save remaining steps
+        
         setBoard(prev => {
           const b = prev.map(r => [...r]);
-          for (let r = 0; r < BOARD_ROWS; r++) {
-            for (let c = 0; c < BOARD_COLS; c++) {
-              if (b[r][c] && playerPieceIds.includes(b[r][c]!)) {
-                b[r][c] = null;
-              }
-            }
-          }
+          step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
           return b;
         });
+        
         setPlaced(prev => {
           const p = new Map(prev);
-          playerPieceIds.forEach(id => p.delete(id));
+          p.set(step.pieceId, step.cells);
           return p;
         });
-        setRemovingPieces(new Set());
-
-        // Now solve from the clean state
-        setTimeout(() => startSolving(), 200);
-      }, 600);
-    } else {
-      startSolving();
-    }
-  }, [placed]);
-
-  const startSolving = useCallback(() => {
-    // Use cached solution from shuffle first, then try solving fresh
-    let solution = cachedSolutionRef.current;
-    if (!solution || solution.length === 0) {
-      // Need to re-read board state at this point
-      setBoard(currentBoard => {
-        const currentPlacedIds = new Set<string>();
-        for (let r = 0; r < BOARD_ROWS; r++) {
-          for (let c = 0; c < BOARD_COLS; c++) {
-            if (currentBoard[r][c]) currentPlacedIds.add(currentBoard[r][c]!);
-          }
-        }
-        solution = solvePuzzle(currentBoard, currentPlacedIds, 20000000);
-
-        if (solution && solution.length > 0) {
-          setSolving(false);
-          cachedSolutionRef.current = null;
-          setShowingSolution(true);
-
-          solution.forEach((step, i) => {
-            setTimeout(() => {
-              setBoard(prev => {
-                const b = prev.map(r => [...r]);
-                step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
-                return b;
-              });
-              setPlaced(prev => {
+        
+        sfx.place();
+        setSolving(false);
+      } else {
+        // Unsolvable! The hint HELPS by removing the most recent wrong piece.
+        const shuffledId = shuffledPieceIdRef.current;
+        const playerPieceIds = Array.from(placed.keys()).filter(id => id !== shuffledId);
+        
+        if (playerPieceIds.length > 0) {
+            const wrongId = playerPieceIds[playerPieceIds.length - 1]; // Assume last placed piece is the dead end
+            setBoard(prev => {
+               const b = prev.map(r => [...r]);
+               const cells = placed.get(wrongId);
+               if (cells) cells.forEach(([r, c]) => { b[r][c] = null; });
+               return b;
+            });
+            setPlaced(prev => {
                 const p = new Map(prev);
-                p.set(step.pieceId, step.cells);
+                p.delete(wrongId);
                 return p;
-              });
-              sfx.place();
-              if (i === solution!.length - 1) {
-                setTimeout(() => sfx.levelComplete(), 200);
-              }
-            }, (i + 1) * 350);
-          });
+            });
+            sfx.mismatch?.();
+            toast.info(`Hint: Removed piece '${wrongId}' as it leads to a dead end!`);
         } else {
-          setSolving(false);
-          cachedSolutionRef.current = null;
+            sfx.error();
+            toast.error("No valid moves! Something is wrong.");
         }
-
-        return currentBoard; // Don't modify
-      });
-    } else {
-      setSolving(false);
-      cachedSolutionRef.current = null;
-      setShowingSolution(true);
-
-      solution.forEach((step, i) => {
-        setTimeout(() => {
-          setBoard(prev => {
-            const b = prev.map(r => [...r]);
-            step.cells.forEach(([r, c]) => { b[r][c] = step.pieceId; });
-            return b;
-          });
-          setPlaced(prev => {
-            const p = new Map(prev);
-            p.set(step.pieceId, step.cells);
-            return p;
-          });
-          sfx.place();
-          if (i === solution!.length - 1) {
-            setTimeout(() => sfx.levelComplete(), 200);
-          }
-        }, (i + 1) * 350);
-      });
-    }
-  }, []);
+        setSolving(false);
+      }
+    }, 50);
+  }, [board, placed]);
 
   const pieceColor = (id: string) => PIECES.find((p) => p.id === id)?.color || "bg-muted";
 
@@ -499,7 +463,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
 
       {/* Action buttons */}
       <div className="flex gap-2 flex-wrap justify-center">
-        {lastPlacedId && !showingSolution && (
+        {lastPlacedId && (
           <button
             onClick={shakeLastPiece}
             disabled={shuffling}
@@ -511,12 +475,12 @@ export const KonoodleGame = ({ onComplete }: Props) => {
         )}
         {hasShuffled && (
           <button
-            onClick={handleSolve}
-            disabled={solving || showingSolution}
+            onClick={handleHint}
+            disabled={solving}
             className="flex items-center gap-1.5 px-4 py-2 bg-primary/10 border border-primary/30 text-primary rounded-xl font-display text-xs hover:border-primary/60 transition-all disabled:opacity-40"
           >
             <Eye className="h-3.5 w-3.5" />
-            {solving ? "SOLVING..." : "SHOW SOLUTION"}
+            {solving ? "THINKING..." : "GET HINT"}
           </button>
         )}
         <button onClick={reset} className="px-6 py-2 bg-card border border-border text-foreground rounded-xl font-display text-sm hover:border-primary/50 transition-all">

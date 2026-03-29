@@ -86,65 +86,70 @@ export const SudokuGame = ({ level: propLevel, onComplete }: Props) => {
     }
   };
 
-  const handleViewSolution = useCallback(() => {
+  const handleHint = useCallback(() => {
     if (won || showingSolution) return;
 
-    // If player has placed numbers, animate them away first
-    if (hasPlayerPlacedCells) {
-      setIsRemoving(true);
-      sfx.click();
+    // 1. Check for incorrect cells
+    let hasMistakes = false;
+    const newBoard = board.map(row => [...row]);
+    let mistakesCount = 0;
 
-      setTimeout(() => {
-        // Clear all player-placed cells
-        const clearedBoard = board.map((row, r) =>
-          row.map((val, c) => (fixed[r][c] ? val : 0))
-        );
-        setBoard(clearedBoard);
-        setIsRemoving(false);
-        setSelected(null);
-
-        // Now reveal solution step by step
-        startSolutionReveal(clearedBoard);
-      }, 600);
-    } else {
-      startSolutionReveal(board);
-    }
-  }, [won, showingSolution, hasPlayerPlacedCells, board, fixed, solution]);
-
-  const startSolutionReveal = useCallback((currentBoard: number[][]) => {
-    setShowingSolution(true);
-
-    // Collect all empty cells
-    const emptyCells: [number, number][] = [];
     for (let r = 0; r < 9; r++) {
       for (let c = 0; c < 9; c++) {
-        if (currentBoard[r][c] === 0) {
-          emptyCells.push([r, c]);
+        if (!fixed[r][c] && board[r][c] !== 0 && board[r][c] !== solution[r][c]) {
+          newBoard[r][c] = 0;
+          hasMistakes = true;
+          mistakesCount++;
         }
       }
     }
 
-    // Reveal cells one by one with delay
-    emptyCells.forEach(([r, c], index) => {
-      setTimeout(() => {
-        setBoard((prev) => {
-          const newBoard = prev.map((row) => [...row]);
-          newBoard[r][c] = solution[r][c];
-          return newBoard;
-        });
-        setRevealedCells((prev) => {
-          const next = prev.map((row) => [...row]);
-          next[r][c] = true;
-          return next;
-        });
-        sfx.click();
-      }, 50 * (index + 1));
-    });
+    if (hasMistakes) {
+      // The hint helps by automatically clearing incorrect cells!
+      setBoard(newBoard);
+      sfx.error();
+      toast.info(`Hint: Removed ${mistakesCount} incorrect cell${mistakesCount > 1 ? 's' : ''}!`);
+      return;
+    }
 
-    setTimeout(() => {
-      toast.info("Solution revealed! No points awarded.");
-    }, 50 * emptyCells.length + 200);
-  }, [solution]);
+    // 2. If no mistakes, place exactly ONE correct cell
+    const emptyCells: [number, number][] = [];
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (newBoard[r][c] === 0) emptyCells.push([r, c]);
+      }
+    }
+
+    if (emptyCells.length > 0) {
+      // Pick a random empty cell to fill
+      const [r, c] = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      newBoard[r][c] = solution[r][c];
+      
+      setBoard(newBoard);
+      setRevealedCells(prev => {
+        const next = prev.map(row => [...row]);
+        next[r][c] = true;
+        return next;
+      });
+      sfx.place();
+      
+      // Check win condition
+      if (newBoard.every((row, ri) => row.every((v, ci) => v === solution[ri][ci]))) {
+        setWon(true);
+        sfx.levelComplete();
+        const pts = 100 + currentLevel * 50;
+        addPoints(pts);
+        updateStreak("sudoku");
+        addWin("sudoku");
+        incrementLevel("sudoku");
+        toast.success(`${difficulty.label} Sudoku solved! +${pts} points`);
+        onComplete?.(pts);
+      } else {
+        toast.success("Hint: Placed correct number.");
+      }
+    }
+
+  }, [won, showingSolution, board, fixed, solution, currentLevel]);
 
   const isError = (r: number, c: number) => board[r][c] !== 0 && board[r][c] !== solution[r][c];
   const isPlayerCell = (r: number, c: number) => !fixed[r][c] && board[r][c] !== 0;
@@ -209,11 +214,11 @@ export const SudokuGame = ({ level: propLevel, onComplete }: Props) => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={handleViewSolution}
+          onClick={handleHint}
           className="flex items-center gap-2 px-4 py-2 bg-secondary/10 border border-secondary/30 text-secondary rounded-xl font-display text-xs hover:bg-secondary/20 hover:border-secondary/50 transition-all"
         >
           <Eye className="h-4 w-4" />
-          VIEW SOLUTION
+          GET HINT
         </motion.button>
       )}
 

@@ -337,9 +337,9 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
         <p className="text-center text-sm text-muted-foreground font-display mb-2">Choose how to play</p>
         <button
           onClick={() => setMode("bot")}
-          className="w-full flex items-center gap-4 p-5 rounded-xl border-2 border-primary/30 bg-card hover:border-primary/60 hover:glow-primary transition-all"
+          className="w-full flex items-center gap-4 p-5 rounded-xl border-2 border-primary/30 bg-card hover:border-primary/60 hover:bg-primary/10 transition-all"
         >
-          <Bot className="h-8 w-8 text-primary" />
+          <Bot className="h-8 w-8 text-primary group-hover:scale-110 transition-transform" />
           <div className="text-left">
             <div className="font-display font-bold text-foreground">Play vs Bot</div>
             <div className="text-xs text-muted-foreground">Choose difficulty and challenge the AI</div>
@@ -350,9 +350,9 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
             setMode("friend");
             if (!playerId) setFriendStep("choice");
           }}
-          className="w-full flex items-center gap-4 p-5 rounded-xl border-2 border-secondary/30 bg-card hover:border-secondary/60 hover:glow-secondary transition-all"
+          className="w-full flex items-center gap-4 p-5 rounded-xl border-2 border-secondary/30 bg-card hover:border-secondary/60 hover:bg-secondary/10 transition-all"
         >
-          <Users className="h-8 w-8 text-secondary" />
+          <Users className="h-8 w-8 text-secondary group-hover:scale-110 transition-transform" />
           <div className="text-left">
             <div className="font-display font-bold text-foreground">Play vs Friend</div>
             <div className="text-xs text-muted-foreground">Create or join a room with a code</div>

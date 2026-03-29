@@ -59,7 +59,7 @@ export const updateStreak = (gameId: string) => {
 };
 
 export const getAllGameStreaks = (): Record<string, number> => {
-  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe"];
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe", "taprush", "reaction", "color", "aim", "rps", "cups", "number", "gravityflip"];
   const streaks: Record<string, number> = {};
   for (const id of gameIds) {
     streaks[id] = getStreak(id);
@@ -119,12 +119,12 @@ export const addLoss = (gameId: string) => {
 };
 
 export const getTotalWins = (): number => {
-  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe"];
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe", "taprush", "reaction", "color", "aim", "rps", "cups", "number", "gravityflip"];
   return gameIds.reduce((sum, id) => sum + getWins(id), 0);
 };
 
 export const getTotalLosses = (): number => {
-  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe"];
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe", "taprush", "reaction", "color", "aim", "rps", "cups", "number", "gravityflip"];
   return gameIds.reduce((sum, id) => sum + getLosses(id), 0);
 };
 

@@ -3,10 +3,11 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Trophy, TrendingUp, TrendingDown, Gamepad2 } from "lucide-react";
+import { Brain, Trophy, TrendingUp, TrendingDown, Gamepad2, Mail, Instagram } from "lucide-react";
 import { StatsBar } from "@/components/StatsBar";
 import { getTotalWins, getTotalLosses, getPoints } from "@/lib/streaks";
 import { ScreenBreaker } from "@/components/ScreenBreaker";
+import { ContactModal } from "@/components/ContactModal";
 import { Starfield } from "@/components/Starfield";
 
 const Index = () => {
@@ -133,6 +134,7 @@ const Index = () => {
             <Trophy className="h-5 w-5 text-accent" />
             <span className="font-display text-sm text-foreground">WORLDWIDE LEADERBOARD</span>
           </motion.button>
+
         </motion.div>
       ) : (
         <motion.div
@@ -218,6 +220,9 @@ const Index = () => {
         </motion.div>
       )}
     </AnimatePresence>
+
+      {/* Global Suggestion Modal for Lobby and Brain Hub */}
+      <ContactModal />
     </div>
   );
 };

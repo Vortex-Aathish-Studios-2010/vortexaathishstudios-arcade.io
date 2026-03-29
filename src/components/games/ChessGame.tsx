@@ -12,9 +12,9 @@ type PlayerColor = "white" | "black";
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
 
-export const ChessGame = () => {
-  const [mode, setMode] = useState<Mode>("select");
-  const [pendingMode, setPendingMode] = useState<"bot" | "friend">("bot");
+export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "friend" }) => {
+  const [mode, setMode] = useState<Mode>(initialMode === "bot" ? "color" : "friend");
+  const [pendingMode, setPendingMode] = useState<"bot" | "friend">(initialMode);
   const [playerColor, setPlayerColor] = useState<PlayerColor>("white");
   const [state, setState] = useState<GameState>(createInitialState());
   const [selected, setSelected] = useState<Position | null>(null);
@@ -121,40 +121,6 @@ export const ChessGame = () => {
     return () => clearTimeout(timer);
   }, [mode, state, playerColor]);
 
-  // Mode select screen
-  if (mode === "select") {
-    return (
-      <div className="flex flex-col items-center gap-8">
-        <motion.div
-          initial={{ scale: 0, rotate: -20 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: "spring", stiffness: 180 }}
-          className="text-8xl"
-        >
-          ♚
-        </motion.div>
-        <h2 className="font-sport text-2xl tracking-wide text-[hsl(var(--sport-text))]">CHOOSE MODE</h2>
-        <div className="flex gap-4">
-          <motion.button
-            whileHover={{ scale: 1.05, y: -3 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => { setPendingMode("bot"); setMode("color"); }}
-            className="px-8 py-4 rounded-xl bg-[hsl(var(--sport-primary))] text-[hsl(var(--sport-bg))] font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-all"
-          >
-            🤖 vs Bot
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05, y: -3 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => { setPendingMode("friend"); resetGame("friend", "white"); }}
-            className="px-8 py-4 rounded-xl bg-[hsl(var(--sport-secondary))] text-[hsl(var(--sport-bg))] font-sport-body font-bold text-lg shadow-lg hover:shadow-xl transition-all"
-          >
-            👥 vs Friend
-          </motion.button>
-        </div>
-      </div>
-    );
-  }
 
   // Color select screen (bot mode only)
   if (mode === "color") {
@@ -204,15 +170,6 @@ export const ChessGame = () => {
           </motion.button>
         </div>
 
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          onClick={() => setMode("select")}
-          className="text-[hsl(var(--sport-muted))] hover:text-[hsl(var(--sport-text))] font-sport-body text-sm transition-colors"
-        >
-          ← Back
-        </motion.button>
       </div>
     );
   }
@@ -361,14 +318,6 @@ export const ChessGame = () => {
           className="px-4 py-2 rounded-lg bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] text-[hsl(var(--sport-text))] font-sport-body font-bold text-sm hover:shadow-md transition-all"
         >
           🔄 New Game
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setMode("select")}
-          className="px-4 py-2 rounded-lg bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] text-[hsl(var(--sport-text))] font-sport-body font-bold text-sm hover:shadow-md transition-all"
-        >
-          🔙 Change Mode
         </motion.button>
       </div>
     </div>

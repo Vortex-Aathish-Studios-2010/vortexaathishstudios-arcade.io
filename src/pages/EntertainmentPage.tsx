@@ -6,6 +6,7 @@ import { EntertainmentCard } from "@/components/EntertainmentCard";
 import { Starfield } from "@/components/Starfield";
 import { Star, Brain, Trophy, TrendingUp, TrendingDown } from "lucide-react";
 import { getEntertainmentPoints, getTotalWins, getTotalLosses } from "@/lib/streaks";
+import { ContactModal } from "@/components/ContactModal";
 
 const EntertainmentPage = () => {
   const navigate = useNavigate();
@@ -148,6 +149,8 @@ const EntertainmentPage = () => {
           ))}
         </div>
       </main>
+
+      <ContactModal />
     </motion.div>
   );
 };

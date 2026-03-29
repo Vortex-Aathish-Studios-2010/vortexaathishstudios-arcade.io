@@ -68,8 +68,7 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                 key="logo"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0, y: -60, filter: "blur(20px)" }}
-                transition={{ exit: { duration: 0.6, ease: [0.4, 0, 0.2, 1] } }}
+                exit={{ opacity: 0, y: -60, filter: "blur(20px)", transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] } }}
                 className="text-center relative z-10 select-none"
               >
                 {/* Scanline flash */}
@@ -132,13 +131,6 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                     transition={{ delay: 0.1, duration: 0.9, type: "spring", stiffness: 80 }}
                     className="text-center flex-shrink-0"
                   >
-                    <motion.div
-                      animate={{ boxShadow: ["0 0 20px hsl(185 100% 50% / 0.2)", "0 0 50px hsl(185 100% 50% / 0.5)", "0 0 20px hsl(185 100% 50% / 0.2)"] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      className="w-28 h-28 md:w-40 md:h-40 rounded-2xl border-2 border-primary/60 bg-gradient-to-br from-primary/20 to-primary/5 mx-auto mb-4 flex items-center justify-center overflow-hidden"
-                    >
-                      <span className="font-display text-[10px] text-primary/50 tracking-wider">PHOTO</span>
-                    </motion.div>
                     <motion.p
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -164,13 +156,6 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                     transition={{ delay: 0.25, duration: 0.9, type: "spring", stiffness: 80 }}
                     className="text-center flex-shrink-0"
                   >
-                    <motion.div
-                      animate={{ boxShadow: ["0 0 20px hsl(300 80% 60% / 0.2)", "0 0 50px hsl(300 80% 60% / 0.5)", "0 0 20px hsl(300 80% 60% / 0.2)"] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                      className="w-28 h-28 md:w-40 md:h-40 rounded-2xl border-2 border-secondary/60 bg-gradient-to-br from-secondary/20 to-secondary/5 mx-auto mb-4 flex items-center justify-center overflow-hidden"
-                    >
-                      <span className="font-display text-[10px] text-secondary/50 tracking-wider">PHOTO</span>
-                    </motion.div>
                     <motion.p
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}

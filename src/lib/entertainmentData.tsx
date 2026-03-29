@@ -92,5 +92,15 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     available: true,
     difficulty: "Hard",
     tutorial: ["Watch which cup hides the ball.", "Follow it as the cups shuffle around.", "Tap the correct cup to guess.", "Speed increases with every correct guess."],
+  },
+  {
+    id: "gravity-flip",
+    name: "Gravity Flip Runner",
+    description: "Flip gravity to dodge obstacles and survive!",
+    icon: <GameIcon src={racingIcon} alt="Gravity Flip Runner" />,
+    color: "sport-primary",
+    available: true,
+    difficulty: "Medium",
+    tutorial: ["Hit Space or Tap the screen to flip gravity.", "Stay on the floor or ceiling to dodge objects.", "Crashing ends your run instantly.", "Speed increases the further you go!"],
   }
 ];

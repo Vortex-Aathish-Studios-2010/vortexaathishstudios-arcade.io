@@ -162,13 +162,16 @@ const LeaderboardPage = () => {
           </button>
 
           {currentPlayerName ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-xl text-primary font-display text-xs">
+            <button
+              onClick={() => setShowSubmit(!showSubmit)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-xl text-primary font-display text-xs hover:bg-primary/20 transition-colors"
+            >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
               </span>
               SYNCING AS {currentPlayerName.toUpperCase()}
-            </div>
+            </button>
           ) : (
             <button
               onClick={() => setShowSubmit(!showSubmit)}

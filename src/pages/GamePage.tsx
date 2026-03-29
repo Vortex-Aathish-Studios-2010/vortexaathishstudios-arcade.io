@@ -99,10 +99,10 @@ const GamePage = () => {
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.1 }}
-        className="flex items-center justify-between px-4 py-3 border-b border-border"
+        className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-border bg-background/80 backdrop-blur-md"
       >
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/?mode=brain")}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -132,7 +132,7 @@ const GamePage = () => {
       </motion.div>
 
       {/* Game fills all remaining space */}
-      <div className="flex-1 flex items-start justify-center p-4 pt-6">
+      <div className="relative z-10 flex-1 flex items-start justify-center p-4 pt-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
