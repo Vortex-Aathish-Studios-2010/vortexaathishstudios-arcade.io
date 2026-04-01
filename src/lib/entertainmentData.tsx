@@ -1,11 +1,12 @@
 import React from "react";
 import chessIcon from "@/assets/icons/chess.png";
-import boxingIcon from "@/assets/icons/boxing.png";
-import memoryIcon from "@/assets/icons/memory.png";
-import tetrisIcon from "@/assets/icons/tetris.png";
-import archeryIcon from "@/assets/icons/archery.png";
-import racingIcon from "@/assets/icons/racing.png";
-import hideseekIcon from "@/assets/icons/hideseek.png";
+import taprushIcon from "@/assets/icons/taprush.png";
+import colorswitchIcon from "@/assets/icons/colorswitch.png";
+import stacktowerIcon from "@/assets/icons/stacktower.png";
+import oneshotIcon from "@/assets/icons/oneshot.png";
+import avoidwallsIcon from "@/assets/icons/avoidwalls.png";
+import shellgameIcon from "@/assets/icons/shellgame.png";
+import gravityflipIcon from "@/assets/icons/gravityflip.png";
 
 export interface EntertainmentGameInfo {
   id: string;
@@ -37,7 +38,7 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "tap-rush",
     name: "Tap Rush",
     description: "Tap as fast as possible in 10s",
-    icon: <GameIcon src={boxingIcon} alt="Tap Rush" />,
+    icon: <GameIcon src={taprushIcon} alt="Tap Rush" />,
     color: "sport-accent",
     available: true,
     difficulty: "Easy",
@@ -47,7 +48,7 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "color-switch",
     name: "Color Switch Tap",
     description: "Tap when the color matches the rule",
-    icon: <GameIcon src={memoryIcon} alt="Color Switch" />,
+    icon: <GameIcon src={colorswitchIcon} alt="Color Switch" />,
     color: "sport-secondary",
     available: true,
     difficulty: "Medium",
@@ -57,7 +58,7 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "stack-tower",
     name: "Stack Tower",
     description: "Drop blocks to build a tower",
-    icon: <GameIcon src={tetrisIcon} alt="Stack Tower" />,
+    icon: <GameIcon src={stacktowerIcon} alt="Stack Tower" />,
     color: "sport-primary",
     available: true,
     difficulty: "Medium",
@@ -67,7 +68,7 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "one-shot",
     name: "One Shot Aim",
     description: "Shoot the moving target",
-    icon: <GameIcon src={archeryIcon} alt="One Shot Aim" />,
+    icon: <GameIcon src={oneshotIcon} alt="One Shot Aim" />,
     color: "sport-accent",
     available: true,
     difficulty: "Medium",
@@ -77,7 +78,7 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "avoid-walls",
     name: "Avoid the Walls",
     description: "Dodge falling obstacles",
-    icon: <GameIcon src={racingIcon} alt="Avoid the Walls" />,
+    icon: <GameIcon src={avoidwallsIcon} alt="Avoid the Walls" />,
     color: "sport-secondary",
     available: true,
     difficulty: "Medium",
@@ -87,7 +88,7 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "three-cups",
     name: "Shell Game",
     description: "Follow the cup with the ball",
-    icon: <GameIcon src={hideseekIcon} alt="Three Cups" />,
+    icon: <GameIcon src={shellgameIcon} alt="Three Cups" />,
     color: "sport-primary",
     available: true,
     difficulty: "Hard",
@@ -97,7 +98,7 @@ export const entertainmentGames: EntertainmentGameInfo[] = [
     id: "gravity-flip",
     name: "Gravity Flip Runner",
     description: "Flip gravity to dodge obstacles and survive!",
-    icon: <GameIcon src={racingIcon} alt="Gravity Flip Runner" />,
+    icon: <GameIcon src={gravityflipIcon} alt="Gravity Flip Runner" />,
     color: "sport-primary",
     available: true,
     difficulty: "Medium",
