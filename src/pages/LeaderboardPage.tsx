@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Trophy, ArrowLeft, Medal, Crown, Plus, Trash2, AlertTriangle } from "lucide-react";
+import { Trophy, ArrowLeft, Medal, Crown, LogIn, LogOut, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getTotalWins, getTotalLosses, getPlayerName, setPlayerName } from "@/lib/streaks";
+import { useAuth } from "@/hooks/useAuth";
+import { Starfield } from "@/components/Starfield";
 
 interface LeaderboardEntry {
   id: string;
@@ -15,15 +17,11 @@ interface LeaderboardEntry {
 
 const LeaderboardPage = () => {
   const navigate = useNavigate();
+  const { user, signInWithGoogle, signOut } = useAuth();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [name, setName] = useState(() => getPlayerName());
-  const [nameError, setNameError] = useState("");
-  const [showSubmit, setShowSubmit] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const currentPlayerName = getPlayerName();
+
+  const currentPlayerName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
 
   const fetchLeaderboard = async () => {
     const { data, error } = await supabase
@@ -41,6 +39,35 @@ const LeaderboardPage = () => {
     setLoading(false);
   };
 
+  // Auto-sync when user is logged in
+  useEffect(() => {
+    if (user && currentPlayerName) {
+      setPlayerName(currentPlayerName);
+      syncScore();
+    }
+  }, [user]);
+
+  const syncScore = async () => {
+    if (!currentPlayerName.trim()) return;
+    const wins = getTotalWins();
+    const losses = getTotalLosses();
+
+    const { data: existing } = await supabase
+      .from("leaderboard")
+      .select("id, wins, losses")
+      .eq("player_name", currentPlayerName.trim())
+      .maybeSingle();
+
+    if (existing) {
+      if (existing.wins !== wins || existing.losses !== losses) {
+        await supabase.from("leaderboard").update({ wins, losses, updated_at: new Date().toISOString() }).eq("id", existing.id);
+      }
+    } else {
+      await supabase.from("leaderboard").insert({ player_name: currentPlayerName.trim(), wins, losses });
+    }
+    fetchLeaderboard();
+  };
+
   useEffect(() => {
     fetchLeaderboard();
     const channel = supabase
@@ -50,92 +77,19 @@ const LeaderboardPage = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const checkNameAvailable = async (n: string): Promise<boolean> => {
-    const { data } = await supabase
-      .from("leaderboard")
-      .select("id, player_name")
-      .eq("player_name", n.trim())
-      .maybeSingle();
-    // Name is available if no entry exists OR the existing entry belongs to the current player
-    if (!data) return true;
-    if (currentPlayerName && data.player_name === currentPlayerName) return true;
-    return false;
-  };
-
-  const handleNameChange = (val: string) => {
-    setName(val);
-    setNameError("");
-  };
-
-  const handleSubmitScore = async () => {
-    const trimmed = name.trim();
-    if (!trimmed) { setNameError("Please enter your name"); return; }
-    if (trimmed.length < 2) { setNameError("Name must be at least 2 characters"); return; }
-
-    setSubmitting(true);
-
-    // Check if name is taken by someone else
-    const { data: existing } = await supabase
-      .from("leaderboard")
-      .select("id, player_name")
-      .eq("player_name", trimmed)
-      .maybeSingle();
-
-    const isOwnEntry = existing && currentPlayerName === trimmed;
-
-    if (existing && !isOwnEntry) {
-      setNameError("NAME ALREADY TAKEN — CHOOSE ANOTHER!");
-      setSubmitting(false);
-      return;
-    }
-
-    setPlayerName(trimmed);
-    const wins = getTotalWins();
-    const losses = getTotalLosses();
-
-    if (isOwnEntry && existing) {
-      await supabase.from("leaderboard").update({ wins, losses, updated_at: new Date().toISOString() }).eq("id", existing.id);
-      toast.success("Score updated!");
-    } else {
-      const { error } = await supabase.from("leaderboard").insert({ player_name: trimmed, wins, losses });
-      if (error) {
-        toast.error("Failed to submit score");
-        console.error(error);
-        setSubmitting(false);
-        return;
-      }
-      toast.success("Joined the leaderboard!");
-    }
-
-    setSubmitting(false);
-    setShowSubmit(false);
-    setNameError("");
-    fetchLeaderboard();
-  };
-
-  const handleDelete = async (id: string, playerNameToDelete: string) => {
-    setDeletingId(id);
-    const { error } = await supabase.from("leaderboard").delete().eq("id", id);
-    if (error) {
-      toast.error("Failed to delete entry");
-      console.error(error);
-    } else {
-      toast.success(`Removed ${playerNameToDelete} from leaderboard`);
-      if (playerNameToDelete === currentPlayerName) {
-        setPlayerName("");
-        setName("");
-      }
-    }
-    setDeletingId(null);
-    setConfirmDeleteId(null);
-    fetchLeaderboard();
-  };
-
   const getRankIcon = (index: number) => {
     if (index === 0) return <Crown className="h-5 w-5 text-accent" />;
     if (index === 1) return <Medal className="h-5 w-5 text-gray-400" />;
     if (index === 2) return <Medal className="h-5 w-5 text-[hsl(25,80%,50%)]" />;
     return <span className="w-5 h-5 flex items-center justify-center font-display text-xs text-muted-foreground">{index + 1}</span>;
+  };
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to sign in");
+    }
   };
 
   return (
@@ -146,7 +100,8 @@ const LeaderboardPage = () => {
       transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
       className="min-h-screen bg-background p-6"
     >
-      <div className="max-w-2xl mx-auto">
+      <Starfield />
+      <div className="max-w-2xl mx-auto relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -161,24 +116,33 @@ const LeaderboardPage = () => {
             <span className="font-display text-sm">BACK</span>
           </button>
 
-          {currentPlayerName ? (
-            <button
-              onClick={() => setShowSubmit(!showSubmit)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-xl text-primary font-display text-xs hover:bg-primary/20 transition-colors"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-              </span>
-              SYNCING AS {currentPlayerName.toUpperCase()}
-            </button>
+          {user ? (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-xl">
+                <User className="h-3.5 w-3.5 text-primary" />
+                <span className="font-display text-xs text-primary">{currentPlayerName}</span>
+              </div>
+              <button
+                onClick={() => syncScore()}
+                className="px-3 py-1.5 bg-accent/10 border border-accent/30 text-accent rounded-xl font-display text-xs hover:border-accent/60 transition-all"
+              >
+                SYNC
+              </button>
+              <button
+                onClick={signOut}
+                className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
           ) : (
             <button
-              onClick={() => setShowSubmit(!showSubmit)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-accent/10 border border-accent/30 text-accent rounded-xl font-display text-xs hover:border-accent/60 transition-all"
+              onClick={handleSignIn}
+              className="flex items-center gap-1.5 px-4 py-2 bg-white text-black rounded-xl font-semibold text-xs hover:bg-gray-100 transition-all shadow"
             >
-              <Plus className="h-3.5 w-3.5" />
-              JOIN LEADERBOARD
+              <LogIn className="h-3.5 w-3.5" />
+              Sign in with Google
             </button>
           )}
         </motion.div>
@@ -198,65 +162,18 @@ const LeaderboardPage = () => {
           <p className="text-muted-foreground text-sm">Top players ranked by wins</p>
         </motion.div>
 
-        {/* Submit form */}
-        <AnimatePresence>
-          {showSubmit && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-6 bg-card border border-border rounded-xl p-4 overflow-hidden"
-            >
-              <p className="font-display text-sm text-foreground mb-3">
-                Your stats:{" "}
-                <span className="text-primary">{getTotalWins()}W</span>{" / "}
-                <span className="text-destructive">{getTotalLosses()}L</span>{" "}
-                <span className="text-muted-foreground ml-2 text-xs">({getTotalWins() + getTotalLosses()} Total)</span>
-              </p>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => handleNameChange(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSubmitScore()}
-                    placeholder="Enter your name"
-                    maxLength={20}
-                    className={`w-full bg-background border rounded-lg px-3 py-2 text-foreground font-display text-sm focus:outline-none transition-colors ${
-                      nameError ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
-                    }`}
-                  />
-                  {nameError && (
-                    <p className="text-destructive text-xs font-display mt-1 flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3" /> {nameError}
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={handleSubmitScore}
-                  disabled={submitting}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-display text-sm hover:opacity-90 transition-all disabled:opacity-50 h-fit"
-                >
-                  {submitting ? "..." : "SUBMIT"}
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Leaderboard table */}
         {loading ? (
           <div className="text-center py-12 text-muted-foreground font-display">Loading...</div>
         ) : entries.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground font-display mb-2">No scores yet!</p>
-            <p className="text-sm text-muted-foreground">Be the first to submit your score.</p>
+            <p className="text-sm text-muted-foreground">Sign in with Google to be the first!</p>
           </div>
         ) : (
           <div className="space-y-2">
             {entries.map((entry, i) => {
               const isCurrentPlayer = entry.player_name === currentPlayerName;
-              const isConfirmingDelete = confirmDeleteId === entry.id;
               return (
                 <motion.div
                   key={entry.id}
@@ -290,38 +207,6 @@ const LeaderboardPage = () => {
                         ? Math.round((entry.wins / (entry.wins + entry.losses)) * 100)
                         : 0}%
                     </span>
-                    <span className="font-display text-[10px] text-muted-foreground ml-2 hidden sm:inline-block w-16 text-right">
-                      {entry.wins + entry.losses} GAMES
-                    </span>
-
-                    {/* Delete button (only for your own entry) */}
-                    {isCurrentPlayer && (
-                      isConfirmingDelete ? (
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => handleDelete(entry.id, entry.player_name)}
-                            disabled={deletingId === entry.id}
-                            className="px-2 py-1 bg-destructive text-destructive-foreground rounded text-[10px] font-display hover:opacity-90 transition-all"
-                          >
-                            {deletingId === entry.id ? "..." : "CONFIRM"}
-                          </button>
-                          <button
-                            onClick={() => setConfirmDeleteId(null)}
-                            className="px-2 py-1 bg-muted text-muted-foreground rounded text-[10px] font-display hover:bg-muted/80 transition-all"
-                          >
-                            CANCEL
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmDeleteId(entry.id)}
-                          className="p-1.5 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 rounded transition-all"
-                          title="Delete entry"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      )
-                    )}
                   </div>
                 </motion.div>
               );
