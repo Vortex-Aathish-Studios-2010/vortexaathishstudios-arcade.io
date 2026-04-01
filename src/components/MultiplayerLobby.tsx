@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Users, Copy, Play, Trophy, X } from "lucide-react";
-import { ensurePlayer, createRoom, joinRoom, startGame, reportScore, subscribeToRoom } from "@/lib/multiplayer";
-import { getPlayerName, addWin, addLoss } from "@/lib/streaks";
+import { ensurePlayer, createRoom, joinRoom, startGame, subscribeToRoom } from "@/lib/multiplayer";
+import { useAuth } from "@/hooks/useAuth";
+import { getPlayerName, setPlayerName, addWin, addLoss } from "@/lib/streaks";
 import { toast } from "sonner";
 
 interface MultiplayerLobbyProps {
@@ -12,8 +13,10 @@ interface MultiplayerLobbyProps {
 }
 
 export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: MultiplayerLobbyProps) => {
-  const [step, setStep] = useState<"name" | "choice" | "create" | "join" | "waiting">("name");
-  const [name, setName] = useState(getPlayerName() || "");
+  const { user, signInWithGoogle } = useAuth();
+  const [step, setStep] = useState<"auth" | "choice" | "create" | "join" | "waiting">(
+    user ? "choice" : "auth"
+  );
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState("");
   const [roomId, setRoomId] = useState("");
@@ -22,9 +25,35 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
   const [roomStatus, setRoomStatus] = useState("waiting");
   const [isHost, setIsHost] = useState(false);
 
+  // When user authenticates, setup player
+  useEffect(() => {
+    if (user && step === "auth") {
+      const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Player";
+      setPlayerName(displayName);
+      setupPlayer(displayName);
+    }
+  }, [user]);
+
+  // If already logged in, setup player immediately
+  useEffect(() => {
+    if (user) {
+      const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Player";
+      setupPlayer(displayName);
+    }
+  }, []);
+
+  const setupPlayer = async (name: string) => {
+    try {
+      const id = await ensurePlayer(name);
+      setPlayerId(id);
+      setStep("choice");
+    } catch {
+      toast.error("Failed to set up player");
+    }
+  };
+
   useEffect(() => {
     if (!roomId) return;
-    // Initial fetch of players
     const fetchPlayers = async () => {
       const { supabase } = await import("@/integrations/supabase/client");
       const { data: ps } = await supabase.from("room_players").select("*, players(display_name)").eq("room_id", roomId);
@@ -43,14 +72,11 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
     return unsub;
   }, [roomId, isHost, playerId]);
 
-  const handleSetName = async () => {
-    if (!name.trim()) return;
+  const handleGoogleSignIn = async () => {
     try {
-      const id = await ensurePlayer(name.trim());
-      setPlayerId(id);
-      setStep("choice");
-    } catch {
-      toast.error("Failed to set up player");
+      await signInWithGoogle();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to sign in");
     }
   };
 
@@ -102,25 +128,31 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
           <h2 className="font-display text-lg font-bold text-foreground">Multiplayer</h2>
         </div>
 
-        {step === "name" && (
+        {step === "auth" && (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Enter your display name:</p>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSetName()}
-              placeholder="Your name"
-              className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground font-display text-sm focus:border-primary outline-none"
-              autoFocus
-            />
-            <button onClick={handleSetName} className="w-full py-2 bg-primary text-primary-foreground rounded-lg font-display text-sm hover:brightness-110 transition-all">
-              CONTINUE
+            <p className="text-sm text-muted-foreground text-center">Sign in to play with friends</p>
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-full flex items-center justify-center gap-3 py-3 px-6 bg-white text-black rounded-xl font-semibold text-sm hover:bg-gray-100 transition-all shadow-lg"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              Sign in with Google
             </button>
           </div>
         )}
 
         {step === "choice" && (
           <div className="space-y-3">
+            {user && (
+              <p className="text-xs text-center text-muted-foreground mb-2">
+                Playing as <span className="text-primary font-bold">{user.user_metadata?.full_name || user.email}</span>
+              </p>
+            )}
             <button onClick={handleCreate} className="w-full py-3 bg-primary/10 border-2 border-primary/40 text-primary rounded-xl font-display text-sm hover:border-primary hover:glow-primary transition-all">
               CREATE ROOM
             </button>
@@ -199,7 +231,6 @@ export const MultiplayerResult = ({ roomId, playerId, gameId, onClose }: Multipl
         else addLoss(gameId);
       }
     });
-    // Initial fetch
     const fetch = async () => {
       const { supabase } = await import("@/integrations/supabase/client");
       const { data } = await supabase.from("room_players").select("*, players(display_name)").eq("room_id", roomId);

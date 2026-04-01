@@ -1,16 +1,25 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Mail, Instagram, X } from "lucide-react";
+import { MessageSquare, Send, X } from "lucide-react";
+import { toast } from "sonner";
 
 export const ContactModal = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [suggestion, setSuggestion] = useState("");
+
+  const handleSubmit = () => {
+    if (!suggestion.trim()) return;
+    toast.success("Thanks for the suggestion! 🎮");
+    setSuggestion("");
+    setIsOpen(false);
+  };
 
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-4 right-4 z-[90] p-3 rounded-full bg-primary/20 border border-primary/40 text-primary hover:bg-primary/40 hover:glow-primary transition-all backdrop-blur-sm"
-        title="Suggestions & Contact"
+        title="Suggestions"
       >
         <MessageSquare className="w-5 h-5" />
       </button>
@@ -44,21 +53,20 @@ export const ContactModal = () => {
               </p>
 
               <div className="space-y-4">
-                <div className="flex items-center gap-4 bg-background p-4 rounded-xl border border-primary/20">
-                  <Mail className="w-6 h-6 text-primary" />
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase font-display tracking-wider">Email</p>
-                    <p className="font-mono text-sm text-white select-all">aathish.k720.2@gmail.com</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 bg-background p-4 rounded-xl border border-[#E1306C]/20">
-                  <Instagram className="w-6 h-6 text-[#E1306C]" />
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase font-display tracking-wider">Instagram</p>
-                    <p className="font-mono text-sm text-white select-all">s.a.aa_072010</p>
-                  </div>
-                </div>
+                <textarea
+                  value={suggestion}
+                  onChange={(e) => setSuggestion(e.target.value)}
+                  placeholder="Type your suggestion here..."
+                  rows={4}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 text-foreground text-sm focus:border-primary outline-none resize-none"
+                />
+                <button
+                  onClick={handleSubmit}
+                  className="w-full py-2.5 bg-primary text-primary-foreground rounded-xl font-display text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  SEND SUGGESTION
+                </button>
               </div>
             </motion.div>
           </motion.div>
