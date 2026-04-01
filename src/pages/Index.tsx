@@ -123,19 +123,55 @@ const Index = () => {
             setPendingMode(null);
           }} />
 
-          {/* Leaderboard link */}
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/leaderboard")}
-            className="mt-8 flex items-center gap-2 px-6 py-3 rounded-xl border border-accent/40 bg-card hover:border-accent hover:glow-accent transition-all"
-          >
-            <Trophy className="h-5 w-5 text-accent" />
-            <span className="font-display text-sm text-foreground">WORLDWIDE LEADERBOARD</span>
-          </motion.button>
+          {/* Auth + Leaderboard row */}
+          <div className="mt-8 flex items-center gap-3 flex-wrap justify-center">
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/leaderboard")}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl border border-accent/40 bg-card hover:border-accent hover:glow-accent transition-all"
+            >
+              <Trophy className="h-5 w-5 text-accent" />
+              <span className="font-display text-sm text-foreground">WORLDWIDE LEADERBOARD</span>
+            </motion.button>
+
+            {user ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="flex items-center gap-2"
+              >
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary/30 bg-card">
+                  <User className="h-4 w-4 text-primary" />
+                  <span className="font-display text-xs text-foreground">{user.user_metadata?.full_name || user.email?.split("@")[0]}</span>
+                </div>
+                <button
+                  onClick={signOut}
+                  className="p-2.5 rounded-xl border border-border bg-card text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-all"
+                  title="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </motion.div>
+            ) : (
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={signInWithGoogle}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-black font-semibold text-sm hover:bg-gray-100 transition-all shadow-lg"
+              >
+                <LogIn className="h-4 w-4" />
+                Sign in with Google
+              </motion.button>
+            )}
+          </div>
 
         </motion.div>
       ) : (
