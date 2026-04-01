@@ -13,6 +13,7 @@ import { Starfield } from "@/components/Starfield";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user, signInWithGoogle, signOut } = useAuth();
   const [searchParams] = useSearchParams();
   const initialMode = searchParams.get("mode") === "brain" ? "brain" : "select";
   const [mode, setMode] = useState<"select" | "brain">(initialMode);
