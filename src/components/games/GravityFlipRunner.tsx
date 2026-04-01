@@ -50,9 +50,13 @@ export const GravityFlipRunner = ({ initialMode = "bot" }: { initialMode?: "bot"
     setIsPlaying(false);
     setIsGameOver(true);
     setWinnerMessage(winnerMsg || null);
-    saveHighScore(Math.floor(finalScore));
+    const hs = parseInt(localStorage.getItem("gravityFlipHighScore") || "0", 10);
+    if (Math.floor(finalScore) > hs) {
+      setHighScore(Math.floor(finalScore));
+      localStorage.setItem("gravityFlipHighScore", Math.floor(finalScore).toString());
+    }
     sfx.gameOver?.();
-  }, [highScore]);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
