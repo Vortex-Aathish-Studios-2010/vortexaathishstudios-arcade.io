@@ -39,7 +39,7 @@ export const GameTutorial = ({ game, open, onClose }: GameTutorialProps) => {
           onClick={onClose}
           className="mt-4 w-full py-2 bg-primary text-primary-foreground rounded-lg font-display text-sm hover:bg-primary/90 transition-colors"
         >
-          GOT IT!
+          CONTINUE
         </button>
       </DialogContent>
     </Dialog>
