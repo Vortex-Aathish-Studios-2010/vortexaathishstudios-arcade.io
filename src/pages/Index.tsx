@@ -13,7 +13,7 @@ import { Starfield } from "@/components/Starfield";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, signInWithGoogle, signOut } = useAuth();
+  const { user, isGuest, signInWithGoogle, signOut } = useAuth();
   const [searchParams] = useSearchParams();
   const initialMode = searchParams.get("mode") === "brain" ? "brain" : "select";
   const [mode, setMode] = useState<"select" | "brain">(initialMode);
@@ -125,18 +125,20 @@ const Index = () => {
 
           {/* Auth + Leaderboard row */}
           <div className="mt-8 flex items-center gap-3 flex-wrap justify-center">
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate("/leaderboard")}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl border border-accent/40 bg-card hover:border-accent hover:glow-accent transition-all"
-            >
-              <Trophy className="h-5 w-5 text-accent" />
-              <span className="font-display text-sm text-foreground">WORLDWIDE LEADERBOARD</span>
-            </motion.button>
+            {!isGuest && (
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/leaderboard")}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl border border-accent/40 bg-card hover:border-accent hover:glow-accent transition-all"
+              >
+                <Trophy className="h-5 w-5 text-accent" />
+                <span className="font-display text-sm text-foreground">WORLDWIDE LEADERBOARD</span>
+              </motion.button>
+            )}
 
             {user ? (
               <motion.div
@@ -157,20 +159,26 @@ const Index = () => {
                   <LogOut className="h-4 w-4" />
                 </button>
               </motion.div>
-            ) : (
-              <motion.button
+            ) : isGuest ? (
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={signInWithGoogle}
-                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-black font-semibold text-sm hover:bg-gray-100 transition-all shadow-lg"
+                className="flex items-center gap-2"
               >
-                <LogIn className="h-4 w-4" />
-                Sign in with Google
-              </motion.button>
-            )}
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-muted-foreground/30 bg-card">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-display text-xs text-muted-foreground">Guest</span>
+                </div>
+                <button
+                  onClick={signInWithGoogle}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-black font-semibold text-xs hover:bg-gray-100 transition-all shadow-lg"
+                >
+                  <LogIn className="h-3.5 w-3.5" />
+                  Sign in
+                </button>
+              </motion.div>
+            ) : null}
           </div>
 
         </motion.div>

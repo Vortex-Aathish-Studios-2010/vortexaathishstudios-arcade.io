@@ -7,8 +7,10 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isGuest: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  playAsGuest: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -17,11 +19,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) setIsGuest(false);
       setLoading(false);
     });
 
@@ -49,10 +53,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    setIsGuest(false);
+  };
+
+  const playAsGuest = () => {
+    setIsGuest(true);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isGuest, signInWithGoogle, signOut, playAsGuest }}>
       {children}
     </AuthContext.Provider>
   );
