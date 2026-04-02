@@ -195,7 +195,8 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
                   <motion.h2
                     animate={{ textShadow: ["0 0 20px hsl(45 100% 60% / 0.4)", "0 0 60px hsl(45 100% 60% / 0.8)", "0 0 20px hsl(45 100% 60% / 0.4)"] }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                    className="text-3xl md:text-5xl lg:text-6xl font-display font-black text-accent leading-tight"
+                    className="text-3xl md:text-5xl lg:text-6xl font-black text-accent leading-tight"
+                    style={{ fontFamily: "'Playfair Display', serif" }}
                   >
                     THE KANNAYIL BROTHERS
                   </motion.h2>
