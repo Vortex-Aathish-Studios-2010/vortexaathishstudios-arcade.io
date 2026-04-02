@@ -52,6 +52,7 @@ const GamePage = () => {
 
   const handleTutorialClose = useCallback(() => {
     setShowTutorial(false);
+    setGameStarted(true);
     if (id) markTutorialShown(id);
   }, [id]);
 
