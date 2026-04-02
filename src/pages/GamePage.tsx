@@ -39,7 +39,9 @@ const GamePage = () => {
   const game = games.find((g) => g.id === id);
   const GameComponent = id ? gameComponents[id] : null;
 
-  const [showTutorial, setShowTutorial] = useState(() => id ? !isTutorialShown(id) : false);
+  const needsTutorial = id ? !isTutorialShown(id) : false;
+  const [showTutorial, setShowTutorial] = useState(needsTutorial);
+  const [gameStarted, setGameStarted] = useState(!needsTutorial);
   const [showMultiplayer, setShowMultiplayer] = useState(false);
   const [multiplayerRoom, setMultiplayerRoom] = useState<{ roomId: string; playerId: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
