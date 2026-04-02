@@ -13,7 +13,7 @@ interface MultiplayerLobbyProps {
 }
 
 export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: MultiplayerLobbyProps) => {
-  const { user, signInWithGoogle } = useAuth();
+  const { user, isGuest, signInWithGoogle } = useAuth();
   const [step, setStep] = useState<"auth" | "choice" | "create" | "join" | "waiting">(
     user ? "choice" : "auth"
   );
