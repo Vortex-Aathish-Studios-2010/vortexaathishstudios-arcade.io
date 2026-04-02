@@ -142,9 +142,15 @@ const GamePage = () => {
           transition={{ delay: 0.2, duration: 0.5, type: "spring", stiffness: 120 }}
           className="relative w-full max-w-3xl"
         >
-          <div className={countdown !== null ? "blur-md pointer-events-none" : ""}>
-            <GameComponent level={level} onComplete={multiplayerRoom && gameReady ? handleGameComplete : undefined} />
-          </div>
+          {gameStarted ? (
+            <div className={countdown !== null ? "blur-md pointer-events-none" : ""}>
+              <GameComponent level={level} onComplete={multiplayerRoom && gameReady ? handleGameComplete : undefined} />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-64 text-muted-foreground font-display text-lg">
+              Read the instructions to begin…
+            </div>
+          )}
 
           <AnimatePresence>
             {countdown !== null && (
