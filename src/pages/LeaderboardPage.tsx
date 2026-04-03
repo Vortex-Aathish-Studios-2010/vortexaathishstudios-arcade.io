@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Trophy, ArrowLeft, Medal, Crown, LogIn, LogOut, User } from "lucide-react";
+import { Trophy, ArrowLeft, Medal, Crown, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getTotalWins, getTotalLosses, getPlayerName, setPlayerName } from "@/lib/streaks";
-import { useAuth } from "@/hooks/useAuth";
+import { getTotalWins, getTotalLosses, getPlayerName, syncLeaderboard } from "@/lib/streaks";
 import { Starfield } from "@/components/Starfield";
 
 interface LeaderboardEntry {
@@ -17,11 +16,9 @@ interface LeaderboardEntry {
 
 const LeaderboardPage = () => {
   const navigate = useNavigate();
-  const { user, signInWithGoogle, signOut } = useAuth();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const currentPlayerName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
+  const currentPlayerName = getPlayerName();
 
   const fetchLeaderboard = async () => {
     const { data, error } = await supabase
@@ -39,37 +36,10 @@ const LeaderboardPage = () => {
     setLoading(false);
   };
 
-  // Auto-sync when user is logged in
   useEffect(() => {
-    if (user && currentPlayerName) {
-      setPlayerName(currentPlayerName);
-      syncScore();
-    }
-  }, [user]);
+    // Auto-sync score on page load
+    syncLeaderboard().then(() => fetchLeaderboard());
 
-  const syncScore = async () => {
-    if (!currentPlayerName.trim()) return;
-    const wins = getTotalWins();
-    const losses = getTotalLosses();
-
-    const { data: existing } = await supabase
-      .from("leaderboard")
-      .select("id, wins, losses")
-      .eq("player_name", currentPlayerName.trim())
-      .maybeSingle();
-
-    if (existing) {
-      if (existing.wins !== wins || existing.losses !== losses) {
-        await supabase.from("leaderboard").update({ wins, losses, updated_at: new Date().toISOString() }).eq("id", existing.id);
-      }
-    } else {
-      await supabase.from("leaderboard").insert({ player_name: currentPlayerName.trim(), wins, losses });
-    }
-    fetchLeaderboard();
-  };
-
-  useEffect(() => {
-    fetchLeaderboard();
     const channel = supabase
       .channel("leaderboard-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "leaderboard" }, fetchLeaderboard)
@@ -84,14 +54,6 @@ const LeaderboardPage = () => {
     return <span className="w-5 h-5 flex items-center justify-center font-display text-xs text-muted-foreground">{index + 1}</span>;
   };
 
-  const handleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to sign in");
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96, filter: "blur(8px)" }}
@@ -102,7 +64,6 @@ const LeaderboardPage = () => {
     >
       <Starfield />
       <div className="max-w-2xl mx-auto relative z-10">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -116,38 +77,12 @@ const LeaderboardPage = () => {
             <span className="font-display text-sm">BACK</span>
           </button>
 
-          {user ? (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-xl">
-                <User className="h-3.5 w-3.5 text-primary" />
-                <span className="font-display text-xs text-primary">{currentPlayerName}</span>
-              </div>
-              <button
-                onClick={() => syncScore()}
-                className="px-3 py-1.5 bg-accent/10 border border-accent/30 text-accent rounded-xl font-display text-xs hover:border-accent/60 transition-all"
-              >
-                SYNC
-              </button>
-              <button
-                onClick={signOut}
-                className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-                title="Sign out"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleSignIn}
-              className="flex items-center gap-1.5 px-4 py-2 bg-white text-black rounded-xl font-semibold text-xs hover:bg-gray-100 transition-all shadow"
-            >
-              <LogIn className="h-3.5 w-3.5" />
-              Sign in with Google
-            </button>
-          )}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-xl">
+            <User className="h-3.5 w-3.5 text-primary" />
+            <span className="font-display text-xs text-primary">{currentPlayerName}</span>
+          </div>
         </motion.div>
 
-        {/* Title */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -162,13 +97,12 @@ const LeaderboardPage = () => {
           <p className="text-muted-foreground text-sm">Top players ranked by wins</p>
         </motion.div>
 
-        {/* Leaderboard table */}
         {loading ? (
           <div className="text-center py-12 text-muted-foreground font-display">Loading...</div>
         ) : entries.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground font-display mb-2">No scores yet!</p>
-            <p className="text-sm text-muted-foreground">Sign in with Google to be the first!</p>
+            <p className="text-sm text-muted-foreground">Play some games to get on the board!</p>
           </div>
         ) : (
           <div className="space-y-2">
