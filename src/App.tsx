@@ -6,9 +6,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SplashScreen } from "@/components/SplashScreen";
 import { DeviceSelector, getDeviceType, DeviceType } from "@/components/DeviceSelector";
-import { AuthGate } from "@/components/AuthGate";
+import { UsernameGate } from "@/components/UsernameGate";
 import { DeviceProvider } from "@/lib/DeviceContext";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import GamePage from "./pages/GamePage";
 import EntertainmentPage from "./pages/EntertainmentPage";
@@ -16,52 +15,40 @@ import EntertainmentGamePage from "./pages/EntertainmentGamePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import NotFound from "./pages/NotFound";
 import { BigNotificationProvider } from "./components/BigNotification";
+import { getPlayerName } from "@/lib/streaks";
 
 const queryClient = new QueryClient();
 
 const AppFlow = () => {
-  const { user, isGuest, loading } = useAuth();
   const [showSplash, setShowSplash] = useState(true);
   const [showDeviceSelector, setShowDeviceSelector] = useState(false);
-  const [showAuthGate, setShowAuthGate] = useState(false);
+  const [showUsernameGate, setShowUsernameGate] = useState(false);
   const [ready, setReady] = useState(false);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
     if (!getDeviceType()) {
       setShowDeviceSelector(true);
+    } else if (!getPlayerName()) {
+      setShowUsernameGate(true);
     } else {
-      // Device already selected, go to auth
-      if (!user && !isGuest) {
-        setShowAuthGate(true);
-      } else {
-        setReady(true);
-      }
+      setReady(true);
     }
   };
 
   const handleDeviceSelect = (_device: DeviceType) => {
     setShowDeviceSelector(false);
-    if (!user && !isGuest) {
-      setShowAuthGate(true);
+    if (!getPlayerName()) {
+      setShowUsernameGate(true);
     } else {
       setReady(true);
     }
   };
 
-  const handleAuthComplete = () => {
-    setShowAuthGate(false);
+  const handleUsernameComplete = (_username: string) => {
+    setShowUsernameGate(false);
     setReady(true);
   };
-
-  // If user logs in via OAuth redirect (page reload), skip gates
-  useEffect(() => {
-    if (!loading && user && !ready && !showSplash) {
-      setShowDeviceSelector(false);
-      setShowAuthGate(false);
-      setReady(true);
-    }
-  }, [user, loading]);
 
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
@@ -78,7 +65,7 @@ const AppFlow = () => {
     <>
       {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
       {showDeviceSelector && <DeviceSelector onSelect={handleDeviceSelect} />}
-      {showAuthGate && <AuthGate onComplete={handleAuthComplete} />}
+      {showUsernameGate && <UsernameGate onComplete={handleUsernameComplete} />}
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
@@ -96,15 +83,13 @@ const AppFlow = () => {
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <DeviceProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <AppFlow />
-          </TooltipProvider>
-        </DeviceProvider>
-      </AuthProvider>
+      <DeviceProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AppFlow />
+        </TooltipProvider>
+      </DeviceProvider>
     </QueryClientProvider>
   );
 };
