@@ -69,16 +69,18 @@ const AppFlow = () => {
       {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
       {showDeviceSelector && <DeviceSelector onSelect={handleDeviceSelect} />}
       {showUsernameGate && <UsernameGate onComplete={handleUsernameComplete} />}
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/game/:id" element={<GamePage />} />
-          <Route path="/entertainment" element={<EntertainmentPage />} />
-          <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
-          <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <GameNotificationProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/game/:id" element={<GamePage />} />
+            <Route path="/entertainment" element={<EntertainmentPage />} />
+            <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </GameNotificationProvider>
     </>
   );
 };
