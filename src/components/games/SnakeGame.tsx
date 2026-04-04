@@ -45,6 +45,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
   const [score, setScore] = useState(0);
   const [started, setStarted] = useState(false);
   const [obstacles, setObstacles] = useState<Set<string>>(new Set());
+  const [obstacleTarget, setObstacleTarget] = useState(0);
   const dirRef = useRef<Pos>([0, 1]);
   const moveQueue = useRef<Pos[]>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
@@ -84,9 +85,10 @@ export const SnakeGame = ({ onComplete }: Props) => {
         const pts = getPointsPerFood();
         setScore((s) => s + pts);
         sfx.eat();
-        // Add obstacles every 5 foods eaten
+        // Add obstacles every 5 foods eaten — ensure exact count
         if (newSnake.length % 5 === 0) {
-          const newObs = generateObstacles(2, newSnake, food);
+          const count = 2;
+          const newObs = generateObstacles(count, newSnake, food);
           setObstacles((o) => new Set([...o, ...newObs]));
         }
         setFood(randomFood(newSnake, obstacles));
@@ -168,7 +170,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
       {obstacles.size > 0 && (
         <div className="text-xs font-display text-destructive">⚠ {obstacles.size} obstacles</div>
       )}
-      <div className="bg-card border border-border p-1 rounded-xl inline-block">
+      <div className="bg-card border border-border p-1 rounded-xl inline-block max-w-full overflow-hidden">
         {Array.from({ length: ROWS }, (_, r) => (
           <div key={r} className="flex">
             {Array.from({ length: COLS }, (_, c) => {
@@ -178,7 +180,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
               const isFood = food[0] === r && food[1] === c;
               const isObstacle = obstacles.has(key);
               return (
-                <div key={c} className={`w-4 h-4 rounded-sm transition-colors ${
+                <div key={c} className={`w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition-colors ${
                   isHead ? "bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.6)]"
                   : isSnake ? "bg-primary/50"
                   : isFood ? "bg-accent shadow-[0_0_8px_hsl(var(--accent)/0.5)]"

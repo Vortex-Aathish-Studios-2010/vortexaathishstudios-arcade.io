@@ -196,7 +196,10 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     }
     setDraggingPiece(piece);
     setSelectedPiece(piece);
-    setRotation(0);
+    // Preserve current rotation instead of resetting
+    if (!fromBoard && !selectedPiece) {
+      setRotation(0);
+    }
   };
 
   // Drag preview cells
@@ -394,7 +397,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
             <motion.div
               initial={{ scaleY: 0 }}
               animate={{ scaleY: 1 }}
-              exit={{ scaleY: 0, transition: { duration: 0.4, ease: "easeIn" } }}
+              exit={{ scaleY: 0, transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] } }}
               transition={{ duration: 0.35, ease: "easeOut" }}
               style={{ originY: 0 }}
               className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary via-secondary to-accent flex items-center justify-center z-10"
