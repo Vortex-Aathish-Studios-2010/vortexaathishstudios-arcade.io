@@ -170,7 +170,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
       {obstacles.size > 0 && (
         <div className="text-xs font-display text-destructive">⚠ {obstacles.size} obstacles</div>
       )}
-      <div className="bg-card border border-border p-1 rounded-xl inline-block">
+      <div className="bg-card border border-border p-1 rounded-xl inline-block max-w-full overflow-hidden">
         {Array.from({ length: ROWS }, (_, r) => (
           <div key={r} className="flex">
             {Array.from({ length: COLS }, (_, c) => {
