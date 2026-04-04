@@ -159,7 +159,12 @@ export const GravityFlipRunner = ({ initialMode = "bot" }: { initialMode?: "bot"
     };
 
     const handleInput = (e: KeyboardEvent | MouseEvent | TouchEvent) => {
-      if (e.target && (e.target as HTMLElement).closest('button')) return; // Don't jump if clicking a native button
+      if (e.target && (e.target as HTMLElement).closest('button')) return;
+
+      // Prevent default to avoid delays on mobile
+      if (e.type === "touchstart") {
+        e.preventDefault();
+      }
 
       if ((e.type === "keydown" && (e as KeyboardEvent).code === "Space") || e.type === "mousedown" || e.type === "touchstart") {
         if (!state.running) {
