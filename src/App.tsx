@@ -16,6 +16,7 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import NotFound from "./pages/NotFound";
 import { BigNotificationProvider } from "./components/BigNotification";
 import { getPlayerName } from "@/lib/streaks";
+import { ensureAnonymousAuth } from "@/lib/auth";
 
 const queryClient = new QueryClient();
 
@@ -25,8 +26,10 @@ const AppFlow = () => {
   const [showUsernameGate, setShowUsernameGate] = useState(false);
   const [ready, setReady] = useState(false);
 
-  const handleSplashComplete = () => {
+  const handleSplashComplete = async () => {
     setShowSplash(false);
+    // Ensure anonymous auth session exists for returning users
+    try { await ensureAnonymousAuth(); } catch { /* handled later */ }
     if (!getDeviceType()) {
       setShowDeviceSelector(true);
     } else if (!getPlayerName()) {

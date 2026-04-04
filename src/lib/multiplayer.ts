@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getPlayerId, setPlayerId, getPlayerName, setPlayerName } from "./streaks";
+import { getAuthUserId } from "./auth";
 
 const generateCode = (): string => {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -7,10 +8,13 @@ const generateCode = (): string => {
 };
 
 export const ensurePlayer = async (name: string): Promise<string> => {
+  const authUserId = await getAuthUserId();
+  if (!authUserId) throw new Error("Not authenticated");
+
   let id = getPlayerId();
   if (id) {
-    // Check if still exists
-    const { data } = await supabase.from("players").select("id").eq("id", id).single();
+    // Check if still exists and belongs to this auth user
+    const { data } = await supabase.from("players").select("id").eq("id", id).eq("user_id", authUserId).single();
     if (data) {
       if (name !== getPlayerName()) {
         await supabase.from("players").update({ display_name: name }).eq("id", id);
@@ -19,7 +23,17 @@ export const ensurePlayer = async (name: string): Promise<string> => {
       return id;
     }
   }
-  const { data, error } = await supabase.from("players").insert({ display_name: name }).select("id").single();
+
+  // Check if this auth user already has a player record
+  const { data: existingPlayer } = await supabase.from("players").select("id").eq("user_id", authUserId).single();
+  if (existingPlayer) {
+    await supabase.from("players").update({ display_name: name }).eq("id", existingPlayer.id);
+    setPlayerId(existingPlayer.id);
+    setPlayerName(name);
+    return existingPlayer.id;
+  }
+
+  const { data, error } = await supabase.from("players").insert({ display_name: name, user_id: authUserId }).select("id").single();
   if (error || !data) throw new Error("Failed to create player");
   setPlayerId(data.id);
   setPlayerName(name);
@@ -60,14 +74,12 @@ export const reportScore = async (roomId: string, playerId: string, score: numbe
     .eq("room_id", roomId)
     .eq("player_id", playerId);
 
-  // Check if all players finished
   const { data: players } = await supabase
     .from("room_players")
     .select("*")
     .eq("room_id", roomId);
 
   if (players && players.every((p: any) => p.finished)) {
-    // Winner = player who finished first (earliest finished_at) with score > 0
     const validPlayers = players.filter((p: any) => p.score > 0);
     const winner = validPlayers.length > 0
       ? validPlayers.reduce((best: any, p: any) => {
@@ -97,12 +109,10 @@ export const subscribeToRoom = (
     .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms", filter: `id=eq.${roomId}` }, fetchState)
     .subscribe((status) => {
       if (status === "SUBSCRIBED") {
-        // Immediately fetch current state on subscribe to catch any missed events
         fetchState();
       }
     });
 
-  // Also poll every 3s as fallback for realtime edge cases
   const pollInterval = setInterval(fetchState, 3000);
 
   return () => {
