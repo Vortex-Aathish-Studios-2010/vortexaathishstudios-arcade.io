@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthUserId } from "./auth";
 
 const POINTS_KEY = "brainpuzzle_points";
 const ENT_POINTS_KEY = "entertainment_points";
