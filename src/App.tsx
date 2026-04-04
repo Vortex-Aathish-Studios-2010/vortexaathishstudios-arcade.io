@@ -14,7 +14,7 @@ import EntertainmentPage from "./pages/EntertainmentPage";
 import EntertainmentGamePage from "./pages/EntertainmentGamePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import NotFound from "./pages/NotFound";
-import { BigNotificationProvider } from "./components/BigNotification";
+import { GameNotificationProvider } from "./components/GameNotification";
 import { getPlayerName } from "@/lib/streaks";
 import { ensureAnonymousAuth } from "@/lib/auth";
 
