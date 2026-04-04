@@ -45,6 +45,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
   const [score, setScore] = useState(0);
   const [started, setStarted] = useState(false);
   const [obstacles, setObstacles] = useState<Set<string>>(new Set());
+  const [obstacleTarget, setObstacleTarget] = useState(0);
   const dirRef = useRef<Pos>([0, 1]);
   const moveQueue = useRef<Pos[]>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
