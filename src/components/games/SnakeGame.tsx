@@ -85,9 +85,10 @@ export const SnakeGame = ({ onComplete }: Props) => {
         const pts = getPointsPerFood();
         setScore((s) => s + pts);
         sfx.eat();
-        // Add obstacles every 5 foods eaten
+        // Add obstacles every 5 foods eaten — ensure exact count
         if (newSnake.length % 5 === 0) {
-          const newObs = generateObstacles(2, newSnake, food);
+          const count = 2;
+          const newObs = generateObstacles(count, newSnake, food);
           setObstacles((o) => new Set([...o, ...newObs]));
         }
         setFood(randomFood(newSnake, obstacles));
