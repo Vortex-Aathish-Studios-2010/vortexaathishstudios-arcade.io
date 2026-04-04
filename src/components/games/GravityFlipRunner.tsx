@@ -218,7 +218,7 @@ export const GravityFlipRunner = ({ initialMode = "bot" }: { initialMode?: "bot"
 
     window.addEventListener("keydown", handleInput);
     window.addEventListener("mousedown", handleInput);
-    window.addEventListener("touchstart", handleInput);
+    window.addEventListener("touchstart", handleInput, { passive: false });
 
     let lastTime = performance.now();
 

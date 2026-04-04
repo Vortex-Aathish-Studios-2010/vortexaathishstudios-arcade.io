@@ -86,18 +86,27 @@ export const subscribeToRoom = (
   roomId: string,
   onUpdate: (players: any[], status: string) => void
 ) => {
-  const channel = supabase.channel(`room-${roomId}`)
-    .on("postgres_changes", { event: "*", schema: "public", table: "room_players", filter: `room_id=eq.${roomId}` }, async () => {
-      const { data: players } = await supabase.from("room_players").select("*, players(display_name)").eq("room_id", roomId);
-      const { data: room } = await supabase.from("game_rooms").select("status").eq("id", roomId).single();
-      onUpdate(players || [], room?.status || "waiting");
-    })
-    .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms", filter: `id=eq.${roomId}` }, async () => {
-      const { data: players } = await supabase.from("room_players").select("*, players(display_name)").eq("room_id", roomId);
-      const { data: room } = await supabase.from("game_rooms").select("status").eq("id", roomId).single();
-      onUpdate(players || [], room?.status || "waiting");
-    })
-    .subscribe();
+  const fetchState = async () => {
+    const { data: players } = await supabase.from("room_players").select("*, players(display_name)").eq("room_id", roomId);
+    const { data: room } = await supabase.from("game_rooms").select("status").eq("id", roomId).single();
+    onUpdate(players || [], room?.status || "waiting");
+  };
 
-  return () => { supabase.removeChannel(channel); };
+  const channel = supabase.channel(`room-${roomId}`)
+    .on("postgres_changes", { event: "*", schema: "public", table: "room_players", filter: `room_id=eq.${roomId}` }, fetchState)
+    .on("postgres_changes", { event: "*", schema: "public", table: "game_rooms", filter: `id=eq.${roomId}` }, fetchState)
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        // Immediately fetch current state on subscribe to catch any missed events
+        fetchState();
+      }
+    });
+
+  // Also poll every 3s as fallback for realtime edge cases
+  const pollInterval = setInterval(fetchState, 3000);
+
+  return () => {
+    clearInterval(pollInterval);
+    supabase.removeChannel(channel);
+  };
 };

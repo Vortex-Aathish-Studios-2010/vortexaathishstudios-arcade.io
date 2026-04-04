@@ -179,7 +179,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
               const isFood = food[0] === r && food[1] === c;
               const isObstacle = obstacles.has(key);
               return (
-                <div key={c} className={`w-4 h-4 rounded-sm transition-colors ${
+                <div key={c} className={`w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition-colors ${
                   isHead ? "bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.6)]"
                   : isSnake ? "bg-primary/50"
                   : isFood ? "bg-accent shadow-[0_0_8px_hsl(var(--accent)/0.5)]"

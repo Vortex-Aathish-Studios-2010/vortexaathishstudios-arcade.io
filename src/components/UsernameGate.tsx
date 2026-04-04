@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { User, ArrowRight } from "lucide-react";
+import { User, ArrowRight, Loader2 } from "lucide-react";
 import { Starfield } from "@/components/Starfield";
 import { setPlayerName } from "@/lib/streaks";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface UsernameGateProps {
@@ -11,8 +12,9 @@ interface UsernameGateProps {
 
 export const UsernameGate = ({ onComplete }: UsernameGateProps) => {
   const [username, setUsername] = useState("");
+  const [checking, setChecking] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const trimmed = username.trim();
     if (!trimmed || trimmed.length < 2) {
       toast.error("Username must be at least 2 characters");
@@ -22,8 +24,30 @@ export const UsernameGate = ({ onComplete }: UsernameGateProps) => {
       toast.error("Username must be 20 characters or less");
       return;
     }
-    setPlayerName(trimmed);
-    onComplete(trimmed);
+
+    setChecking(true);
+    try {
+      // Check if username already exists in leaderboard
+      const { data: existing } = await supabase
+        .from("leaderboard")
+        .select("id")
+        .eq("player_name", trimmed)
+        .maybeSingle();
+
+      if (existing) {
+        toast.error("Username already taken! Pick a different name.");
+        setChecking(false);
+        return;
+      }
+
+      setPlayerName(trimmed);
+      onComplete(trimmed);
+    } catch {
+      // If DB check fails, allow entry anyway (offline mode)
+      setPlayerName(trimmed);
+      onComplete(trimmed);
+    }
+    setChecking(false);
   };
 
   return (
@@ -60,10 +84,20 @@ export const UsernameGate = ({ onComplete }: UsernameGateProps) => {
 
           <button
             onClick={handleSubmit}
-            className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-primary text-primary-foreground rounded-xl font-display font-bold text-sm hover:brightness-110 transition-all glow-primary"
+            disabled={checking}
+            className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-primary text-primary-foreground rounded-xl font-display font-bold text-sm hover:brightness-110 transition-all glow-primary disabled:opacity-60"
           >
-            LET'S PLAY
-            <ArrowRight className="h-4 w-4" />
+            {checking ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                CHECKING...
+              </>
+            ) : (
+              <>
+                LET'S PLAY
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </button>
 
           <p className="text-muted-foreground/40 text-[10px]">
