@@ -59,6 +59,7 @@ export type Database = {
           losses: number
           player_name: string
           updated_at: string | null
+          user_id: string | null
           wins: number
         }
         Insert: {
@@ -67,6 +68,7 @@ export type Database = {
           losses?: number
           player_name: string
           updated_at?: string | null
+          user_id?: string | null
           wins?: number
         }
         Update: {
@@ -75,6 +77,7 @@ export type Database = {
           losses?: number
           player_name?: string
           updated_at?: string | null
+          user_id?: string | null
           wins?: number
         }
         Relationships: []
@@ -84,16 +87,19 @@ export type Database = {
           created_at: string | null
           display_name: string
           id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           display_name: string
           id?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           display_name?: string
           id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
