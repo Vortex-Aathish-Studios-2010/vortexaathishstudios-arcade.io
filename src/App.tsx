@@ -16,6 +16,7 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import NotFound from "./pages/NotFound";
 import { BigNotificationProvider } from "./components/BigNotification";
 import { getPlayerName } from "@/lib/streaks";
+import { ensureAnonymousAuth } from "@/lib/auth";
 
 const queryClient = new QueryClient();
 
