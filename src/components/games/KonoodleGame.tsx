@@ -196,7 +196,10 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     }
     setDraggingPiece(piece);
     setSelectedPiece(piece);
-    setRotation(0);
+    // Preserve current rotation instead of resetting
+    if (!fromBoard && !selectedPiece) {
+      setRotation(0);
+    }
   };
 
   // Drag preview cells
