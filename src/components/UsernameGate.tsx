@@ -4,6 +4,7 @@ import { User, ArrowRight, Loader2 } from "lucide-react";
 import { Starfield } from "@/components/Starfield";
 import { setPlayerName } from "@/lib/streaks";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureAnonymousAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
 interface UsernameGateProps {
@@ -27,6 +28,9 @@ export const UsernameGate = ({ onComplete }: UsernameGateProps) => {
 
     setChecking(true);
     try {
+      // Ensure we have an anonymous auth session
+      await ensureAnonymousAuth();
+
       // Check if username already exists in leaderboard
       const { data: existing } = await supabase
         .from("leaderboard")
@@ -43,7 +47,7 @@ export const UsernameGate = ({ onComplete }: UsernameGateProps) => {
       setPlayerName(trimmed);
       onComplete(trimmed);
     } catch {
-      // If DB check fails, allow entry anyway (offline mode)
+      // If auth/DB check fails, allow entry anyway (offline mode)
       setPlayerName(trimmed);
       onComplete(trimmed);
     }
