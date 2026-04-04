@@ -26,8 +26,10 @@ const AppFlow = () => {
   const [showUsernameGate, setShowUsernameGate] = useState(false);
   const [ready, setReady] = useState(false);
 
-  const handleSplashComplete = () => {
+  const handleSplashComplete = async () => {
     setShowSplash(false);
+    // Ensure anonymous auth session exists for returning users
+    try { await ensureAnonymousAuth(); } catch { /* handled later */ }
     if (!getDeviceType()) {
       setShowDeviceSelector(true);
     } else if (!getPlayerName()) {
