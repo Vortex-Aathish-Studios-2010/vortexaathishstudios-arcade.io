@@ -194,11 +194,11 @@ export const SnakeGame = ({ onComplete }: Props) => {
       </div>
       {!started && !gameOver && (
         <p className="text-sm text-muted-foreground font-display animate-pulse">
-          {(!device || device === "laptop") ? "Press any arrow key or swipe to start" : "Use virtual controls or swipe to start"}
+          {(!device || device === "laptop") ? "Press any arrow key to start" : "Tap the controls below to start"}
         </p>
       )}
       <p className="text-xs text-muted-foreground">
-        {(!device || device === "laptop") ? "Arrow keys or swipe" : "Virtual controls" } · Obstacles appear as you grow!
+        {(!device || device === "laptop") ? "Arrow keys to move" : "Use D-pad below"} · Obstacles appear as you grow!
       </p>
       {gameOver && (
         <button onClick={reset} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary">

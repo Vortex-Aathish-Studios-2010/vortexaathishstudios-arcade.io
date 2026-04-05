@@ -7,7 +7,7 @@ export const OnScreenControls = ({ gameId }: { gameId?: string }) => {
   const touchRefs = useRef<{ [key: string]: boolean }>({});
 
   // Only show for phone or tablet and only for snake/tetris
-  if (!device || device === "laptop" || !gameId || !["snake", "tetris"].includes(gameId)) return null;
+  if (!device || device === "laptop" || !gameId || !["snake", "tetris", "avoid-the-walls"].includes(gameId)) return null;
 
   const dispatchKey = (type: "keydown" | "keyup", key: string) => {
     const event = new KeyboardEvent(type, {
@@ -40,8 +40,8 @@ export const OnScreenControls = ({ gameId }: { gameId?: string }) => {
   const dpadSize = isTablet ? "w-44 h-44" : "w-40 h-40";
 
   return (
-    <div className={`absolute bottom-0 left-0 right-0 p-4 z-[80] flex justify-between items-end pointer-events-none mb-4 mx-2 sm:mx-8 ${isTablet ? 'pb-8 opacity-90' : 'opacity-80'} hover:opacity-100 transition-opacity touch-none select-none`}>
-      {/* D-Pad */}
+    <div className={`absolute bottom-0 left-0 right-0 p-4 z-[80] flex justify-center items-end pointer-events-none mb-4 ${isTablet ? 'pb-8 opacity-90' : 'opacity-80'} hover:opacity-100 transition-opacity touch-none select-none`}>
+      {/* D-Pad - centered */}
       <div className={`relative ${dpadSize} pointer-events-auto group`}>
         <div className={`absolute top-0 left-1/2 -translate-x-1/2 rounded-t-xl bg-background/90 border border-border shadow-lg active:bg-primary/20 backdrop-blur ${btnSize} flex items-center justify-center cursor-pointer transition-colors`}
           onPointerDown={handleStart("ArrowUp")} onPointerUp={handleEnd("ArrowUp")} onPointerLeave={handleEnd("ArrowUp")} onPointerCancel={handleEnd("ArrowUp")}>
