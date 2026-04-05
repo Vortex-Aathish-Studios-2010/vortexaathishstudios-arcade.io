@@ -7,7 +7,7 @@ export const OnScreenControls = ({ gameId }: { gameId?: string }) => {
   const touchRefs = useRef<{ [key: string]: boolean }>({});
 
   // Only show for phone or tablet and only for snake/tetris
-  if (!device || device === "laptop" || !gameId || !["snake", "tetris"].includes(gameId)) return null;
+  if (!device || device === "laptop" || !gameId || !["snake", "tetris", "avoid-the-walls"].includes(gameId)) return null;
 
   const dispatchKey = (type: "keydown" | "keyup", key: string) => {
     const event = new KeyboardEvent(type, {
