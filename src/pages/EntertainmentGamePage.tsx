@@ -145,9 +145,10 @@ const EntertainmentGamePage = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.97, filter: "blur(8px)" }}
+      initial={{ opacity: 0, scale: 0.96, filter: "blur(8px)" }}
       animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-      transition={{ duration: 0.4 }}
+      exit={{ opacity: 0, scale: 1.04, filter: "blur(12px)" }}
+      transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
       className="entertainment-theme min-h-screen bg-black flex flex-col"
     >
       <Starfield />
@@ -257,18 +258,7 @@ const EntertainmentGamePage = () => {
         />
       )}
 
-      {/* Device Toggle */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] flex bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-lg p-0.5 shadow-lg">
-        <button title="Phone" onClick={() => setDevice("phone")} className={`p-2 rounded-md transition-colors ${device === "phone" ? "bg-[hsl(var(--sport-primary))] text-black" : "text-[hsl(var(--sport-muted))] hover:bg-[hsl(var(--sport-bg))]"}`}>
-          <Smartphone className="w-4 h-4" />
-        </button>
-        <button title="Tablet" onClick={() => setDevice("tablet")} className={`p-2 rounded-md transition-colors ${device === "tablet" ? "bg-[hsl(var(--sport-primary))] text-black" : "text-[hsl(var(--sport-muted))] hover:bg-[hsl(var(--sport-bg))]"}`}>
-          <Tablet className="w-4 h-4" />
-        </button>
-        <button title="Laptop" onClick={() => setDevice("laptop")} className={`p-2 rounded-md transition-colors ${device === "laptop" ? "bg-[hsl(var(--sport-primary))] text-black" : "text-[hsl(var(--sport-muted))] hover:bg-[hsl(var(--sport-bg))]"}`}>
-          <Monitor className="w-4 h-4" />
-        </button>
-      </div>
+      {/* Device toggle removed to prevent confusing the user with multiple controls UI */}
     </motion.div>
   );
 };

@@ -14,6 +14,24 @@ import EntertainmentGamePage from "./pages/EntertainmentGamePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import NotFound from "./pages/NotFound";
 import { BigNotificationProvider } from "./components/BigNotification";
+import { AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
+
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<Index />} />
+        <Route path="/game/:id" element={<GamePage />} />
+        <Route path="/entertainment" element={<EntertainmentPage />} />
+        <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
 
 const queryClient = new QueryClient();
 
@@ -57,14 +75,7 @@ const App = () => {
             {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
             {showDeviceSelector && <DeviceSelector onSelect={handleDeviceSelect} />}
             <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/game/:id" element={<GamePage />} />
-                <Route path="/entertainment" element={<EntertainmentPage />} />
-                <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
-                <Route path="/leaderboard" element={<LeaderboardPage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AnimatedRoutes />
             </BrowserRouter>
           </TooltipProvider>
         </BigNotificationProvider>

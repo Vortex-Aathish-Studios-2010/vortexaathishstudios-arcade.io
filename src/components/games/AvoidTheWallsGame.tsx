@@ -15,7 +15,7 @@ export const AvoidTheWallsGame = ({ onComplete }: { onComplete?: (score: number)
   const [score, setScore] = useState(0);
 
   const playerRef = useRef({ x: AREA_WIDTH / 2 });
-  const wallsRef = useRef<{ id: number; y: number; gapX: number; gapWidth: number }[]>([]);
+  const wallsRef = useRef<{ id: number; y: number; gapX: number; gapWidth: number; passed?: boolean }[]>([]);
   const animRef = useRef<number>(0);
   const frameCount = useRef(0);
   const speedRef = useRef(3.5);
@@ -87,9 +87,7 @@ export const AvoidTheWallsGame = ({ onComplete }: { onComplete?: (score: number)
     if (frameCount.current % Math.floor(60 * (3.5 / speedRef.current)) === 0) {
       const gapWidth = Math.max(70, 110 - (speedRef.current * 4)); 
       const gapX = Math.random() * (AREA_WIDTH - gapWidth);
-      wallsRef.current.push({ id: Date.now(), y: -WALL_HEIGHT, gapX, gapWidth });
-      setScore(prev => prev + 10);
-      speedRef.current += 0.05; 
+      wallsRef.current.push({ id: Date.now(), y: -WALL_HEIGHT, gapX, gapWidth, passed: false });
     }
 
     const survivingWalls = [];
@@ -105,6 +103,12 @@ export const AvoidTheWallsGame = ({ onComplete }: { onComplete?: (score: number)
           endGame();
           return;
         }
+      }
+
+      if (wall.y > playerY + PLAYER_SIZE / 2 && !wall.passed) {
+        wall.passed = true;
+        setScore(prev => prev + 10);
+        speedRef.current += 0.15; // Increased speed bump for more distinct progression
       }
 
       if (wall.y < AREA_HEIGHT) survivingWalls.push(wall);

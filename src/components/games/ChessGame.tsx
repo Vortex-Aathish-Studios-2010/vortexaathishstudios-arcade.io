@@ -12,6 +12,25 @@ type PlayerColor = "white" | "black";
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
 
+const PIECE_IMAGES: Record<string, Record<string, string>> = {
+  white: {
+    king: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wK.svg",
+    queen: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wQ.svg",
+    rook: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wR.svg",
+    bishop: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wB.svg",
+    knight: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wN.svg",
+    pawn: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wP.svg"
+  },
+  black: {
+    king: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bK.svg",
+    queen: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bQ.svg",
+    rook: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bR.svg",
+    bishop: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bB.svg",
+    knight: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bN.svg",
+    pawn: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bP.svg"
+  }
+};
+
 export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "friend" }) => {
   const [mode, setMode] = useState<Mode>(initialMode === "bot" ? "color" : "friend");
   const [pendingMode, setPendingMode] = useState<"bot" | "friend">(initialMode);
@@ -146,7 +165,7 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
             onClick={() => resetGame("bot", "white")}
             className="flex flex-col items-center gap-4 px-8 py-6 rounded-2xl border-2 border-white/30 bg-white/10 hover:border-white/70 hover:bg-white/20 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all"
           >
-            <span className="text-6xl" style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.5))" }}>♔</span>
+            <img src={PIECE_IMAGES.white.king} alt="White King" className="w-16 h-16 drop-shadow-lg" draggable="false" />
             <div>
               <p className="font-sport text-lg text-white font-bold">WHITE</p>
               <p className="font-sport-body text-xs text-white/60">Moves first</p>
@@ -162,7 +181,7 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
             onClick={() => resetGame("bot", "black")}
             className="flex flex-col items-center gap-4 px-8 py-6 rounded-2xl border-2 border-[hsl(var(--sport-text))]/30 bg-[hsl(var(--sport-bg))]/60 hover:border-[hsl(var(--sport-primary))]/70 hover:shadow-[0_0_30px_hsl(var(--sport-primary)/0.3)] transition-all"
           >
-            <span className="text-6xl" style={{ color: "#111", WebkitTextStroke: "1px #666", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.8))" }}>♚</span>
+            <img src={PIECE_IMAGES.black.king} alt="Black King" className="w-16 h-16 drop-shadow-lg" draggable="false" />
             <div>
               <p className="font-sport text-lg text-[hsl(var(--sport-text))] font-bold">BLACK</p>
               <p className="font-sport-body text-xs text-[hsl(var(--sport-muted))]">Bot moves first</p>
@@ -213,7 +232,7 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
 
       <div className="flex items-center gap-1 min-h-[24px] px-2 flex-wrap">
         {state.capturedBlack.map((p, i) => (
-          <span key={i} className="text-base opacity-70">{getPieceSymbol(p)}</span>
+          <img key={i} src={PIECE_IMAGES.black[p.type]} alt="Captured Black" draggable="false" className="w-5 h-5 opacity-80" />
         ))}
       </div>
 
@@ -278,24 +297,17 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
                     />
                   )}
                   {piece && (
-                    <motion.span
+                    <motion.img
                       key={`piece-${r}-${c}-${piece.type}-${piece.color}`}
+                      src={PIECE_IMAGES[piece.color][piece.type]}
+                      alt={`${piece.color} ${piece.type}`}
+                      draggable="false"
                       initial={isLastTo ? { scale: 1.2 } : {}}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 300 }}
-                      className="select-none z-10"
-                      style={{
-                        fontSize: "min(9vw, 44px)",
-                        color: piece.color === "white" ? "#FFFFFF" : "#1a1a1a",
-                        WebkitTextStroke: piece.color === "white" ? "0.5px #888" : "0.5px #000",
-                        filter: piece.color === "white"
-                          ? "drop-shadow(1px 2px 3px rgba(0,0,0,0.5))"
-                          : "drop-shadow(1px 1px 1px rgba(0,0,0,0.3))",
-                        lineHeight: 1,
-                      }}
-                    >
-                      {getPieceSymbol(piece)}
-                    </motion.span>
+                      className="select-none pointer-events-none z-10 drop-shadow-md"
+                      style={{ width: "85%", height: "85%" }}
+                    />
                   )}
                 </motion.div>
               );
@@ -306,7 +318,7 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
 
       <div className="flex items-center gap-1 min-h-[24px] px-2 flex-wrap">
         {state.capturedWhite.map((p, i) => (
-          <span key={i} className="text-base opacity-70">{getPieceSymbol(p)}</span>
+          <img key={i} src={PIECE_IMAGES.white[p.type]} alt="Captured White" draggable="false" className="w-5 h-5 opacity-80" />
         ))}
       </div>
 

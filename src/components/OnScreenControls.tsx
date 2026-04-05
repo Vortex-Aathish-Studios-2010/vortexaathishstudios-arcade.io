@@ -36,26 +36,26 @@ export const OnScreenControls = ({ gameId }: { gameId?: string }) => {
   const isTablet = device === "tablet";
 
   return (
-    <div className={`absolute bottom-0 left-0 right-0 p-4 z-[80] flex justify-between items-end pointer-events-none mb-4 mx-2 sm:mx-8 ${isTablet ? 'pb-8 opacity-90' : 'opacity-70'} hover:opacity-100 transition-opacity touch-none select-none`}>
+    <div className={`absolute bottom-0 left-0 right-0 p-4 z-[80] flex ${gameId === "snake" ? "justify-center mb-8" : "justify-between mb-4"} items-end pointer-events-none mx-2 sm:mx-8 ${isTablet ? 'pb-8 opacity-90' : 'opacity-70'} hover:opacity-100 transition-opacity touch-none select-none`}>
       {/* D-Pad */}
-      <div className="relative w-36 h-36 pointer-events-auto group">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 rounded-t-xl bg-background border border-border shadow-lg active:bg-primary/20 backdrop-blur w-12 h-12 flex items-center justify-center cursor-pointer transition-colors"
+      <div className={`relative ${gameId === "snake" ? "w-48 h-48" : "w-36 h-36"} pointer-events-auto group`}>
+        <div className={`absolute top-0 left-1/2 -translate-x-1/2 rounded-t-xl bg-background border border-border shadow-lg active:bg-primary/20 backdrop-blur ${gameId === "snake" ? "w-16 h-16" : "w-12 h-12"} flex items-center justify-center cursor-pointer transition-colors`}
           onPointerDown={handleStart("ArrowUp")} onPointerUp={handleEnd("ArrowUp")} onPointerLeave={handleEnd("ArrowUp")} onPointerCancel={handleEnd("ArrowUp")}>
-            <ChevronUp className="w-8 h-8 text-primary group-hover:glow-primary" />
+            <ChevronUp className={`${gameId === "snake" ? "w-10 h-10" : "w-8 h-8"} text-primary group-hover:glow-primary`} />
         </div>
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-b-xl bg-background border border-border shadow-lg active:bg-primary/20 backdrop-blur w-12 h-12 flex items-center justify-center cursor-pointer transition-colors"
+        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 rounded-b-xl bg-background border border-border shadow-lg active:bg-primary/20 backdrop-blur ${gameId === "snake" ? "w-16 h-16" : "w-12 h-12"} flex items-center justify-center cursor-pointer transition-colors`}
           onPointerDown={handleStart("ArrowDown")} onPointerUp={handleEnd("ArrowDown")} onPointerLeave={handleEnd("ArrowDown")} onPointerCancel={handleEnd("ArrowDown")}>
-            <ChevronDown className="w-8 h-8 text-primary group-hover:glow-primary" />
+            <ChevronDown className={`${gameId === "snake" ? "w-10 h-10" : "w-8 h-8"} text-primary group-hover:glow-primary`} />
         </div>
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 rounded-l-xl bg-background border border-border shadow-lg active:bg-primary/20 backdrop-blur w-12 h-12 flex items-center justify-center cursor-pointer transition-colors"
+        <div className={`absolute left-0 top-1/2 -translate-y-1/2 rounded-l-xl bg-background border border-border shadow-lg active:bg-primary/20 backdrop-blur ${gameId === "snake" ? "w-16 h-16" : "w-12 h-12"} flex items-center justify-center cursor-pointer transition-colors`}
           onPointerDown={handleStart("ArrowLeft")} onPointerUp={handleEnd("ArrowLeft")} onPointerLeave={handleEnd("ArrowLeft")} onPointerCancel={handleEnd("ArrowLeft")}>
-            <ChevronLeft className="w-8 h-8 text-primary group-hover:glow-primary" />
+            <ChevronLeft className={`${gameId === "snake" ? "w-10 h-10" : "w-8 h-8"} text-primary group-hover:glow-primary`} />
         </div>
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 rounded-r-xl bg-background border border-border shadow-lg active:bg-primary/20 backdrop-blur w-12 h-12 flex items-center justify-center cursor-pointer transition-colors"
+        <div className={`absolute right-0 top-1/2 -translate-y-1/2 rounded-r-xl bg-background border border-border shadow-lg active:bg-primary/20 backdrop-blur ${gameId === "snake" ? "w-16 h-16" : "w-12 h-12"} flex items-center justify-center cursor-pointer transition-colors`}
           onPointerDown={handleStart("ArrowRight")} onPointerUp={handleEnd("ArrowRight")} onPointerLeave={handleEnd("ArrowRight")} onPointerCancel={handleEnd("ArrowRight")}>
-            <ChevronRight className="w-8 h-8 text-primary group-hover:glow-primary" />
+            <ChevronRight className={`${gameId === "snake" ? "w-10 h-10" : "w-8 h-8"} text-primary group-hover:glow-primary`} />
         </div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full w-10 h-10 bg-background/50 border border-border shadow-inner" />
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full ${gameId === "snake" ? "w-14 h-14" : "w-10 h-10"} bg-background/50 border border-border shadow-inner`} />
       </div>
 
       {/* Action Buttons (Only for Tetris) */}

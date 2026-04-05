@@ -90,6 +90,7 @@ const GamePage = () => {
     <motion.div
       initial={{ opacity: 0, scale: 0.96, filter: "blur(8px)" }}
       animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, scale: 1.04, filter: "blur(12px)" }}
       transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
       className="min-h-screen bg-black flex flex-col"
     >
@@ -139,7 +140,7 @@ const GamePage = () => {
           transition={{ delay: 0.2, duration: 0.5, type: "spring", stiffness: 120 }}
           className="relative w-full max-w-3xl"
         >
-          <div className={countdown !== null ? "blur-md pointer-events-none" : ""}>
+          <div className={`${countdown !== null ? "blur-md pointer-events-none" : ""} ${(id === 'snake' || id === 'tetris') ? 'pb-32 lg:pb-0' : ''}`}>
             <GameComponent level={level} onComplete={multiplayerRoom && gameReady ? handleGameComplete : undefined} />
           </div>
 
@@ -188,19 +189,7 @@ const GamePage = () => {
 
       <OnScreenControls gameId={id} />
 
-      {showDeviceToggle && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] flex bg-card border border-border rounded-lg p-0.5 shadow-lg">
-          <button title="Phone" onClick={() => setDevice("phone")} className={`p-2 rounded-md transition-colors ${device === "phone" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
-            <Smartphone className="w-4 h-4" />
-          </button>
-          <button title="Tablet" onClick={() => setDevice("tablet")} className={`p-2 rounded-md transition-colors ${device === "tablet" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
-            <Tablet className="w-4 h-4" />
-          </button>
-          <button title="Laptop" onClick={() => setDevice("laptop")} className={`p-2 rounded-md transition-colors ${device === "laptop" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}>
-            <Monitor className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      {/* Device toggle removed to prevent confusing the user with multiple controls UI */}
     </motion.div>
   );
 };

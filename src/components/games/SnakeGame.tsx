@@ -121,27 +121,6 @@ export const SnakeGame = ({ onComplete }: Props) => {
     return () => window.removeEventListener("keydown", handler);
   }, [started]);
 
-  useEffect(() => {
-    let sx = 0, sy = 0;
-    const onStart = (e: TouchEvent) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; };
-    const onEnd = (e: TouchEvent) => {
-      const dx = e.changedTouches[0].clientX - sx;
-      const dy = e.changedTouches[0].clientY - sy;
-      if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
-      if (!started) setStarted(true);
-      let nd: Pos;
-      if (Math.abs(dx) > Math.abs(dy)) nd = dx > 0 ? [0, 1] : [0, -1];
-      else nd = dy > 0 ? [1, 0] : [-1, 0];
-      const lastQueued = moveQueue.current.length > 0 ? moveQueue.current[moveQueue.current.length - 1] : dirRef.current;
-      if (lastQueued[0] + nd[0] !== 0 || lastQueued[1] + nd[1] !== 0) {
-        if (moveQueue.current.length < 3) moveQueue.current.push(nd);
-      }
-    };
-    window.addEventListener("touchstart", onStart);
-    window.addEventListener("touchend", onEnd);
-    return () => { window.removeEventListener("touchstart", onStart); window.removeEventListener("touchend", onEnd); };
-  }, [started]);
-
   const reset = () => {
     sfx.click();
     setSnake(initialSnake); 
@@ -192,11 +171,11 @@ export const SnakeGame = ({ onComplete }: Props) => {
       </div>
       {!started && !gameOver && (
         <p className="text-sm text-muted-foreground font-display animate-pulse">
-          {(!device || device === "laptop") ? "Press any arrow key or swipe to start" : "Use virtual controls or swipe to start"}
+          Press any arrow key or screen control to start
         </p>
       )}
       <p className="text-xs text-muted-foreground">
-        {(!device || device === "laptop") ? "Arrow keys or swipe" : "Virtual controls" } · Obstacles appear as you grow!
+        Obstacles appear as you grow!
       </p>
       {gameOver && (
         <button onClick={reset} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary">

@@ -43,7 +43,7 @@ const Index = () => {
   const pageTransition = { duration: 0.45, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] };
 
   return (
-    <div className="min-h-screen bg-black relative">
+    <motion.div className="min-h-screen bg-black relative" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition}>
       <Starfield />
       <AnimatePresence mode="wait">
         {mode === "select" ? (
@@ -77,8 +77,8 @@ const Index = () => {
               whileHover={{ scale: 1.04, y: -4 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => {
-                setPendingMode("brain");
-                setTransitionTrigger(true);
+                setMode("brain");
+
               }}
               className="relative rounded-2xl border-2 border-primary/40 bg-card p-8 text-center hover:border-primary hover:glow-primary transition-all"
             >
@@ -94,8 +94,8 @@ const Index = () => {
               whileHover={{ scale: 1.04, y: -4 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => {
-                setPendingMode("entertainment");
-                setTransitionTrigger(true);
+                navigate("/entertainment");
+
               }}
               className="group relative rounded-2xl border-2 border-accent/40 bg-card p-8 text-center hover:border-accent hover:glow-accent transition-all overflow-hidden"
             >
@@ -223,7 +223,7 @@ const Index = () => {
 
       {/* Global Suggestion Modal for Lobby and Brain Hub */}
       <ContactModal />
-    </div>
+    </motion.div>
   );
 };
 
