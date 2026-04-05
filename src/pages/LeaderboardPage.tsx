@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getTotalWins, getTotalLosses, getPlayerName, syncLeaderboard } from "@/lib/streaks";
 import { Starfield } from "@/components/Starfield";
+import { ensureAnonymousAuth } from "@/lib/auth";
 
 interface LeaderboardEntry {
   id: string;
@@ -21,17 +22,27 @@ const LeaderboardPage = () => {
   const currentPlayerName = getPlayerName();
 
   const fetchLeaderboard = async () => {
-    const { data, error } = await supabase
-      .from("leaderboard")
-      .select("*")
-      .order("wins", { ascending: false })
-      .limit(50);
+    try {
+      // Ensure auth session exists before querying
+      await ensureAnonymousAuth();
+      console.log("Leaderboard: fetching data...");
 
-    if (error) {
+      const { data, error } = await supabase
+        .from("leaderboard")
+        .select("*")
+        .order("wins", { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error("Leaderboard load error:", error);
+        toast.error("Failed to load leaderboard");
+      } else {
+        console.log("Leaderboard loaded", data?.length, "entries");
+        setEntries(data || []);
+      }
+    } catch (e) {
+      console.error("Leaderboard exception:", e);
       toast.error("Failed to load leaderboard");
-      console.error(error);
-    } else {
-      setEntries(data || []);
     }
     setLoading(false);
   };

@@ -99,14 +99,14 @@ export const GravityFlipRunner = ({ initialMode = "bot" }: { initialMode?: "bot"
     canvas.width = WIDTH;
     canvas.height = HEIGHT;
 
-    const spawnObstacle = () => {
-      // Difficulty pacing
-      const minSpacing = Math.max(220, 450 - state.gameSpeed * 15);
-      const lastObstacle = state.obstacles[state.obstacles.length - 1];
-      if (lastObstacle && (WIDTH - lastObstacle.x) < minSpacing) return;
+      const spawnObstacle = () => {
+        // Tighter spacing = more frequent obstacles
+        const minSpacing = Math.max(160, 320 - state.gameSpeed * 12);
+        const lastObstacle = state.obstacles[state.obstacles.length - 1];
+        if (lastObstacle && (WIDTH - lastObstacle.x) < minSpacing) return;
 
-      // Higher chance to spawn as game progresses
-      const spawnChance = Math.min(0.08, 0.03 + (state.gameSpeed * 0.003));
+        // Higher base spawn chance for less dead time
+        const spawnChance = Math.min(0.15, 0.06 + (state.gameSpeed * 0.005));
       
       if (Math.random() < spawnChance) {
         const type = Math.random() < 0.5 ? "ground" : "ceil";

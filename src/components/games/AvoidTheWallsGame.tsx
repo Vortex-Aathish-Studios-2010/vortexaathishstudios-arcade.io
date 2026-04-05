@@ -191,15 +191,24 @@ export const AvoidTheWallsGame = ({ onComplete }: { onComplete?: (score: number)
                 </AnimatePresence>
               </motion.div>
               
-              {/* Right Button */}
+              {/* Controls at bottom - thumb-friendly placement */}
               {device !== "laptop" && (
-                <button 
-                  className="w-16 h-16 bg-card/80 backdrop-blur-md border border-white/5 rounded-[2rem] shadow-xl flex items-center justify-center active:bg-secondary/40 active:scale-95 transition-all outline-none"
-                  onPointerDown={(e) => { e.preventDefault(); inputRef.current = 1; }} onPointerUp={() => { inputRef.current = 0; }} onPointerLeave={() => { inputRef.current = 0; }}
-                  style={{ touchAction: "none" }}
-                >
-                  <ChevronRight className="w-10 h-10 text-primary drop-shadow-[0_0_10px_rgba(var(--primary),1)]" />
-                </button>
+                <div className="flex gap-6 justify-center mt-2">
+                  <button 
+                    className="w-20 h-20 bg-card/80 backdrop-blur-md border border-white/10 rounded-[2rem] shadow-xl flex items-center justify-center active:bg-secondary/40 active:scale-95 transition-all outline-none"
+                    onPointerDown={(e) => { e.preventDefault(); inputRef.current = -1; }} onPointerUp={() => { inputRef.current = 0; }} onPointerLeave={() => { inputRef.current = 0; }}
+                    style={{ touchAction: "none" }}
+                  >
+                    <ChevronLeft className="w-12 h-12 text-primary drop-shadow-[0_0_10px_rgba(var(--primary),1)]" />
+                  </button>
+                  <button 
+                    className="w-20 h-20 bg-card/80 backdrop-blur-md border border-white/10 rounded-[2rem] shadow-xl flex items-center justify-center active:bg-secondary/40 active:scale-95 transition-all outline-none"
+                    onPointerDown={(e) => { e.preventDefault(); inputRef.current = 1; }} onPointerUp={() => { inputRef.current = 0; }} onPointerLeave={() => { inputRef.current = 0; }}
+                    style={{ touchAction: "none" }}
+                  >
+                    <ChevronRight className="w-12 h-12 text-primary drop-shadow-[0_0_10px_rgba(var(--primary),1)]" />
+                  </button>
+                </div>
               )}
             </div>
           </motion.div>
