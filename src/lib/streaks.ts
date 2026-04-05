@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getAuthUserId } from "./auth";
 
 const POINTS_KEY = "brainpuzzle_points";
 const ENT_POINTS_KEY = "entertainment_points";
@@ -79,6 +80,9 @@ export const syncLeaderboard = async () => {
   const name = getPlayerName();
   if (!name.trim()) return;
 
+  const authUserId = await getAuthUserId();
+  if (!authUserId) return;
+
   const wins = getTotalWins();
   const losses = getTotalLosses();
 
@@ -86,22 +90,20 @@ export const syncLeaderboard = async () => {
     const { data: existing } = await supabase
       .from("leaderboard")
       .select("id, wins, losses")
-      .eq("player_name", name.trim())
+      .eq("user_id", authUserId)
       .maybeSingle();
 
     if (existing) {
-      // Only update if values changed
       if (existing.wins !== wins || existing.losses !== losses) {
         await supabase
           .from("leaderboard")
-          .update({ wins, losses, updated_at: new Date().toISOString() })
+          .update({ wins, losses, player_name: name.trim(), updated_at: new Date().toISOString() })
           .eq("id", existing.id);
       }
     } else {
-      // Auto-register on first win/loss
       await supabase
         .from("leaderboard")
-        .insert({ player_name: name.trim(), wins, losses });
+        .insert({ player_name: name.trim(), wins, losses, user_id: authUserId });
     }
   } catch (e) {
     console.error("Leaderboard sync failed:", e);

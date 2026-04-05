@@ -196,7 +196,10 @@ export const KonoodleGame = ({ onComplete }: Props) => {
     }
     setDraggingPiece(piece);
     setSelectedPiece(piece);
-    setRotation(0);
+    // Preserve current rotation instead of resetting
+    if (!fromBoard && !selectedPiece) {
+      setRotation(0);
+    }
   };
 
   // Drag preview cells
@@ -208,61 +211,35 @@ export const KonoodleGame = ({ onComplete }: Props) => {
   })() : null;
   const dragPreviewSet = new Set(dragPreviewCells?.cells.map(([r, c]) => `${r},${c}`) || []);
 
-  // Shuffle with cover/reveal animation — only commits if arrangement is solvable
+  // Shuffle: solve empty board once, extract the target piece's placement
   const shakeLastPiece = useCallback(() => {
     if (!lastPlacedId) return;
-    const piece = PIECES.find(p => p.id === lastPlacedId);
-    if (!piece) return;
 
     setShuffling(true);
     sfx.shake();
 
+    // Use requestAnimationFrame + setTimeout to keep UI responsive
     setTimeout(() => {
-      const boardWithout = board.map(row => row.map(cell => cell === lastPlacedId ? null : cell));
+      // Solve a completely empty board — one call, guaranteed fast
+      const emptyBoard = createEmptyBoard();
+      const solution = solvePuzzle(emptyBoard, new Set(), 2000000);
 
-      type Candidate = { cells: number[][]; r: number; c: number };
-      const candidates: Candidate[] = [];
-      for (const orientation of piece.orientations) {
-        for (let r = 0; r < BOARD_ROWS; r++)
-          for (let c = 0; c < BOARD_COLS; c++)
-            if (canPlace(orientation, r, c, boardWithout))
-              candidates.push({ cells: orientation, r, c });
-      }
+      if (solution) {
+        // Find where our target piece lands in the full solution
+        const targetStep = solution.find(s => s.pieceId === lastPlacedId);
+        if (targetStep) {
+          // Place only the target piece, cache the rest as hints
+          const newBoard = createEmptyBoard();
+          targetStep.cells.forEach(([r, c]) => { newBoard[r][c] = lastPlacedId; });
 
-      // Shuffle and pick a random valid candidate immediately (no heavy solve check)
-      for (let i = candidates.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
-      }
+          const newPlaced = new Map<string, [number, number][]>();
+          newPlaced.set(lastPlacedId, targetStep.cells);
 
-      let foundBoard: BoardState | null = null;
-      let foundCells: [number, number][] = [];
+          cachedSolutionRef.current = solution.filter(s => s.pieceId !== lastPlacedId);
 
-      if (candidates.length > 0) {
-        // Try ALL candidates until we find one with a known solution
-        for (const cand of candidates) {
-          const testBoard = boardWithout.map(row => [...row]);
-          const pc: [number, number][] = [];
-          cand.cells.forEach(([dr, dc]) => {
-            testBoard[cand.r + dr][cand.c + dc] = lastPlacedId;
-            pc.push([cand.r + dr, cand.c + dc]);
-          });
-          const currentPlacedIds = new Set(placed.keys());
-          const sol = solvePuzzle(testBoard, currentPlacedIds, 500000);
-          if (sol !== null) {
-            foundBoard = testBoard;
-            foundCells = pc;
-            cachedSolutionRef.current = sol;
-            break;
-          }
+          setBoard(newBoard);
+          setPlaced(newPlaced);
         }
-      }
-
-      if (foundBoard) {
-        setBoard(foundBoard);
-        const newPlaced = new Map(placed);
-        newPlaced.set(lastPlacedId, foundCells);
-        setPlaced(newPlaced);
       }
 
       setTimeout(() => {
@@ -270,9 +247,9 @@ export const KonoodleGame = ({ onComplete }: Props) => {
         setHasShuffled(true);
         shuffledPieceIdRef.current = lastPlacedId;
         sfx.place();
-      }, 400);
-    }, 400);
-  }, [board, placed, lastPlacedId]);
+      }, 300);
+    }, 100);
+  }, [lastPlacedId]);
 
   // Hint system — places one piece at a time if the board is solvable
   const handleHint = useCallback(() => {
@@ -420,7 +397,7 @@ export const KonoodleGame = ({ onComplete }: Props) => {
             <motion.div
               initial={{ scaleY: 0 }}
               animate={{ scaleY: 1 }}
-              exit={{ scaleY: 0, transition: { duration: 0.4, ease: "easeIn" } }}
+              exit={{ scaleY: 0, transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] } }}
               transition={{ duration: 0.35, ease: "easeOut" }}
               style={{ originY: 0 }}
               className="absolute inset-0 rounded-xl bg-gradient-to-b from-primary via-secondary to-accent flex items-center justify-center z-10"

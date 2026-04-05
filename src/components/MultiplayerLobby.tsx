@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Users, Copy, Play, Trophy, X } from "lucide-react";
-import { ensurePlayer, createRoom, joinRoom, startGame, reportScore, subscribeToRoom } from "@/lib/multiplayer";
+import { ensurePlayer, createRoom, joinRoom, startGame, subscribeToRoom } from "@/lib/multiplayer";
 import { getPlayerName, addWin, addLoss } from "@/lib/streaks";
 import { toast } from "sonner";
+import { ensureAnonymousAuth } from "@/lib/auth";
 
 interface MultiplayerLobbyProps {
   gameId: string;
@@ -12,8 +13,9 @@ interface MultiplayerLobbyProps {
 }
 
 export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: MultiplayerLobbyProps) => {
+  const playerName = getPlayerName();
   const [step, setStep] = useState<"name" | "choice" | "create" | "join" | "waiting">("name");
-  const [name, setName] = useState(getPlayerName() || "");
+  const [name, setName] = useState(playerName || "");
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState("");
   const [roomId, setRoomId] = useState("");
@@ -21,10 +23,29 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
   const [players, setPlayers] = useState<any[]>([]);
   const [roomStatus, setRoomStatus] = useState("waiting");
   const [isHost, setIsHost] = useState(false);
+  const [settingUp, setSettingUp] = useState(true);
+
+  // Setup player on mount - ensure auth first
+  useEffect(() => {
+    const setup = async () => {
+      try {
+        await ensureAnonymousAuth();
+        if (playerName) {
+          const id = await ensurePlayer(playerName);
+          setPlayerId(id);
+          console.log("Multiplayer: player setup complete, id:", id);
+        }
+      } catch (e) {
+        console.error("Multiplayer: player setup failed:", e);
+        toast.error("Failed to set up player. Please try again.");
+      }
+      setSettingUp(false);
+    };
+    setup();
+  }, []);
 
   useEffect(() => {
     if (!roomId) return;
-    // Initial fetch of players
     const fetchPlayers = async () => {
       const { supabase } = await import("@/integrations/supabase/client");
       const { data: ps } = await supabase.from("room_players").select("*, players(display_name)").eq("room_id", roomId);
@@ -55,28 +76,41 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
   };
 
   const handleCreate = async () => {
-    if (!playerId) return;
+    console.log("Button clicked: Create Room");
+    if (!playerId) {
+      toast.error("Player not ready. Please wait...");
+      return;
+    }
     try {
       const room = await createRoom(playerId, gameId);
+      console.log("Room created:", room.code);
       setRoomCode(room.code);
       setRoomId(room.id);
       setIsHost(true);
       setStep("waiting");
-    } catch {
-      toast.error("Failed to create room");
+      toast.success(`Room ${room.code} created!`);
+    } catch (e) {
+      console.error("Room creation failed:", e);
+      toast.error("Failed to create room. Please try again.");
     }
   };
 
   const handleJoin = async () => {
-    if (!playerId || !joinCode.trim()) return;
+    console.log("Button clicked: Join Room");
+    if (!playerId || !joinCode.trim()) {
+      toast.error(!playerId ? "Player not ready" : "Enter a room code");
+      return;
+    }
     try {
       const room = await joinRoom(playerId, joinCode.trim());
       if (!room) { toast.error("Room not found or game already started"); return; }
+      console.log("Room joined:", joinCode.trim().toUpperCase());
       setRoomId(room.id);
       setRoomCode(joinCode.trim().toUpperCase());
       setIsHost(false);
       setStep("waiting");
-    } catch {
+    } catch (e) {
+      console.error("Room join failed:", e);
       toast.error("Failed to join room");
     }
   };
@@ -100,11 +134,78 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
         <div className="flex justify-center mb-4">
           <Users className="h-12 w-12 text-muted-foreground opacity-50" />
         </div>
-        <h2 className="font-display text-2xl font-bold text-foreground mb-2">COMING SOON</h2>
-        <p className="text-sm text-muted-foreground mb-6">Multiplayer and play with friends features are currently under development. Stay tuned!</p>
-        <button onClick={onClose} className="w-full py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg font-display text-sm hover:bg-primary/20 transition-all">
-          GO BACK
-        </button>
+
+        {step === "name" && (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Enter your display name:</p>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSetName()}
+              placeholder="Your name"
+              className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground font-display text-sm focus:border-primary outline-none"
+              autoFocus
+            />
+            <button onClick={handleSetName} className="w-full py-2 bg-primary text-primary-foreground rounded-lg font-display text-sm hover:brightness-110 transition-all">
+              CONTINUE
+            </button>
+          </div>
+        )}
+
+        {step === "choice" && (
+          <div className="space-y-3">
+            <button onClick={handleCreate} className="w-full py-3 bg-primary/10 border-2 border-primary/40 text-primary rounded-xl font-display text-sm hover:border-primary hover:glow-primary transition-all">
+              CREATE ROOM
+            </button>
+            <div className="text-center text-muted-foreground text-xs font-display">OR</div>
+            <div className="flex gap-2">
+              <input
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="ROOM CODE"
+                maxLength={6}
+                className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-foreground font-display text-sm text-center tracking-widest focus:border-secondary outline-none"
+              />
+              <button onClick={handleJoin} className="px-4 py-2 bg-secondary/10 border-2 border-secondary/40 text-secondary rounded-lg font-display text-sm hover:border-secondary hover:glow-secondary transition-all">
+                JOIN
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === "waiting" && (
+          <div className="space-y-4">
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground mb-1">Room Code</p>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-2xl font-display font-black text-primary tracking-[0.3em] text-glow-primary">{roomCode}</span>
+                <button onClick={copyCode} className="text-muted-foreground hover:text-primary transition-colors">
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="border border-border rounded-lg p-3">
+              <p className="text-xs text-muted-foreground mb-2 font-display">PLAYERS ({players.length})</p>
+              {players.map((p: any) => (
+                <div key={p.id} className="flex items-center gap-2 py-1">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-sm text-foreground">{p.players?.display_name || "Player"}</span>
+                </div>
+              ))}
+              {players.length < 2 && (
+                <p className="text-xs text-muted-foreground animate-pulse mt-1">Waiting for players...</p>
+              )}
+            </div>
+            {isHost && players.length >= 2 && (
+              <button onClick={handleStart} className="w-full py-2 bg-primary text-primary-foreground rounded-lg font-display text-sm glow-primary hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                <Play className="h-4 w-4" /> START GAME
+              </button>
+            )}
+            {!isHost && roomStatus === "waiting" && (
+              <p className="text-center text-xs text-muted-foreground animate-pulse">Waiting for host to start...</p>
+            )}
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
@@ -131,7 +232,6 @@ export const MultiplayerResult = ({ roomId, playerId, gameId, onClose }: Multipl
         else addLoss(gameId);
       }
     });
-    // Initial fetch
     const fetch = async () => {
       const { supabase } = await import("@/integrations/supabase/client");
       const { data } = await supabase.from("room_players").select("*, players(display_name)").eq("room_id", roomId);

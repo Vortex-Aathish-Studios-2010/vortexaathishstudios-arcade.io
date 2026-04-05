@@ -197,12 +197,12 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
   const statusText = state.isCheckmate
     ? `Checkmate! ${state.turn === "white" ? "Black" : "White"} wins!`
     : state.isStalemate
-    ? "Stalemate! It's a draw."
-    : state.isCheck
-    ? `${state.turn === "white" ? "White" : "Black"} is in check!`
-    : botThinking
-    ? "Bot is thinking..."
-    : `${state.turn === "white" ? "White" : "Black"}'s turn`;
+      ? "Stalemate! It's a draw."
+      : state.isCheck
+        ? `${state.turn === "white" ? "White" : "Black"} is in check!`
+        : botThinking
+          ? "Bot is thinking..."
+          : `${state.turn === "white" ? "White" : "Black"}'s turn`;
 
   // Flip board if playing as black
   const displayBoard = playerColor === "black"
@@ -221,11 +221,10 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
         key={statusText}
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`font-sport-body text-base font-bold px-4 py-2 rounded-lg ${
-          state.isCheckmate ? "bg-red-900/60 text-red-300"
-          : state.isCheck ? "bg-yellow-900/60 text-yellow-300"
-          : "bg-[hsl(var(--sport-card))] text-[hsl(var(--sport-text))]"
-        } shadow-sm`}
+        className={`font-sport-body text-base font-bold px-4 py-2 rounded-lg ${state.isCheckmate ? "bg-red-900/60 text-red-300"
+            : state.isCheck ? "bg-yellow-900/60 text-yellow-300"
+              : "bg-[hsl(var(--sport-card))] text-[hsl(var(--sport-text))]"
+          } shadow-sm`}
       >
         {statusText}
       </motion.div>
@@ -276,8 +275,8 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
                     background: isCheckSquare
                       ? `radial-gradient(circle, #ef4444 0%, #dc2626 60%, ${isLight ? "#F0D9B5" : "#B58863"} 100%)`
                       : isSelected ? (isLight ? "#F7EC7D" : "#DAC34B")
-                      : isLastFrom || isLastTo ? (isLight ? "#CDD16A" : "#AAA23A")
-                      : isLight ? "#F0D9B5" : "#B58863",
+                        : isLastFrom || isLastTo ? (isLight ? "#CDD16A" : "#AAA23A")
+                          : isLight ? "#F0D9B5" : "#B58863",
                     transition: "background 0.15s ease",
                   }}
                   whileHover={{ opacity: 0.85 }}
@@ -305,9 +304,19 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
                       initial={isLastTo ? { scale: 1.2 } : {}}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 300 }}
-                      className="select-none pointer-events-none z-10 drop-shadow-md"
-                      style={{ width: "85%", height: "85%" }}
-                    />
+                      className="select-none z-10"
+                      style={{
+                        fontSize: "min(9vw, 44px)",
+                        color: piece.color === "white" ? "#FFFFFF" : "#1a1a1a",
+                        WebkitTextStroke: piece.color === "white" ? "0.5px #888" : "0.5px #000",
+                        filter: piece.color === "white"
+                          ? "drop-shadow(1px 2px 3px rgba(0,0,0,0.5))"
+                          : "drop-shadow(1px 1px 1px rgba(0,0,0,0.3))",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {getPieceSymbol(piece)}
+                    </motion.span>
                   )}
                 </motion.div>
               );

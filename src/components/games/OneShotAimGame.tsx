@@ -95,10 +95,16 @@ export const OneShotAimGame = ({ onComplete }: { onComplete?: (score: number) =>
       if (dist < (TARGET_SIZE / 2 + PROJECTILE_SIZE / 2)) {
         // Hit!
         sfx.correct();
-        setScore(prev => prev + 1);
+        const newScore = score + 1;
+        setScore(newScore);
         p.active = false;
         p.y = AREA_HEIGHT - PLAYER_SIZE;
-        t.speed += 0.3;
+        // Every 5 points, boost speed by 10%
+        if (newScore % 5 === 0) {
+          t.speed *= 1.1;
+        } else {
+          t.speed += 0.3;
+        }
         
         // Spawn explosion particles
         for(let i=0; i<15; i++) {

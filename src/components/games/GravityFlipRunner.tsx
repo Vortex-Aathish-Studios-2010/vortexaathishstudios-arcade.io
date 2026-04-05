@@ -50,9 +50,13 @@ export const GravityFlipRunner = ({ initialMode = "bot" }: { initialMode?: "bot"
     setIsPlaying(false);
     setIsGameOver(true);
     setWinnerMessage(winnerMsg || null);
-    saveHighScore(Math.floor(finalScore));
+    const hs = parseInt(localStorage.getItem("gravityFlipHighScore") || "0", 10);
+    if (Math.floor(finalScore) > hs) {
+      setHighScore(Math.floor(finalScore));
+      localStorage.setItem("gravityFlipHighScore", Math.floor(finalScore).toString());
+    }
     sfx.gameOver?.();
-  }, [highScore]);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -95,14 +99,14 @@ export const GravityFlipRunner = ({ initialMode = "bot" }: { initialMode?: "bot"
     canvas.width = WIDTH;
     canvas.height = HEIGHT;
 
-    const spawnObstacle = () => {
-      // Difficulty pacing
-      const minSpacing = Math.max(220, 450 - state.gameSpeed * 15);
-      const lastObstacle = state.obstacles[state.obstacles.length - 1];
-      if (lastObstacle && (WIDTH - lastObstacle.x) < minSpacing) return;
+      const spawnObstacle = () => {
+        // Tighter spacing = more frequent obstacles
+        const minSpacing = Math.max(160, 320 - state.gameSpeed * 12);
+        const lastObstacle = state.obstacles[state.obstacles.length - 1];
+        if (lastObstacle && (WIDTH - lastObstacle.x) < minSpacing) return;
 
-      // Higher chance to spawn as game progresses
-      const spawnChance = Math.min(0.08, 0.03 + (state.gameSpeed * 0.003));
+        // Higher base spawn chance for less dead time
+        const spawnChance = Math.min(0.15, 0.06 + (state.gameSpeed * 0.005));
       
       if (Math.random() < spawnChance) {
         const type = Math.random() < 0.5 ? "ground" : "ceil";
@@ -155,7 +159,12 @@ export const GravityFlipRunner = ({ initialMode = "bot" }: { initialMode?: "bot"
     };
 
     const handleInput = (e: KeyboardEvent | MouseEvent | TouchEvent) => {
-      if (e.target && (e.target as HTMLElement).closest('button')) return; // Don't jump if clicking a native button
+      if (e.target && (e.target as HTMLElement).closest('button')) return;
+
+      // Prevent default to avoid delays on mobile
+      if (e.type === "touchstart") {
+        e.preventDefault();
+      }
 
       if ((e.type === "keydown" && (e as KeyboardEvent).code === "Space") || e.type === "mousedown" || e.type === "touchstart") {
         if (!state.running) {
@@ -209,7 +218,7 @@ export const GravityFlipRunner = ({ initialMode = "bot" }: { initialMode?: "bot"
 
     window.addEventListener("keydown", handleInput);
     window.addEventListener("mousedown", handleInput);
-    window.addEventListener("touchstart", handleInput);
+    window.addEventListener("touchstart", handleInput, { passive: false });
 
     let lastTime = performance.now();
 

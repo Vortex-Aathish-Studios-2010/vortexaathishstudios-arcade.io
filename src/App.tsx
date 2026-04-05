@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SplashScreen } from "@/components/SplashScreen";
 import { DeviceSelector, getDeviceType, DeviceType } from "@/components/DeviceSelector";
+import { UsernameGate } from "@/components/UsernameGate";
 import { DeviceProvider } from "@/lib/DeviceContext";
 import Index from "./pages/Index";
 import GamePage from "./pages/GamePage";
@@ -14,39 +15,40 @@ import EntertainmentGamePage from "./pages/EntertainmentGamePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import NotFound from "./pages/NotFound";
 import { BigNotificationProvider } from "./components/BigNotification";
-import { AnimatePresence } from "framer-motion";
-import { useLocation } from "react-router-dom";
-
-const AnimatedRoutes = () => {
-  const location = useLocation();
-  return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Index />} />
-        <Route path="/game/:id" element={<GamePage />} />
-        <Route path="/entertainment" element={<EntertainmentPage />} />
-        <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AnimatePresence>
-  );
-};
 
 const queryClient = new QueryClient();
 
-const App = () => {
+const AppFlow = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [showDeviceSelector, setShowDeviceSelector] = useState(false);
-  const [ready, setReady] = useState(!!getDeviceType() ? false : false); // will be set after flow
+  const [showUsernameGate, setShowUsernameGate] = useState(false);
+  const [ready, setReady] = useState(false);
 
-  const handleSplashComplete = () => {
+  const handleSplashComplete = async () => {
     setShowSplash(false);
+    // Ensure anonymous auth session exists for returning users
+    try { await ensureAnonymousAuth(); } catch { /* handled later */ }
     if (!getDeviceType()) {
       setShowDeviceSelector(true);
+    } else if (!getPlayerName()) {
+      setShowUsernameGate(true);
     } else {
       setReady(true);
     }
+  };
+
+  const handleDeviceSelect = (_device: DeviceType) => {
+    setShowDeviceSelector(false);
+    if (!getPlayerName()) {
+      setShowUsernameGate(true);
+    } else {
+      setReady(true);
+    }
+  };
+
+  const handleUsernameComplete = (_username: string) => {
+    setShowUsernameGate(false);
+    setReady(true);
   };
 
   useEffect(() => {
@@ -60,11 +62,6 @@ const App = () => {
     return () => document.removeEventListener('click', handleGlobalClick);
   }, []);
 
-  const handleDeviceSelect = (_device: DeviceType) => {
-    setShowDeviceSelector(false);
-    setReady(true);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <DeviceProvider>
@@ -75,7 +72,14 @@ const App = () => {
             {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
             {showDeviceSelector && <DeviceSelector onSelect={handleDeviceSelect} />}
             <BrowserRouter>
-              <AnimatedRoutes />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/game/:id" element={<GamePage />} />
+                <Route path="/entertainment" element={<EntertainmentPage />} />
+                <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
             </BrowserRouter>
           </TooltipProvider>
         </BigNotificationProvider>

@@ -3,12 +3,13 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { GameCard } from "@/components/GameCard";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Trophy, TrendingUp, TrendingDown, Gamepad2, Mail, Instagram } from "lucide-react";
+import { Brain, Trophy, TrendingUp, TrendingDown, Gamepad2, User, Edit2 } from "lucide-react";
 import { StatsBar } from "@/components/StatsBar";
-import { getTotalWins, getTotalLosses, getPoints } from "@/lib/streaks";
+import { getTotalWins, getTotalLosses, getPoints, getPlayerName, setPlayerName } from "@/lib/streaks";
 import { ScreenBreaker } from "@/components/ScreenBreaker";
 import { ContactModal } from "@/components/ContactModal";
 import { Starfield } from "@/components/Starfield";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -20,6 +21,9 @@ const Index = () => {
   const [points, setPoints] = useState(0);
   const [transitionTrigger, setTransitionTrigger] = useState(false);
   const [pendingMode, setPendingMode] = useState<"select" | "brain" | "entertainment" | null>(null);
+  const [playerName, setLocalPlayerName] = useState(getPlayerName());
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(playerName);
 
   useEffect(() => {
     setWins(getTotalWins());
@@ -33,7 +37,18 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Shared page transition variants
+  const handleNameSave = () => {
+    const trimmed = nameInput.trim();
+    if (trimmed.length < 2) {
+      toast.error("Username must be at least 2 characters");
+      return;
+    }
+    setPlayerName(trimmed);
+    setLocalPlayerName(trimmed);
+    setEditingName(false);
+    toast.success("Username updated!");
+  };
+
   const pageVariants = {
     initial: { opacity: 0, scale: 0.96, filter: "blur(8px)" },
     animate: { opacity: 1, scale: 1, filter: "blur(0px)" },
@@ -99,7 +114,6 @@ const Index = () => {
               }}
               className="group relative rounded-2xl border-2 border-accent/40 bg-card p-8 text-center hover:border-accent hover:glow-accent transition-all overflow-hidden"
             >
-              {/* Animated gradient background on hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <motion.div
                 animate={{ rotate: 360 }}
@@ -121,19 +135,51 @@ const Index = () => {
             setPendingMode(null);
           }} />
 
-          {/* Leaderboard link */}
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/leaderboard")}
-            className="mt-8 flex items-center gap-2 px-6 py-3 rounded-xl border border-accent/40 bg-card hover:border-accent hover:glow-accent transition-all"
-          >
-            <Trophy className="h-5 w-5 text-accent" />
-            <span className="font-display text-sm text-foreground">WORLDWIDE LEADERBOARD</span>
-          </motion.button>
+          {/* Player info + Leaderboard */}
+          <div className="mt-8 flex items-center gap-3 flex-wrap justify-center">
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/leaderboard")}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl border border-accent/40 bg-card hover:border-accent hover:glow-accent transition-all"
+            >
+              <Trophy className="h-5 w-5 text-accent" />
+              <span className="font-display text-sm text-foreground">WORLDWIDE LEADERBOARD</span>
+            </motion.button>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="flex items-center gap-2"
+            >
+              {editingName ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleNameSave()}
+                    maxLength={20}
+                    autoFocus
+                    className="px-3 py-2 bg-background border border-primary/40 rounded-lg text-foreground font-display text-xs w-32 focus:outline-none"
+                  />
+                  <button onClick={handleNameSave} className="px-2 py-2 text-primary text-xs font-bold">✓</button>
+                  <button onClick={() => { setEditingName(false); setNameInput(playerName); }} className="px-2 py-2 text-muted-foreground text-xs">✕</button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary/30 bg-card">
+                  <User className="h-4 w-4 text-primary" />
+                  <span className="font-display text-xs text-foreground">{playerName}</span>
+                  <button onClick={() => setEditingName(true)} className="text-muted-foreground hover:text-primary transition-colors">
+                    <Edit2 className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </div>
 
         </motion.div>
       ) : (
@@ -163,7 +209,6 @@ const Index = () => {
                 </h1>
               </div>
               <div className="flex items-center gap-3">
-                {/* Wins / Losses */}
                 <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-1.5">
                   <TrendingUp className="h-3.5 w-3.5 text-primary" />
                   <span className="font-display text-xs text-primary">{wins}W</span>
@@ -171,9 +216,7 @@ const Index = () => {
                   <TrendingDown className="h-3.5 w-3.5 text-destructive" />
                   <span className="font-display text-xs text-destructive">{losses}L</span>
                 </div>
-                {/* Points */}
                 <StatsBar />
-                {/* Leaderboard */}
                 <button
                   onClick={() => navigate("/leaderboard")}
                   className="rounded-lg px-3 py-1.5 bg-card border border-accent/30 hover:border-accent/60 transition-all"
@@ -181,7 +224,6 @@ const Index = () => {
                 >
                   <Trophy className="h-4 w-4 text-accent" />
                 </button>
-                {/* Entertainment switch */}
                 <button
                   onClick={() => navigate("/entertainment")}
                   className="relative overflow-hidden rounded-lg px-3 py-1.5 bg-card border border-border hover:border-[hsl(35,95%,55%)]/60 transition-all cursor-pointer"
@@ -221,7 +263,6 @@ const Index = () => {
       )}
     </AnimatePresence>
 
-      {/* Global Suggestion Modal for Lobby and Brain Hub */}
       <ContactModal />
     </motion.div>
   );

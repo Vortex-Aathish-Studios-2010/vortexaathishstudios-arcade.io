@@ -39,7 +39,9 @@ const GamePage = () => {
   const game = games.find((g) => g.id === id);
   const GameComponent = id ? gameComponents[id] : null;
 
-  const [showTutorial, setShowTutorial] = useState(() => id ? !isTutorialShown(id) : false);
+  const needsTutorial = id ? !isTutorialShown(id) : false;
+  const [showTutorial, setShowTutorial] = useState(needsTutorial);
+  const [gameStarted, setGameStarted] = useState(!needsTutorial);
   const [showMultiplayer, setShowMultiplayer] = useState(false);
   const [multiplayerRoom, setMultiplayerRoom] = useState<{ roomId: string; playerId: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -50,6 +52,7 @@ const GamePage = () => {
 
   const handleTutorialClose = useCallback(() => {
     setShowTutorial(false);
+    setGameStarted(true);
     if (id) markTutorialShown(id);
   }, [id]);
 
@@ -140,7 +143,7 @@ const GamePage = () => {
           transition={{ delay: 0.2, duration: 0.5, type: "spring", stiffness: 120 }}
           className="relative w-full max-w-3xl"
         >
-          <div className={`${countdown !== null ? "blur-md pointer-events-none" : ""} ${(id === 'snake' || id === 'tetris') ? 'pb-32 lg:pb-0' : ''}`}>
+          <div className={countdown !== null ? "blur-md pointer-events-none" : ""}>
             <GameComponent level={level} onComplete={multiplayerRoom && gameReady ? handleGameComplete : undefined} />
           </div>
 
