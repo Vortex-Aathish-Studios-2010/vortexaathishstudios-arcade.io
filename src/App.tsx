@@ -15,6 +15,8 @@ import EntertainmentGamePage from "./pages/EntertainmentGamePage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import NotFound from "./pages/NotFound";
 import { BigNotificationProvider } from "./components/BigNotification";
+import { ensureAnonymousAuth } from "@/lib/auth";
+import { getPlayerName } from "@/lib/streaks";
 
 const queryClient = new QueryClient();
 
@@ -88,4 +90,4 @@ const AppFlow = () => {
   );
 };
 
-export default App;
+export default AppFlow;

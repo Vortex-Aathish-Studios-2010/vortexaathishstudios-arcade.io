@@ -296,11 +296,8 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
                     />
                   )}
                   {piece && (
-                    <motion.img
+                    <motion.span
                       key={`piece-${r}-${c}-${piece.type}-${piece.color}`}
-                      src={PIECE_IMAGES[piece.color][piece.type]}
-                      alt={`${piece.color} ${piece.type}`}
-                      draggable="false"
                       initial={isLastTo ? { scale: 1.2 } : {}}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 300 }}
