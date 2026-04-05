@@ -4,6 +4,7 @@ import { Users, Copy, Play, Trophy, X } from "lucide-react";
 import { ensurePlayer, createRoom, joinRoom, startGame, subscribeToRoom } from "@/lib/multiplayer";
 import { getPlayerName, addWin, addLoss } from "@/lib/streaks";
 import { toast } from "sonner";
+import { ensureAnonymousAuth } from "@/lib/auth";
 
 interface MultiplayerLobbyProps {
   gameId: string;
@@ -21,22 +22,26 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
   const [players, setPlayers] = useState<any[]>([]);
   const [roomStatus, setRoomStatus] = useState("waiting");
   const [isHost, setIsHost] = useState(false);
+  const [settingUp, setSettingUp] = useState(true);
 
-  // Setup player on mount
+  // Setup player on mount - ensure auth first
   useEffect(() => {
-    if (playerName) {
-      setupPlayer(playerName);
-    }
+    const setup = async () => {
+      try {
+        await ensureAnonymousAuth();
+        if (playerName) {
+          const id = await ensurePlayer(playerName);
+          setPlayerId(id);
+          console.log("Multiplayer: player setup complete, id:", id);
+        }
+      } catch (e) {
+        console.error("Multiplayer: player setup failed:", e);
+        toast.error("Failed to set up player. Please try again.");
+      }
+      setSettingUp(false);
+    };
+    setup();
   }, []);
-
-  const setupPlayer = async (name: string) => {
-    try {
-      const id = await ensurePlayer(name);
-      setPlayerId(id);
-    } catch {
-      toast.error("Failed to set up player");
-    }
-  };
 
   useEffect(() => {
     if (!roomId) return;
@@ -59,28 +64,41 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
   }, [roomId, isHost, playerId]);
 
   const handleCreate = async () => {
-    if (!playerId) return;
+    console.log("Button clicked: Create Room");
+    if (!playerId) {
+      toast.error("Player not ready. Please wait...");
+      return;
+    }
     try {
       const room = await createRoom(playerId, gameId);
+      console.log("Room created:", room.code);
       setRoomCode(room.code);
       setRoomId(room.id);
       setIsHost(true);
       setStep("waiting");
-    } catch {
-      toast.error("Failed to create room");
+      toast.success(`Room ${room.code} created!`);
+    } catch (e) {
+      console.error("Room creation failed:", e);
+      toast.error("Failed to create room. Please try again.");
     }
   };
 
   const handleJoin = async () => {
-    if (!playerId || !joinCode.trim()) return;
+    console.log("Button clicked: Join Room");
+    if (!playerId || !joinCode.trim()) {
+      toast.error(!playerId ? "Player not ready" : "Enter a room code");
+      return;
+    }
     try {
       const room = await joinRoom(playerId, joinCode.trim());
       if (!room) { toast.error("Room not found or game already started"); return; }
+      console.log("Room joined:", joinCode.trim().toUpperCase());
       setRoomId(room.id);
       setRoomCode(joinCode.trim().toUpperCase());
       setIsHost(false);
       setStep("waiting");
-    } catch {
+    } catch (e) {
+      console.error("Room join failed:", e);
       toast.error("Failed to join room");
     }
   };
@@ -106,12 +124,14 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
           <h2 className="font-display text-lg font-bold text-foreground">Multiplayer</h2>
         </div>
 
-        {step === "choice" && (
+        {settingUp ? (
+          <div className="text-center py-6 text-muted-foreground font-display animate-pulse">Setting up...</div>
+        ) : step === "choice" ? (
           <div className="space-y-3">
             <p className="text-xs text-center text-muted-foreground mb-2">
               Playing as <span className="text-primary font-bold">{playerName}</span>
             </p>
-            <button onClick={handleCreate} className="w-full py-3 bg-primary/10 border-2 border-primary/40 text-primary rounded-xl font-display text-sm hover:border-primary hover:glow-primary transition-all">
+            <button onClick={handleCreate} disabled={!playerId} className="w-full py-3 bg-primary/10 border-2 border-primary/40 text-primary rounded-xl font-display text-sm hover:border-primary hover:glow-primary transition-all disabled:opacity-50">
               CREATE ROOM
             </button>
             <div className="text-center text-muted-foreground text-xs font-display">OR</div>
@@ -123,14 +143,12 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
                 maxLength={6}
                 className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-foreground font-display text-sm text-center tracking-widest focus:border-secondary outline-none"
               />
-              <button onClick={handleJoin} className="px-4 py-2 bg-secondary/10 border-2 border-secondary/40 text-secondary rounded-lg font-display text-sm hover:border-secondary hover:glow-secondary transition-all">
+              <button onClick={handleJoin} disabled={!playerId} className="px-4 py-2 bg-secondary/10 border-2 border-secondary/40 text-secondary rounded-lg font-display text-sm hover:border-secondary hover:glow-secondary transition-all disabled:opacity-50">
                 JOIN
               </button>
             </div>
           </div>
-        )}
-
-        {step === "waiting" && (
+        ) : step === "waiting" ? (
           <div className="space-y-4">
             <div className="text-center">
               <p className="text-xs text-muted-foreground mb-1">Room Code</p>
@@ -162,7 +180,7 @@ export const MultiplayerLobby = ({ gameId, onStartMultiplayer, onClose }: Multip
               <p className="text-center text-xs text-muted-foreground animate-pulse">Waiting for host to start...</p>
             )}
           </div>
-        )}
+        ) : null}
       </motion.div>
     </motion.div>
   );

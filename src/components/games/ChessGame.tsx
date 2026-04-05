@@ -286,11 +286,12 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
                       className="select-none z-10"
                       style={{
                         fontSize: "min(9vw, 44px)",
-                        color: piece.color === "white" ? "#FFFFFF" : "#1a1a1a",
-                        WebkitTextStroke: piece.color === "white" ? "0.5px #888" : "0.5px #000",
+                        color: piece.color === "white" ? "#FFFFFF" : "#222222",
+                        WebkitTextStroke: piece.color === "white" ? "0.5px #aaa" : "1px #666",
                         filter: piece.color === "white"
                           ? "drop-shadow(1px 2px 3px rgba(0,0,0,0.5))"
-                          : "drop-shadow(1px 1px 1px rgba(0,0,0,0.3))",
+                          : "drop-shadow(0px 1px 2px rgba(0,0,0,0.6))",
+                        textShadow: piece.color === "black" ? "0 0 2px rgba(100,100,100,0.8)" : "none",
                         lineHeight: 1,
                       }}
                     >
