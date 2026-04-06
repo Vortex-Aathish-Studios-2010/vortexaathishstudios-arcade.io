@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   GameState, Position, createInitialState, getLegalMoves,
-  makeMove, getPieceSymbol, getBotMove,
+  makeMove, getBotMove,
 } from "@/lib/chessEngine";
 import { chessSfx } from "@/lib/chessSounds";
 
@@ -237,25 +237,25 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
 
       <div
         ref={boardRef}
-        className="relative rounded-lg overflow-hidden shadow-2xl border-4 border-amber-900/80"
-        style={{ background: "linear-gradient(135deg, #8B6914 0%, #6B4E0A 100%)", padding: "2px" }}
+        className="relative shadow-2xl border-[4px] border-[#8B6914] rounded-lg bg-[#6B4E0A]"
+        style={{ padding: "12px 12px 16px 16px" }}
       >
-        <div className="absolute left-[-20px] top-0 bottom-0 flex flex-col">
+        <div className="absolute left-1 top-[12px] bottom-[16px] flex flex-col">
           {displayRanks.map(rank => (
-            <div key={rank} className="flex-1 flex items-center justify-center">
-              <span className="text-[10px] font-sport-body font-bold text-[hsl(var(--sport-muted))]">{rank}</span>
+            <div key={rank} className="flex-1 flex items-center justify-center w-3">
+              <span className="text-[10px] font-sport-body font-bold text-white/70">{rank}</span>
             </div>
           ))}
         </div>
-        <div className="absolute left-0 right-0 bottom-[-18px] flex">
+        <div className="absolute left-[16px] right-[12px] bottom-1 flex">
           {displayFiles.map(file => (
-            <div key={file} className="flex-1 flex items-center justify-center">
-              <span className="text-[10px] font-sport-body font-bold text-[hsl(var(--sport-muted))]">{file}</span>
+            <div key={file} className="flex-1 flex items-center justify-center h-3">
+              <span className="text-[10px] font-sport-body font-bold text-white/70">{file}</span>
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-8" style={{ width: "min(90vw, 440px)" }}>
+        <div className="grid grid-cols-8 grid-rows-8 w-full aspect-square rounded overflow-hidden" style={{ width: "min(85vw, 440px)" }}>
           {displayBoard.map((row, dr) =>
             row.map((piece, dc) => {
               const [r, c] = toDisplayCoords(dr, dc);
@@ -296,24 +296,21 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
                     />
                   )}
                   {piece && (
-                    <motion.span
+                    <motion.img
                       key={`piece-${r}-${c}-${piece.type}-${piece.color}`}
+                      src={PIECE_IMAGES[piece.color][piece.type]}
+                      alt={`${piece.color} ${piece.type}`}
+                      draggable="false"
                       initial={isLastTo ? { scale: 1.2 } : {}}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 300 }}
-                      className="select-none z-10"
+                      className="w-[85%] h-[85%] select-none z-10"
                       style={{
-                        fontSize: "min(9vw, 44px)",
-                        color: piece.color === "white" ? "#FFFFFF" : "#1a1a1a",
-                        WebkitTextStroke: piece.color === "white" ? "0.5px #888" : "0.5px #000",
                         filter: piece.color === "white"
                           ? "drop-shadow(1px 2px 3px rgba(0,0,0,0.5))"
                           : "drop-shadow(1px 1px 1px rgba(0,0,0,0.3))",
-                        lineHeight: 1,
                       }}
-                    >
-                      {getPieceSymbol(piece)}
-                    </motion.span>
+                    />
                   )}
                 </motion.div>
               );
