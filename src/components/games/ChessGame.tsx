@@ -14,20 +14,20 @@ const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
 
 const PIECE_IMAGES: Record<string, Record<string, string>> = {
   white: {
-    king: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wK.svg",
-    queen: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wQ.svg",
-    rook: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wR.svg",
-    bishop: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wB.svg",
-    knight: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wN.svg",
-    pawn: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wP.svg"
+    king: "https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg",
+    queen: "https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg",
+    rook: "https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg",
+    bishop: "https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg",
+    knight: "https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg",
+    pawn: "https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg"
   },
   black: {
-    king: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bK.svg",
-    queen: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bQ.svg",
-    rook: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bR.svg",
-    bishop: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bB.svg",
-    knight: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bN.svg",
-    pawn: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bP.svg"
+    king: "https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg",
+    queen: "https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg",
+    rook: "https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg",
+    bishop: "https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg",
+    knight: "https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg",
+    pawn: "https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg"
   }
 };
 
