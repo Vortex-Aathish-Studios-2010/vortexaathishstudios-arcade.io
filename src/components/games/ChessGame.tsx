@@ -7,6 +7,12 @@ import {
 import { chessSfx } from "@/lib/chessSounds";
 import { CHESS_PIECE_COMPONENTS } from "@/lib/chessPieces";
 
+type Mode = "select" | "color" | "bot" | "friend";
+type PlayerColor = "white" | "black";
+
+const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
+
 export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "friend" }) => {
   const [mode, setMode] = useState<Mode>(initialMode === "bot" ? "color" : "friend");
   const [pendingMode, setPendingMode] = useState<"bot" | "friend">(initialMode);
