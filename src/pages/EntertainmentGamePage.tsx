@@ -98,17 +98,12 @@ const EntertainmentGamePage = () => {
           <span className="font-sport tracking-widest text-sm">{id === "chess" ? "VS BOT" : "ALONE"}</span>
         </button>
         <button 
-          onClick={() => {
-            if (id === "chess") {
-              setMatchMode("friends");
-            } else {
-              setShowMultiplayer(true);
-            }
-          }}
-          className="flex flex-col items-center gap-4 p-8 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-2xl hover:border-[hsl(var(--sport-accent))] transition-all group"
+          disabled
+          className="flex flex-col items-center gap-4 p-8 bg-[hsl(var(--sport-card))]/50 border border-[hsl(var(--sport-border))]/30 rounded-2xl opacity-50 cursor-not-allowed"
         >
-          <Users className="h-12 w-12 text-[hsl(var(--sport-accent))] group-hover:scale-110 transition-transform" />
+          <Users className="h-12 w-12 text-[hsl(var(--sport-accent))]/40" />
           <span className="font-sport tracking-widest text-sm">FRIENDS</span>
+          <span className="text-[9px] text-[hsl(var(--sport-accent))]/70 font-bold">Coming in Arcade.io 2</span>
         </button>
       </div>
     </div>
