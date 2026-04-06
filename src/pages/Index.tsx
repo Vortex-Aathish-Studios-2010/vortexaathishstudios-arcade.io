@@ -141,13 +141,12 @@ const Index = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate("/leaderboard")}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl border border-accent/40 bg-card hover:border-accent hover:glow-accent transition-all"
+              disabled
+              className="flex items-center gap-2 px-6 py-3 rounded-xl border border-accent/20 bg-card/50 opacity-60 cursor-not-allowed"
             >
-              <Trophy className="h-5 w-5 text-accent" />
-              <span className="font-display text-sm text-foreground">WORLDWIDE LEADERBOARD</span>
+              <Trophy className="h-5 w-5 text-accent/50" />
+              <span className="font-display text-sm text-foreground/60">WORLDWIDE LEADERBOARD</span>
+              <span className="text-[10px] text-accent/70 font-bold ml-1">Coming in Arcade.io 2</span>
             </motion.button>
 
             <motion.div
