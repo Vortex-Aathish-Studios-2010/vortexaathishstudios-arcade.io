@@ -147,7 +147,7 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
             onClick={() => resetGame("bot", "white")}
             className="flex flex-col items-center gap-4 px-8 py-6 rounded-2xl border-2 border-white/30 bg-white/10 hover:border-white/70 hover:bg-white/20 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all"
           >
-            <img src={PIECE_IMAGES.white.king} alt="White King" className="w-16 h-16 drop-shadow-lg" draggable="false" />
+            <div className="w-16 h-16 drop-shadow-lg">{React.createElement(CHESS_PIECE_COMPONENTS.white.king)}</div>
             <div>
               <p className="font-sport text-lg text-white font-bold">WHITE</p>
               <p className="font-sport-body text-xs text-white/60">Moves first</p>
@@ -163,7 +163,7 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
             onClick={() => resetGame("bot", "black")}
             className="flex flex-col items-center gap-4 px-8 py-6 rounded-2xl border-2 border-[hsl(var(--sport-text))]/30 bg-[hsl(var(--sport-bg))]/60 hover:border-[hsl(var(--sport-primary))]/70 hover:shadow-[0_0_30px_hsl(var(--sport-primary)/0.3)] transition-all"
           >
-            <img src={PIECE_IMAGES.black.king} alt="Black King" className="w-16 h-16 drop-shadow-lg" draggable="false" />
+            <div className="w-16 h-16 drop-shadow-lg">{React.createElement(CHESS_PIECE_COMPONENTS.black.king)}</div>
             <div>
               <p className="font-sport text-lg text-[hsl(var(--sport-text))] font-bold">BLACK</p>
               <p className="font-sport-body text-xs text-[hsl(var(--sport-muted))]">Bot moves first</p>
@@ -213,7 +213,7 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
 
       <div className="flex items-center gap-1 min-h-[24px] px-2 flex-wrap">
         {state.capturedBlack.map((p, i) => (
-          <img key={i} src={PIECE_IMAGES.black[p.type]} alt="Captured Black" draggable="false" className="w-5 h-5 opacity-80" />
+          <div key={i} className="w-5 h-5 opacity-80">{React.createElement(CHESS_PIECE_COMPONENTS.black[p.type])}</div>
         ))}
       </div>
 
@@ -278,11 +278,8 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
                     />
                   )}
                   {piece && (
-                    <motion.img
+                    <motion.div
                       key={`piece-${r}-${c}-${piece.type}-${piece.color}`}
-                      src={PIECE_IMAGES[piece.color][piece.type]}
-                      alt={`${piece.color} ${piece.type}`}
-                      draggable="false"
                       initial={isLastTo ? { scale: 1.2 } : {}}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 300 }}
@@ -292,7 +289,9 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
                           ? "drop-shadow(1px 2px 3px rgba(0,0,0,0.5))"
                           : "drop-shadow(1px 1px 1px rgba(0,0,0,0.3))",
                       }}
-                    />
+                    >
+                      {React.createElement(CHESS_PIECE_COMPONENTS[piece.color][piece.type])}
+                    </motion.div>
                   )}
                 </motion.div>
               );
@@ -303,7 +302,7 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
 
       <div className="flex items-center gap-1 min-h-[24px] px-2 flex-wrap">
         {state.capturedWhite.map((p, i) => (
-          <img key={i} src={PIECE_IMAGES.white[p.type]} alt="Captured White" draggable="false" className="w-5 h-5 opacity-80" />
+          <div key={i} className="w-5 h-5 opacity-80">{React.createElement(CHESS_PIECE_COMPONENTS.white[p.type])}</div>
         ))}
       </div>
 
