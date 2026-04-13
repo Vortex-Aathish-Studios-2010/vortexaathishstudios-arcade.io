@@ -21,6 +21,7 @@ import { OfflineWarning } from "./components/OfflineWarning";
 import { App as CapApp } from '@capacitor/app';
 import { SplashScreen as CapSplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
 
 const queryClient = new QueryClient();
 
@@ -35,7 +36,29 @@ const AppFlow = () => {
     // Ensure anonymous auth session exists for returning users
     try { await ensureAnonymousAuth(); } catch { /* handled later */ }
     if (!getDeviceType()) {
-      setShowDeviceSelector(true);
+      import("@/components/DeviceSelector").then(({ setDeviceType }) => {
+        // Auto-detect based on screen width
+        // Common thresholds: < 768px = phone, >= 768px = tablet/laptop
+        // But since this is building an Android app, laptops are practically tablets
+        const width = window.innerWidth;
+        const isCapacitor = Capacitor.isNativePlatform();
+        
+        let autoDevice: DeviceType = "laptop";
+        if (isCapacitor) {
+          autoDevice = width < 600 ? "phone" : "tablet";
+        } else {
+          if (width < 600) autoDevice = "phone";
+          else if (width < 1024) autoDevice = "tablet";
+          else autoDevice = "laptop";
+        }
+        
+        setDeviceType(autoDevice);
+        if (!getPlayerName()) {
+          setShowUsernameGate(true);
+        } else {
+          setReady(true);
+        }
+      });
     } else if (!getPlayerName()) {
       setShowUsernameGate(true);
     } else {
@@ -101,7 +124,8 @@ const AppFlow = () => {
             <Sonner />
             <OfflineWarning />
             {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
-            {showDeviceSelector && <DeviceSelector onSelect={handleDeviceSelect} />}
+            {/* DeviceSelector removed in favor of auto-detect on splash completion */}
+            {showUsernameGate && <UsernameGate onComplete={handleUsernameComplete} />}
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
