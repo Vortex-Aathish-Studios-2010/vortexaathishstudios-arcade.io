@@ -86,10 +86,10 @@ const EntertainmentPage = () => {
             {/* Leaderboard */}
             <button
               onClick={() => toast.info("Leaderboards are coming in Arcade.io 2!")}
-              className="rounded-lg px-3 py-1.5 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-accent))]/30 hover:border-[hsl(var(--sport-accent))]/60 transition-all"
-              title="Leaderboard"
+              className="rounded-lg px-3 py-1.5 bg-[hsl(var(--sport-card))]/50 border border-[hsl(var(--sport-accent))]/15 opacity-80 hover:opacity-100 transition-all"
+              title="Coming in Arcade.io 2"
             >
-              <Trophy className="h-4 w-4 text-[hsl(var(--sport-accent))]" />
+              <Trophy className="h-4 w-4 text-[hsl(var(--sport-accent))]/50" />
             </button>
             {/* Brain Arcade switch */}
             <button

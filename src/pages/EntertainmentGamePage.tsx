@@ -101,10 +101,11 @@ const EntertainmentGamePage = () => {
           onClick={() => {
             import("sonner").then(({ toast }) => toast.info("Multiplayer Friends Mode is coming in Arcade.io 2!"));
           }}
-          className="flex flex-col items-center gap-4 p-8 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-2xl hover:border-[hsl(var(--sport-accent))] transition-all group"
+          className="flex flex-col items-center gap-4 p-8 bg-[hsl(var(--sport-card))]/80 border border-[hsl(var(--sport-border))]/50 rounded-2xl transition-all group opacity-75 hover:opacity-100"
         >
-          <Users className="h-12 w-12 text-[hsl(var(--sport-accent))] group-hover:scale-110 transition-transform" />
+          <Users className="h-12 w-12 text-[hsl(var(--sport-accent))]/40" />
           <span className="font-sport tracking-widest text-sm">FRIENDS</span>
+          <span className="text-[9px] text-[hsl(var(--sport-accent))]/70 font-bold">Coming in Arcade.io 2</span>
         </button>
       </div>
     </div>
