@@ -259,16 +259,18 @@ export const BlockStack = ({ onComplete }: Props) => {
         </div>
         {renderNext()}
       </div>
-      {/* Controls visible on all devices */}
-      <div className="flex gap-2 flex-wrap justify-center">
-        <button onClick={() => movePiece(-1, 0)} className="px-4 py-3 min-w-[3rem] bg-card border border-border text-foreground rounded-lg font-display text-base hover:border-primary/50 active:bg-primary/20 transition-colors">←</button>
-        <button onClick={() => movePiece(0, 0, true)} className="px-4 py-3 min-w-[3rem] bg-card border border-border text-foreground rounded-lg font-display text-base hover:border-secondary/50 active:bg-secondary/20 transition-colors">↻</button>
-        <button onClick={() => movePiece(1, 0)} className="px-4 py-3 min-w-[3rem] bg-card border border-border text-foreground rounded-lg font-display text-base hover:border-primary/50 active:bg-primary/20 transition-colors">→</button>
-        <button onClick={() => movePiece(0, 1)} className="px-4 py-3 min-w-[3rem] bg-card border border-border text-foreground rounded-lg font-display text-base hover:border-accent/50 active:bg-accent/20 transition-colors">↓</button>
-        <button onClick={hardDrop} className="px-4 py-3 min-w-[3rem] bg-primary/20 border border-primary/40 text-primary rounded-lg font-display text-base hover:glow-primary active:bg-primary/30 transition-all">DROP</button>
-      </div>
-      <p className="text-xs text-muted-foreground text-center">
-        {(!device || device === "laptop") ? "Arrow keys + Space to drop · ↑↓ buttons to change speed" : "Tap controls above · ↑↓ to change speed"}
+      {/* Controls visible only on laptop/desktop */}
+      {(!device || device === "laptop") && (
+        <div className="flex gap-2 flex-wrap justify-center pt-2">
+          <button onClick={() => movePiece(-1, 0)} className="px-4 py-3 min-w-[3rem] bg-card border border-border text-foreground rounded-lg font-display text-base hover:border-primary/50 active:bg-primary/20 transition-colors">←</button>
+          <button onClick={() => movePiece(0, 0, true)} className="px-4 py-3 min-w-[3rem] bg-card border border-border text-foreground rounded-lg font-display text-base hover:border-secondary/50 active:bg-secondary/20 transition-colors">↻</button>
+          <button onClick={() => movePiece(1, 0)} className="px-4 py-3 min-w-[3rem] bg-card border border-border text-foreground rounded-lg font-display text-base hover:border-primary/50 active:bg-primary/20 transition-colors">→</button>
+          <button onClick={() => movePiece(0, 1)} className="px-4 py-3 min-w-[3rem] bg-card border border-border text-foreground rounded-lg font-display text-base hover:border-accent/50 active:bg-accent/20 transition-colors">↓</button>
+          <button onClick={hardDrop} className="px-4 py-3 min-w-[3rem] bg-primary/20 border border-primary/40 text-primary rounded-lg font-display text-base hover:glow-primary active:bg-primary/30 transition-all">DROP</button>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground text-center mt-2">
+        {(!device || device === "laptop") ? "Arrow keys + Space to drop · ↑↓ buttons to change speed" : "Tap controls below · ↑↓ above to change speed"}
       </p>
       {gameOver && (
         <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} onClick={reset} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary">

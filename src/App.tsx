@@ -17,6 +17,10 @@ import NotFound from "./pages/NotFound";
 import { BigNotificationProvider } from "./components/BigNotification";
 import { ensureAnonymousAuth } from "@/lib/auth";
 import { getPlayerName } from "@/lib/streaks";
+import { OfflineWarning } from "./components/OfflineWarning";
+import { App as CapApp } from '@capacitor/app';
+import { SplashScreen as CapSplashScreen } from '@capacitor/splash-screen';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 const queryClient = new QueryClient();
 
@@ -54,6 +58,27 @@ const AppFlow = () => {
   };
 
   useEffect(() => {
+    const initCapacitor = async () => {
+      try {
+        await StatusBar.setStyle({ style: Style.Dark });
+        await StatusBar.setOverlaysWebView({ overlay: true });
+        await CapSplashScreen.hide();
+      } catch (e) {
+        // Not running in Capacitor / error
+      }
+
+      try {
+        CapApp.addListener('backButton', ({ canGoBack }) => {
+          if (!canGoBack) {
+            CapApp.exitApp();
+          } else {
+            window.history.back();
+          }
+        });
+      } catch(e) {}
+    };
+    initCapacitor();
+
     const handleGlobalClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('button') || target.closest('a')) {
@@ -61,7 +86,10 @@ const AppFlow = () => {
       }
     };
     document.addEventListener('click', handleGlobalClick);
-    return () => document.removeEventListener('click', handleGlobalClick);
+    return () => {
+      document.removeEventListener('click', handleGlobalClick);
+      CapApp.removeAllListeners();
+    };
   }, []);
 
   return (
@@ -71,6 +99,7 @@ const AppFlow = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <OfflineWarning />
             {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
             {showDeviceSelector && <DeviceSelector onSelect={handleDeviceSelect} />}
             <BrowserRouter>

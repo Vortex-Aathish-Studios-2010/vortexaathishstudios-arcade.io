@@ -143,7 +143,7 @@ const Index = () => {
               transition={{ delay: 0.5 }}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => navigate("/leaderboard")}
+              onClick={() => toast.info("Leaderboards are coming in Arcade.io 2!")}
               className="flex items-center gap-2 px-6 py-3 rounded-xl border border-accent/40 bg-card hover:border-accent hover:glow-accent transition-all"
             >
               <Trophy className="h-5 w-5 text-accent" />
@@ -218,7 +218,7 @@ const Index = () => {
                 </div>
                 <StatsBar />
                 <button
-                  onClick={() => navigate("/leaderboard")}
+                  onClick={() => toast.info("Leaderboards are coming in Arcade.io 2!")}
                   className="rounded-lg px-3 py-1.5 bg-card border border-accent/30 hover:border-accent/60 transition-all"
                   title="Leaderboard"
                 >

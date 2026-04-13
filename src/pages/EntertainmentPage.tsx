@@ -7,6 +7,7 @@ import { Starfield } from "@/components/Starfield";
 import { Star, Brain, Trophy, TrendingUp, TrendingDown } from "lucide-react";
 import { getEntertainmentPoints, getTotalWins, getTotalLosses } from "@/lib/streaks";
 import { ContactModal } from "@/components/ContactModal";
+import { toast } from "sonner";
 
 const EntertainmentPage = () => {
   const navigate = useNavigate();
@@ -84,7 +85,7 @@ const EntertainmentPage = () => {
             </div>
             {/* Leaderboard */}
             <button
-              onClick={() => navigate("/leaderboard")}
+              onClick={() => toast.info("Leaderboards are coming in Arcade.io 2!")}
               className="rounded-lg px-3 py-1.5 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-accent))]/30 hover:border-[hsl(var(--sport-accent))]/60 transition-all"
               title="Leaderboard"
             >

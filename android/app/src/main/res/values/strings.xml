@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Arcade.io</string>
+    <string name="title_activity_main">Arcade.io</string>
+    <string name="package_name">com.vortexaathishstudios.arcadeio</string>
+    <string name="custom_url_scheme">com.vortexaathishstudios.arcadeio</string>
+</resources>

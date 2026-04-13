@@ -57,8 +57,20 @@
     @apply border-border;
   }
 
+  html {
+    overscroll-behavior-y: none;
+    touch-action: pan-x pan-y;
+  }
+
   body {
     @apply bg-background text-foreground font-body antialiased;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+
+  /* Prevent selection highlighting acting like web wrapper */
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1, h2, h3, h4, h5, h6 {

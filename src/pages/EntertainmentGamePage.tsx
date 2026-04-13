@@ -99,11 +99,7 @@ const EntertainmentGamePage = () => {
         </button>
         <button 
           onClick={() => {
-            if (id === "chess") {
-              setMatchMode("friends");
-            } else {
-              setShowMultiplayer(true);
-            }
+            import("sonner").then(({ toast }) => toast.info("Multiplayer Friends Mode is coming in Arcade.io 2!"));
           }}
           className="flex flex-col items-center gap-4 p-8 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-2xl hover:border-[hsl(var(--sport-accent))] transition-all group"
         >
