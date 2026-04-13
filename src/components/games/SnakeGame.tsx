@@ -149,7 +149,15 @@ export const SnakeGame = ({ onComplete }: Props) => {
       {obstacles.size > 0 && (
         <div className="text-xs font-display text-destructive">⚠ {obstacles.size} obstacles</div>
       )}
-      <div className="bg-card border border-border p-1 rounded-xl inline-block max-w-full overflow-hidden">
+      <div className="relative bg-card border border-border p-1 rounded-xl inline-block max-w-full overflow-hidden">
+        {gameOver && (
+          <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl">
+            <p className="text-2xl font-display font-black text-primary mb-4 drop-shadow-[0_0_10px_hsl(var(--primary))]">GAME OVER</p>
+            <button onClick={reset} className="pointer-events-auto px-6 py-3 bg-primary text-primary-foreground rounded-xl font-display text-base glow-primary hover:brightness-110 active:scale-95 transition-all">
+              PLAY AGAIN
+            </button>
+          </div>
+        )}
         {Array.from({ length: ROWS }, (_, r) => (
           <div key={r} className="flex">
             {Array.from({ length: COLS }, (_, c) => {
@@ -175,14 +183,9 @@ export const SnakeGame = ({ onComplete }: Props) => {
           {(!device || device === "laptop") ? "Press any arrow key or swipe to start" : "Use virtual controls or swipe to start"}
         </p>
       )}
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-muted-foreground pb-20 sm:pb-0">
         {(!device || device === "laptop") ? "Arrow keys or swipe" : "Virtual controls"} · Obstacles appear as you grow!
       </p>
-      {gameOver && (
-        <button onClick={reset} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl font-display text-sm glow-primary">
-          PLAY AGAIN
-        </button>
-      )}
     </div>
   );
 };
