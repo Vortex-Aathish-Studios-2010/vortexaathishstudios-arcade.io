@@ -19,9 +19,9 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
   const [phase, setPhase] = useState<"logo" | "founders" | "exit">("logo");
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase("founders"), 3200);
-    const t2 = setTimeout(() => setPhase("exit"), 7400);
-    const t3 = setTimeout(() => onComplete(), 8000);
+    const t1 = setTimeout(() => setPhase("founders"), 900);
+    const t2 = setTimeout(() => setPhase("exit"), 2200);
+    const t3 = setTimeout(() => onComplete(), 2800);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [onComplete]);
 

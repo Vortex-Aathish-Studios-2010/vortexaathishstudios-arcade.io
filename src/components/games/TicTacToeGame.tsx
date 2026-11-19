@@ -508,6 +508,7 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
           return (
             <motion.button
               key={i}
+              aria-label={`Row ${Math.floor(i / 3) + 1}, column ${(i % 3) + 1}: ${cell ?? "empty"}`}
               whileTap={!cell && !gameOver ? { scale: 0.9 } : undefined}
               onClick={() => handleCellClick(i)}
               className={`aspect-square rounded-xl border-2 flex items-center justify-center text-3xl font-display font-black transition-all ${

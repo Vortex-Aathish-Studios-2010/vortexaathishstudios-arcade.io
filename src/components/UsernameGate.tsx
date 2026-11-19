@@ -3,8 +3,7 @@ import { motion } from "framer-motion";
 import { User, ArrowRight, Loader2 } from "lucide-react";
 import { Starfield } from "@/components/Starfield";
 import { setPlayerName } from "@/lib/streaks";
-import { supabase } from "@/integrations/supabase/client";
-import { ensureAnonymousAuth } from "@/lib/auth";
+import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface UsernameGateProps {
@@ -16,6 +15,7 @@ export const UsernameGate = ({ onComplete }: UsernameGateProps) => {
   const [checking, setChecking] = useState(false);
 
   const handleSubmit = async () => {
+    if (checking) return;
     const trimmed = username.trim();
     if (!trimmed || trimmed.length < 2) {
       toast.error("Username must be at least 2 characters");
@@ -26,32 +26,33 @@ export const UsernameGate = ({ onComplete }: UsernameGateProps) => {
       return;
     }
 
-    setChecking(true);
-    try {
-      // Ensure we have an anonymous auth session
-      await ensureAnonymousAuth();
+    if (isSupabaseConfigured && navigator.onLine) {
+      setChecking(true);
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 2500);
 
-      // Check if username already exists in leaderboard
-      const { data: existing } = await supabase
-        .from("leaderboard")
-        .select("id")
-        .eq("player_name", trimmed)
-        .maybeSingle();
+      try {
+        const { data: existing } = await supabase
+          .from("leaderboard")
+          .select("id")
+          .eq("player_name", trimmed)
+          .abortSignal(controller.signal)
+          .maybeSingle();
 
-      if (existing) {
-        toast.error("Username already taken! Pick a different name.");
+        if (existing) {
+          toast.error("Username already taken! Pick a different name.");
+          return;
+        }
+      } catch {
+        // Local play is available when the leaderboard cannot be reached.
+      } finally {
+        window.clearTimeout(timeout);
         setChecking(false);
-        return;
       }
-
-      setPlayerName(trimmed);
-      onComplete(trimmed);
-    } catch {
-      // If auth/DB check fails, allow entry anyway (offline mode)
-      setPlayerName(trimmed);
-      onComplete(trimmed);
     }
-    setChecking(false);
+
+    setPlayerName(trimmed);
+    onComplete(trimmed);
   };
 
   return (
