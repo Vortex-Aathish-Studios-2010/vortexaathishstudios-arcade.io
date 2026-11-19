@@ -1,5 +1,6 @@
+import { useRecentGame } from "@/lib/recentGames";
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { entertainmentGames } from "@/lib/entertainmentData";
 
 import { ChessGame } from "@/components/games/ChessGame";
@@ -32,7 +33,10 @@ const gameComponents: Record<string, React.FC<{ onComplete?: (score: number, isW
 const EntertainmentGamePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnToLibrary = () => location.state?.fromLibrary ? navigate(-1) : navigate("/", { replace: true });
   const game = entertainmentGames.find((g) => g.id === id);
+  useRecentGame(game?.id);
   const [matchMode, setMatchMode] = useState<"select" | "bot" | "friends" | "local_friend" | null>("select");
   const [showMultiplayer, setShowMultiplayer] = useState(false);
   const [multiplayerRoom, setMultiplayerRoom] = useState<{ roomId: string; playerId: string } | null>(null);
@@ -126,11 +130,7 @@ const EntertainmentGamePage = () => {
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96, filter: "blur(8px)" }}
-      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-      exit={{ opacity: 0, scale: 1.04, filter: "blur(12px)" }}
-      transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+    <div
       className="game-stage entertainment-theme min-h-screen bg-black flex flex-col"
     >
       <Starfield />
@@ -148,7 +148,7 @@ const EntertainmentGamePage = () => {
             } else if (matchMode === "friends") {
               setMatchMode("select");
             } else {
-              navigate("/entertainment");
+              returnToLibrary();
             }
           }}
           className="flex items-center gap-2 text-[hsl(var(--sport-muted))] hover:text-[hsl(var(--sport-text))] transition-colors"
@@ -190,7 +190,7 @@ const EntertainmentGamePage = () => {
                   This arena is currently under construction. Check back soon!
                 </p>
                 <button
-                  onClick={() => navigate("/entertainment")}
+                  onClick={returnToLibrary}
                   className="px-6 py-3 rounded-lg bg-[hsl(var(--sport-primary))]/20 border border-[hsl(var(--sport-primary))]/50 text-[hsl(var(--sport-primary))] font-sport tracking-wider hover:bg-[hsl(var(--sport-primary))]/30 transition-all font-bold"
                 >
                   RETURN TO LOBBY
@@ -241,7 +241,7 @@ const EntertainmentGamePage = () => {
       )}
 
       {/* Device toggle removed to prevent confusing the user with multiple controls UI */}
-    </motion.div>
+    </div>
   );
 };
 

@@ -1,5 +1,6 @@
+import { useRecentGame } from "@/lib/recentGames";
 import { useState, useCallback, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { MemoryGame } from "@/components/games/MemoryGame";
 import { SlidingPuzzle } from "@/components/games/SlidingPuzzle";
@@ -36,7 +37,10 @@ const HIDE_LEVEL_IDS = new Set(["tetris", "snake", "konoodle", "tictactoe"]);
 const GamePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnToLibrary = () => location.state?.fromLibrary ? navigate(-1) : navigate("/", { replace: true });
   const game = games.find((g) => g.id === id);
+  useRecentGame(game?.id);
   const GameComponent = id ? gameComponents[id] : null;
 
   const needsTutorial = id ? !isTutorialShown(id) : false;
@@ -90,11 +94,7 @@ const GamePage = () => {
   const showDeviceToggle = id === "snake" || id === "tetris" || id === "konoodle";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96, filter: "blur(8px)" }}
-      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-      exit={{ opacity: 0, scale: 1.04, filter: "blur(12px)" }}
-      transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+    <div
       className="game-stage min-h-screen bg-black flex flex-col"
     >
       <Starfield />
@@ -106,7 +106,7 @@ const GamePage = () => {
         className="play-header relative z-10 flex items-center justify-between px-4 py-3 border-b border-border bg-background/80 backdrop-blur-md"
       >
         <button
-          onClick={() => navigate("/?mode=brain")}
+          onClick={returnToLibrary}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -194,7 +194,7 @@ const GamePage = () => {
       <OnScreenControls gameId={id} />
 
       {/* Device toggle removed to prevent confusing the user with multiple controls UI */}
-    </motion.div>
+    </div>
   );
 };
 

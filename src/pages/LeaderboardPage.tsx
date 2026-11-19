@@ -1,6 +1,5 @@
 import { getPlayerName } from "@/lib/streaks";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { Trophy } from "lucide-react";
 import { api, playerPoints, Rank, syncProfile } from "@/lib/arcade";
 
@@ -44,9 +43,6 @@ export default function LeaderboardPage() {
   return (
     <main className="club-page">
       <div className="club-wrap">
-        <Link className="club-back" to="/">
-          Arcade home
-        </Link>
         <header className="club-title">
           <Trophy />
           <h1>Leaderboard</h1>

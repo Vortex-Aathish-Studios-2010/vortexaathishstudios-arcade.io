@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { Users } from "lucide-react";
+import { ChevronDown, Users } from "lucide-react";
 import { api, ArcadeError, Room, syncProfile } from "@/lib/arcade";
 
 const titles = { trio: "Tic Tac Toe", four: "Four in a Row" };
@@ -83,9 +82,6 @@ export default function Rooms() {
   return (
     <main className="club-page">
       <div className="club-wrap">
-        <Link className="club-back" to="/">
-          Arcade home
-        </Link>
         <header className="club-title">
           <Users />
           <h1>{room ? titles[room.game] : "Play with friends"}</h1>
@@ -101,13 +97,16 @@ export default function Rooms() {
               <h2>Create a room</h2>
               <label>
                 Game
-                <select
-                  value={game}
-                  onChange={(e) => setGame(e.target.value as Room["game"])}
-                >
-                  <option value="trio">Tic Tac Toe</option>
-                  <option value="four">Four in a Row</option>
-                </select>
+                <div className="game-select">
+                  <select
+                    value={game}
+                    onChange={(e) => setGame(e.target.value as Room["game"])}
+                  >
+                    <option value="trio">Tic Tac Toe</option>
+                    <option value="four">Four in a Row</option>
+                  </select>
+                  <ChevronDown size={16} aria-hidden="true" />
+                </div>
               </label>
               <button
                 className="club-cta"
