@@ -1,3 +1,4 @@
+import { getPlayerName } from "@/lib/streaks";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Trophy } from "lucide-react";
@@ -30,7 +31,7 @@ export default function LeaderboardPage() {
       }
       if (!stop) timer = window.setTimeout(read, 2000);
     }
-    syncProfile()
+    (getPlayerName() ? syncProfile() : Promise.resolve())
       .catch(() => {})
       .finally(() => {
         if (!stop) void read();

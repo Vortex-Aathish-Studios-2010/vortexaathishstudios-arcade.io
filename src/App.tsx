@@ -6,13 +6,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ArcadeShell } from "./components/ArcadeShell";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SplashScreen } from "@/components/SplashScreen";
 import { UsernameGate } from "@/components/UsernameGate";
 import { DeviceProvider } from "@/lib/DeviceContext";
 import Index from "./pages/Index";
 const GamePage = lazy(() => import("./pages/GamePage"));
-const EntertainmentPage = lazy(() => import("./pages/EntertainmentPage"));
 const EntertainmentGamePage = lazy(() => import("./pages/EntertainmentGamePage"));
 const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 import NotFound from "./pages/NotFound";
@@ -91,18 +91,18 @@ const AppFlow = () => {
             <OfflineWarning />
             {showSplash ? (
               <SplashScreen onComplete={() => setShowSplash(false)} />
-            ) : needsUsername ? (
-              <UsernameGate onComplete={() => setNeedsUsername(false)} />
             ) : (
               <BrowserRouter>
                 <Suspense fallback={<div className="club-page" role="status">Loading game…</div>}>
                 <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/game/:id" element={<GamePage />} />
-                  <Route path="/entertainment" element={<EntertainmentPage />} />
-                  <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
-                  <Route path="/rooms" element={<Rooms/>} />
-                  <Route path="/leaderboard" element={<LeaderboardPage />} />
+                  <Route element={<ArcadeShell onProfile={() => setNeedsUsername(false)}/>}>
+                    <Route path="/" element={<Index/>}/>
+                    <Route path="/entertainment" element={<Navigate replace to="/?mode=action"/>}/>
+                    <Route path="/rooms" element={needsUsername ? <main className="club-page"><section className="club-wrap"><header className="club-title"><h1>Play with friends</h1></header><UsernameGate onComplete={()=>setNeedsUsername(false)}/></section></main> : <Rooms/>}/>
+                    <Route path="/leaderboard" element={<LeaderboardPage/>}/>
+                  </Route>
+                  <Route path="/game/:id" element={<GamePage/>}/>
+                  <Route path="/entertainment/:id" element={<EntertainmentGamePage/>}/>
                   <Route path="*" element={<NotFound />} />
                 </Routes></Suspense>
               </BrowserRouter>

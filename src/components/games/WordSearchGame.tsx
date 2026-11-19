@@ -214,6 +214,7 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
       <p className="text-[10px] text-muted-foreground/60">Click letters in a line or drag to select</p>
       <div
         ref={gridRef}
+        style={{ maxWidth:"100%", width: config.gridSize * 32 + 18 }}
         className="bg-card border border-border p-2 rounded-xl select-none touch-none"
         onMouseUp={handleDragEnd}
         onMouseLeave={handleDragEnd}
@@ -234,6 +235,7 @@ export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
                   const cell = getCellFromTouch(touch);
                   if (cell) handleDragEnter(cell[0], cell[1]);
                 }}
+                style={{width: `calc(100% / ${config.gridSize})`, height:"auto", aspectRatio:"1"}}
                 className={`${cellSize} flex items-center justify-center font-display font-bold cursor-pointer transition-all rounded-sm
                   ${foundCells.has(cellKey(r, c)) ? "bg-primary/30 text-primary text-glow-primary" : selectingSet.has(cellKey(r, c)) ? "bg-accent/30 text-accent" : "text-foreground/80 hover:bg-muted/50"}
                 `}

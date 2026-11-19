@@ -83,30 +83,17 @@ const EntertainmentGamePage = () => {
   }
 
   const renderMultiplayerSelection = () => (
-    <div className="flex flex-col items-center gap-6 w-full max-w-md mx-auto">
-      <h2 className="font-sport text-2xl tracking-widest text-white mb-4">SELECT MODE</h2>
-      <div className="grid grid-cols-2 gap-4 w-full">
-        <button 
-          onClick={() => setMatchMode("bot")}
-          className="flex flex-col items-center gap-4 p-8 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-2xl hover:border-[hsl(var(--sport-primary))] transition-all group"
-        >
-          {id === "chess" ? (
-             <Bot className="h-12 w-12 text-[hsl(var(--sport-primary))] group-hover:scale-110 transition-transform" />
-          ) : (
-             <User className="h-12 w-12 text-[hsl(var(--sport-primary))] group-hover:scale-110 transition-transform" />
-          )}
-          <span className="font-sport tracking-widest text-sm">{id === "chess" ? "VS BOT" : "ALONE"}</span>
-        </button>
-        <button 
-          onClick={() => navigate("/rooms")}
-          className="flex flex-col items-center gap-4 p-8 bg-[hsl(var(--sport-card))]/80 border border-[hsl(var(--sport-border))]/50 rounded-2xl transition-all group opacity-75 hover:opacity-100"
-        >
-          <Users className="h-12 w-12 text-[hsl(var(--sport-accent))]/40" />
-          <span className="font-sport tracking-widest text-sm">FRIENDS</span>
-          <span className="text-[9px] text-[hsl(var(--sport-accent))]/70 font-bold">Two-player rooms</span>
-        </button>
+    <section className="launch-card">
+      <img src={`/covers/${game.id}.webp`} alt=""/>
+      <div className="launch-copy"><span>{game.difficulty} · Action</span>
+        <h2>{game.name}</h2><p>{game.description}</p>
+        <div className="launch-actions">
+          <button className="solid-button" onClick={() => setMatchMode("bot")}>{id === "chess" ? "Play against bot" : "Play solo"}</button>
+          {id === "chess" && <button onClick={() => setMatchMode("local_friend")}>Two on this device</button>}
+          <button onClick={() => navigate("/rooms")}><Users size={16}/> Online rooms</button>
+        </div>
       </div>
-    </div>
+    </section>
   );
 
   const renderFriendsSelection = () => (
@@ -115,7 +102,7 @@ const EntertainmentGamePage = () => {
       <div className="grid grid-cols-2 gap-4 w-full">
         <button 
           onClick={() => setMatchMode("local_friend")}
-          className="flex flex-col items-center gap-4 p-8 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-2xl hover:border-[hsl(var(--sport-primary))] transition-all group"
+          className="flex flex-col items-center gap-3 px-3 py-5 sm:p-8 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-2xl hover:border-[hsl(var(--sport-primary))] transition-all group"
         >
           <Smartphone className="h-12 w-12 text-[hsl(var(--sport-primary))] group-hover:scale-110 transition-transform" />
           <div className="text-center">
@@ -125,7 +112,7 @@ const EntertainmentGamePage = () => {
         </button>
         <button 
           onClick={() => setShowMultiplayer(true)}
-          className="flex flex-col items-center gap-4 p-8 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-2xl hover:border-[hsl(var(--sport-accent))] transition-all group"
+          className="flex flex-col items-center gap-3 px-3 py-5 sm:p-8 bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] rounded-2xl hover:border-[hsl(var(--sport-accent))] transition-all group"
         >
           <Globe className="h-12 w-12 text-[hsl(var(--sport-accent))] group-hover:scale-110 transition-transform" />
           <div className="text-center">
@@ -144,7 +131,7 @@ const EntertainmentGamePage = () => {
       animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
       exit={{ opacity: 0, scale: 1.04, filter: "blur(12px)" }}
       transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
-      className="entertainment-theme min-h-screen bg-black flex flex-col"
+      className="game-stage entertainment-theme min-h-screen bg-black flex flex-col"
     >
       <Starfield />
       {/* Header */}
@@ -152,7 +139,7 @@ const EntertainmentGamePage = () => {
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.1 }}
-        className="relative z-10 flex items-center px-4 py-3 border-b border-[hsl(var(--sport-border))] bg-black/50 backdrop-blur-md"
+        className="play-header relative z-10 flex items-center px-4 py-3 border-b border-[hsl(var(--sport-border))] bg-black/50 backdrop-blur-md"
       >
         <button
           onClick={() => {
@@ -175,7 +162,7 @@ const EntertainmentGamePage = () => {
       </motion.div>
 
       {/* Game Content */}
-      <div className="relative z-10 flex-1 flex items-start justify-center p-4 pt-6 overflow-hidden">
+      <div className="relative z-10 flex-1 flex items-start justify-center p-2 sm:p-4 pt-4 sm:pt-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

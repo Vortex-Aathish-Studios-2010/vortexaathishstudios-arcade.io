@@ -1,6 +1,10 @@
 import { Capacitor } from "@capacitor/core";
-import React, { createContext, useContext, useState } from "react";
-import { DeviceType, getDeviceType, setDeviceType as saveDeviceType } from "@/components/DeviceSelector";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import {
+  DeviceType,
+  getDeviceType,
+  setDeviceType as saveDeviceType,
+} from "@/components/DeviceSelector";
 
 interface DeviceContextType {
   device: DeviceType | null;
@@ -9,15 +13,31 @@ interface DeviceContextType {
 
 const DeviceContext = createContext<DeviceContextType | undefined>(undefined);
 
-export const DeviceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [device, setDeviceState] = useState<DeviceType>(() => {
-    const saved = getDeviceType();
-    if (saved) return saved;
+function detectDevice(): DeviceType {
+  const touch =
+    Capacitor.isNativePlatform() ||
+    window.matchMedia("(pointer: coarse)").matches;
+  if (
+    window.innerWidth < 600 ||
+    (touch && Math.min(window.innerWidth, window.innerHeight) < 600)
+  )
+    return "phone";
+  return touch || window.innerWidth < 1024 ? "tablet" : "laptop";
+}
 
-    if (window.innerWidth < 600) return "phone";
-    if (Capacitor.isNativePlatform() || window.innerWidth < 1024) return "tablet";
-    return "laptop";
-  });
+export const DeviceProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [device, setDeviceState] = useState<DeviceType>(
+    () => getDeviceType() || detectDevice(),
+  );
+  useEffect(() => {
+    const resized = () => {
+      if (!getDeviceType()) setDeviceState(detectDevice());
+    };
+    window.addEventListener("resize", resized);
+    return () => window.removeEventListener("resize", resized);
+  }, []);
 
   const setDevice = (newDevice: DeviceType) => {
     saveDeviceType(newDevice);

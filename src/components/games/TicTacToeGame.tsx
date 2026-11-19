@@ -165,18 +165,18 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
       setGameOver(true);
       if (mode === "bot") {
         if (winner === "X") {
-          setResult("You Win! 🎉");
+          setResult("You Win!");
           const pts = difficulty === "hard" ? 50 : difficulty === "medium" ? 30 : 15;
           addPoints(pts);
           updateStreak("tictactoe");
           toast.success(`+${pts} points!`);
           onComplete?.(pts);
         } else {
-          setResult("Bot Wins 🤖");
+          setResult("Bot Wins");
           onComplete?.(0);
         }
       } else {
-        setResult(winner === myMark ? "You Win! 🎉" : `${opponentName} Wins!`);
+        setResult(winner === myMark ? "You Win!" : `${opponentName} Wins!`);
         if (winner === myMark) {
           addPoints(30);
           updateStreak("tictactoe");

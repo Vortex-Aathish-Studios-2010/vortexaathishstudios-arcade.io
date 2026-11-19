@@ -97,7 +97,7 @@ export default function Rooms() {
         </header>
         {!active ? (
           <>
-            <section className="club-box">
+            <section className="club-box room-create">
               <h2>Create a room</h2>
               <label>
                 Game

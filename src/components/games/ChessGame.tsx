@@ -10,6 +10,7 @@ import { CHESS_PIECE_COMPONENTS } from "@/lib/chessPieces";
 type Mode = "select" | "color" | "bot" | "friend";
 type PlayerColor = "white" | "black";
 
+const WhitePawn = CHESS_PIECE_COMPONENTS.white.pawn;
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["8", "7", "6", "5", "4", "3", "2", "1"];
 
@@ -132,7 +133,7 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <div className="text-6xl mb-4">♟️</div>
+          <div className="w-14 h-14 mx-auto mb-4"><WhitePawn /></div>
           <h2 className="font-sport text-2xl tracking-wide text-[hsl(var(--sport-text))] mb-2">CHOOSE YOUR COLOR</h2>
           <p className="text-[hsl(var(--sport-muted))] font-sport-body text-sm">Which side will you play?</p>
         </motion.div>
@@ -313,7 +314,7 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
           onClick={() => resetGame(mode, playerColor)}
           className="px-4 py-2 rounded-lg bg-[hsl(var(--sport-card))] border border-[hsl(var(--sport-border))] text-[hsl(var(--sport-text))] font-sport-body font-bold text-sm hover:shadow-md transition-all"
         >
-          🔄 New Game
+          New game
         </motion.button>
       </div>
     </div>

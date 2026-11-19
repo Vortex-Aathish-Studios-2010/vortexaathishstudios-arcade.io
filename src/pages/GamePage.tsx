@@ -95,7 +95,7 @@ const GamePage = () => {
       animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
       exit={{ opacity: 0, scale: 1.04, filter: "blur(12px)" }}
       transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
-      className="min-h-screen bg-black flex flex-col"
+      className="game-stage min-h-screen bg-black flex flex-col"
     >
       <Starfield />
       {/* Header */}
@@ -103,7 +103,7 @@ const GamePage = () => {
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.1 }}
-        className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-border bg-background/80 backdrop-blur-md"
+        className="play-header relative z-10 flex items-center justify-between px-4 py-3 border-b border-border bg-background/80 backdrop-blur-md"
       >
         <button
           onClick={() => navigate("/?mode=brain")}
@@ -127,7 +127,7 @@ const GamePage = () => {
             <span className="font-display text-xs">Rooms</span>
           </button>
           <button
-            onClick={() => setShowTutorial(true)}
+            aria-label="How to play" onClick={() => setShowTutorial(true)}
             className="text-muted-foreground hover:text-foreground transition-colors p-1"
           >
             <HelpCircle className="h-4.5 w-4.5" />
@@ -136,7 +136,8 @@ const GamePage = () => {
       </motion.div>
 
       {/* Game fills all remaining space */}
-      <div className="relative z-10 flex-1 flex items-start justify-center p-4 pt-6">
+      <div className="puzzle-layout relative z-10 flex-1 flex items-start justify-center p-2 pt-4 sm:p-4 sm:pt-6">
+        <aside className="play-guide"><img src={`/covers/${game.id}.webp`} alt=""/><div><span>{game.difficulty} · Puzzles</span><h2>How to play</h2><ol>{game.tutorial.map(step=><li key={step}>{step}</li>)}</ol></div></aside>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

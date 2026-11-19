@@ -9,7 +9,7 @@ export const ContactModal = () => {
 
   const handleSubmit = () => {
     if (!suggestion.trim()) return;
-    toast.success("Thanks for the suggestion! 🎮");
+    toast.success("Thanks for the suggestion!");
     setSuggestion("");
     setIsOpen(false);
   };
@@ -18,10 +18,10 @@ export const ContactModal = () => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-[90] p-3 rounded-full bg-primary/20 border border-primary/40 text-primary hover:bg-primary/40 hover:glow-primary transition-all backdrop-blur-sm"
+        className="suggestion-trigger"
         title="Suggestions"
       >
-        <MessageSquare className="w-5 h-5" />
+        <MessageSquare size={15}/> Suggestions
       </button>
 
       <AnimatePresence>

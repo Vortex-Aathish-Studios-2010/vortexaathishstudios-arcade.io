@@ -1,3 +1,4 @@
+import { Gamepad2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -110,7 +111,7 @@ const EntertainmentPage = () => {
             transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
             className="inline-block text-6xl mb-4"
           >
-            🏟️
+            <Gamepad2 size={44} aria-hidden="true"/>
           </motion.div>
           <h2 className="text-4xl font-sport tracking-wide text-[hsl(var(--sport-text))] mb-2">
             GAME ON!
