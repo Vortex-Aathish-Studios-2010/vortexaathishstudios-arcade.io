@@ -1,0 +1,325 @@
+.arcade-home,
+.club-page {
+  min-height: 100dvh;
+  color: #f4f5fa;
+  background: #10111b;
+  font-family: Inter, system-ui, sans-serif;
+  padding: max(16px, env(safe-area-inset-top))
+    max(18px, env(safe-area-inset-right)) max(48px, env(safe-area-inset-bottom));
+}
+.arcade-shell {
+  max-width: 1080px;
+  margin: auto;
+}
+.arcade-nav,
+.arcade-nav > div,
+.arcade-nav button,
+.hero-actions,
+.hero-actions a,
+.shelf-heading,
+.shelf-tools,
+.filters,
+.game-search,
+.club-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.arcade-nav,
+.shelf-heading,
+.shelf-tools,
+.club-panel {
+  justify-content: space-between;
+}
+.arcade-nav {
+  min-height: 46px;
+  margin-bottom: 14px;
+}
+.arcade-nav > div {
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+}
+.arcade-nav svg {
+  color: #75ece0;
+}
+.arcade-nav button,
+.club-light {
+  background: #222637;
+  border: 1px solid #40445a;
+  padding: 9px 13px;
+  border-radius: 9px;
+  font-size: 0.9rem;
+}
+.arcade-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: clamp(24px, 5vw, 68px);
+  background:
+    radial-gradient(ellipse at 79% 65%, #272b62, transparent 60%),
+    linear-gradient(110deg, #22233c, #191b38);
+  border: 1px solid #3f4261;
+  border-radius: 24px;
+  overflow: hidden;
+}
+.arcade-hero h1 {
+  font: 900 clamp(3.3rem, 9vw, 7.4rem)/0.95 system-ui;
+  letter-spacing: -0.085em;
+}
+.arcade-hero h1 span {
+  color: #7bf1de;
+}
+.arcade-hero p {
+  font-size: clamp(1.05rem, 2.5vw, 1.7rem);
+  color: #bfc3d8;
+  margin: 6px 0 22px;
+}
+.arcade-hero img {
+  width: clamp(94px, 24vw, 225px);
+  border-radius: 26%;
+  transform: rotate(5deg);
+  box-shadow: 0 10px 36px #080b1d80;
+}
+.hero-actions {
+  flex-wrap: wrap;
+}
+.hero-actions a,
+.club-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #9af7e5;
+  color: #102823;
+  border-radius: 9px;
+  padding: 11px 15px;
+  font-weight: 750;
+}
+.hero-actions a + a,
+.club-cta.alt {
+  background: #353650;
+  color: #fff;
+}
+.shelf-heading {
+  margin: 32px 0 15px;
+}
+.shelf-heading h2,
+.club-box h2 {
+  font-size: 1.5rem;
+  font-weight: 750;
+}
+.shelf-heading span,
+.game-shelf small,
+.club-help,
+.club-title p {
+  color: #b4b8c9;
+}
+.shelf-tools {
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.filters {
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.filters button {
+  padding: 8px 13px;
+  border-radius: 8px;
+}
+.filters [aria-pressed="true"] {
+  background: #35384b;
+  color: #a3fae9;
+}
+.game-search {
+  background: #202232;
+  border-radius: 9px;
+  padding: 9px 12px;
+}
+.game-search input {
+  background: transparent;
+  min-width: 0;
+  width: 135px;
+}
+.game-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(152px, 1fr));
+  gap: 16px;
+}
+.game-shelf a {
+  background: #1b1d2b;
+  border: 1px solid #33364a;
+  border-radius: 13px;
+  overflow: hidden;
+  padding-bottom: 12px;
+}
+.game-shelf a:hover {
+  border-color: #72daca;
+}
+.game-shelf strong,
+.game-shelf small {
+  display: block;
+  margin: 7px 12px 0;
+}
+.game-shelf small {
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+.tile-art {
+  height: 112px;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at 50% 100%, #364b55, #202733);
+}
+.tile-art.action {
+  background: radial-gradient(ellipse at 50% 100%, #543b58, #302432);
+}
+.tile-art img {
+  width: 86px;
+  height: 86px;
+  object-fit: contain;
+}
+.club-wrap {
+  max-width: 620px;
+  margin: 16px auto;
+}
+.club-back {
+  color: #9af7e5;
+}
+.club-title {
+  margin: 32px 0 20px;
+}
+.club-title svg {
+  color: #9af7e5;
+}
+.club-title h1 {
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  margin: 10px 0;
+}
+.club-box,
+.club-panel,
+.club-ranks li {
+  background: #202232;
+  border: 1px solid #35384c;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+}
+.club-box {
+  display: grid;
+  gap: 12px;
+}
+.club-box h2 {
+  font-size: 1.15rem;
+}
+.club-box input,
+.club-box select {
+  width: 100%;
+  background: #121421;
+  border: 1px solid #484c64;
+  border-radius: 7px;
+  color: white;
+  padding: 10px;
+  margin-top: 5px;
+}
+.club-box label,
+.club-box small {
+  color: #c2c6d4;
+}
+.club-cta:disabled {
+  opacity: 0.55;
+}
+.room-code {
+  display: block;
+  font: 700 1.8rem monospace;
+  letter-spacing: 0.12em;
+}
+.room-board {
+  display: grid;
+  gap: 6px;
+  margin: 6px auto;
+  width: min(100%, 325px);
+}
+.room-board.trio {
+  grid-template-columns: repeat(3, 1fr);
+}
+.room-board.four {
+  width: 100%;
+  grid-template-columns: repeat(7, 1fr);
+}
+.room-board button {
+  background: #31354b;
+  border: 1px solid #49506d;
+  border-radius: 8px;
+  aspect-ratio: 1;
+  font-size: clamp(1rem, 4vw, 2rem);
+  font-weight: 800;
+}
+.room-board [data-mark="X"] {
+  color: #84f1e1;
+}
+.room-board [data-mark="O"] {
+  color: #ffa4be;
+}
+.club-ranks li {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 12px;
+}
+.club-ranks b,
+.club-panel b {
+  color: #94f2df;
+}
+.static-stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1px 1px at 18px 31px, #8189a6 98%, transparent),
+    radial-gradient(1px 1px at 61px 18px, #666c7b 98%, transparent);
+  background-size:
+    101px 83px,
+    137px 125px;
+}
+@media (max-width: 560px) {
+  .game-shelf {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .arcade-hero {
+    position: relative;
+    display: block;
+    padding: 22px 16px;
+  }
+  .arcade-hero img {
+    position: absolute;
+    right: 18px;
+    top: 17px;
+    width: 74px;
+  }
+  .arcade-hero h1 {
+    font-size: clamp(2.9rem, 12vw, 4rem);
+  }
+  .hero-actions a {
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+  .shelf-tools {
+    gap: 10px;
+  }
+  .slot-art {
+    height: 95px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Users, ArrowLeft, RotateCcw, Trophy } from "lucide-react";
@@ -115,6 +116,7 @@ const botMove = (board: Board, difficulty: Difficulty): number => {
 const CHANNEL_PREFIX = "ttt-game-";
 
 export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: number) => void }> = ({ onComplete }) => {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<GameMode>(null);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [board, setBoard] = useState<Board>(Array(9).fill(null));
@@ -346,10 +348,7 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
           </div>
         </button>
         <button
-          onClick={() => {
-            setMode("friend");
-            if (!playerId) setFriendStep("choice");
-          }}
+          onClick={() => navigate("/rooms")}
           className="w-full flex items-center gap-4 p-5 rounded-xl border-2 border-secondary/30 bg-card hover:border-secondary/60 hover:bg-secondary/10 transition-all"
         >
           <Users className="h-8 w-8 text-secondary group-hover:scale-110 transition-transform" />

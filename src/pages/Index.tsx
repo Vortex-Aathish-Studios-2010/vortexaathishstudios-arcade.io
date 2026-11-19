@@ -1,272 +1,133 @@
-import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Gamepad2, Users, Trophy, Pencil, Search } from "lucide-react";
 import { games } from "@/lib/gameData";
-import { GameCard } from "@/components/GameCard";
-import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Trophy, TrendingUp, TrendingDown, Gamepad2, User, Edit2 } from "lucide-react";
-import { StatsBar } from "@/components/StatsBar";
-import { getTotalWins, getTotalLosses, getPoints, getPlayerName, setPlayerName } from "@/lib/streaks";
-import { ScreenBreaker } from "@/components/ScreenBreaker";
+import { entertainmentGames } from "@/lib/entertainmentData";
+import { getPlayerName, setPlayerName } from "@/lib/streaks";
+import { playerPoints } from "@/lib/arcade";
 import { ContactModal } from "@/components/ContactModal";
-import { Starfield } from "@/components/Starfield";
-import { toast } from "sonner";
 
-const Index = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const initialMode = searchParams.get("mode") === "brain" ? "brain" : "select";
-  const [mode, setMode] = useState<"select" | "brain">(initialMode);
-  const [wins, setWins] = useState(0);
-  const [losses, setLosses] = useState(0);
-  const [points, setPoints] = useState(0);
-  const [transitionTrigger, setTransitionTrigger] = useState(false);
-  const [pendingMode, setPendingMode] = useState<"select" | "brain" | "entertainment" | null>(null);
-  const [playerName, setLocalPlayerName] = useState(getPlayerName());
-  const [editingName, setEditingName] = useState(false);
-  const [nameInput, setNameInput] = useState(playerName);
-
-  useEffect(() => {
-    setWins(getTotalWins());
-    setLosses(getTotalLosses());
-    setPoints(getPoints());
-    const interval = setInterval(() => {
-      setWins(getTotalWins());
-      setLosses(getTotalLosses());
-      setPoints(getPoints());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleNameSave = () => {
-    const trimmed = nameInput.trim();
-    if (trimmed.length < 2) {
-      toast.error("Username must be at least 2 characters");
-      return;
-    }
-    setPlayerName(trimmed);
-    setLocalPlayerName(trimmed);
-    setEditingName(false);
-    toast.success("Username updated!");
-  };
-
-  const pageVariants = {
-    initial: { opacity: 0, scale: 0.96, filter: "blur(8px)" },
-    animate: { opacity: 1, scale: 1, filter: "blur(0px)" },
-    exit: { opacity: 0, scale: 1.04, filter: "blur(12px)" },
-  };
-
-  const pageTransition = { duration: 0.45, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] };
-
-  return (
-    <motion.div className="min-h-screen bg-black relative" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={pageTransition}>
-      <Starfield />
-      <AnimatePresence mode="wait">
-        {mode === "select" ? (
-        <motion.div
-          key="select"
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          transition={pageTransition}
-          className="min-h-screen flex flex-col items-center justify-center p-6"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-center mb-12"
-          >
-            <h1 className="text-4xl md:text-5xl font-display font-black text-foreground mb-2">
-              <span className="text-primary text-glow-primary">ARCADE</span>
-              <span className="text-secondary text-glow-secondary">.IO</span>
-            </h1>
-            <p className="text-muted-foreground">Choose your arena</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-4xl w-full px-4">
-            <motion.button
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
-              whileHover={{ scale: 1.04, y: -4 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => {
-                setMode("brain");
-
-              }}
-              className="relative rounded-2xl border-2 border-primary/40 bg-card p-8 text-center hover:border-primary hover:glow-primary transition-all"
-            >
-              <Brain className="h-16 w-16 text-primary mx-auto mb-4" />
-              <h2 className="font-display text-xl font-bold text-foreground mb-2">Brain Arcade</h2>
-              <p className="text-sm text-muted-foreground">Puzzles & strategy games to train your mind</p>
-            </motion.button>
-
-            <motion.button
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, type: "spring", stiffness: 120 }}
-              whileHover={{ scale: 1.04, y: -4 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => {
-                navigate("/entertainment");
-
-              }}
-              className="group relative rounded-2xl border-2 border-accent/40 bg-card p-8 text-center hover:border-accent hover:glow-accent transition-all overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-accent/5 blur-2xl"
-              />
-              <div className="relative z-10">
-                <Gamepad2 className="h-16 w-16 text-accent mx-auto mb-4" style={{ filter: "drop-shadow(0 0 12px hsl(45 100% 60% / 0.6))" }} />
-                <h2 className="font-display text-xl font-bold text-foreground mb-2">Entertainment Arcade</h2>
-                <p className="text-sm text-muted-foreground">Sports & action games</p>
-              </div>
-            </motion.button>
-          </div>
-
-          <ScreenBreaker trigger={transitionTrigger} onComplete={() => {
-            if (pendingMode === "entertainment") navigate("/entertainment");
-            if (pendingMode === "brain") setMode("brain");
-            setTransitionTrigger(false);
-            setPendingMode(null);
-          }} />
-
-          {/* Player info + Leaderboard */}
-          <div className="mt-8 flex items-center gap-3 flex-wrap justify-center">
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => toast.info("Leaderboards are coming in Arcade.io 2!")}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl border border-accent/20 bg-card/50 opacity-80 hover:opacity-100 transition-all cursor-pointer"
-            >
-              <Trophy className="h-5 w-5 text-accent/50" />
-              <span className="font-display text-sm text-foreground/60">WORLDWIDE LEADERBOARD</span>
-              <span className="text-[10px] text-accent/70 font-bold ml-1">Coming in Arcade.io 2</span>
-            </motion.button>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="flex items-center gap-2"
-            >
-              {editingName ? (
-                <div className="flex items-center gap-1">
-                  <input
-                    value={nameInput}
-                    onChange={(e) => setNameInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleNameSave()}
-                    maxLength={20}
-                    autoFocus
-                    className="px-3 py-2 bg-background border border-primary/40 rounded-lg text-foreground font-display text-xs w-32 focus:outline-none"
-                  />
-                  <button onClick={handleNameSave} className="px-2 py-2 text-primary text-xs font-bold">✓</button>
-                  <button onClick={() => { setEditingName(false); setNameInput(playerName); }} className="px-2 py-2 text-muted-foreground text-xs">✕</button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary/30 bg-card">
-                  <User className="h-4 w-4 text-primary" />
-                  <span className="font-display text-xs text-foreground">{playerName}</span>
-                  <button onClick={() => setEditingName(true)} className="text-muted-foreground hover:text-primary transition-colors">
-                    <Edit2 className="h-3 w-3" />
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </div>
-
-        </motion.div>
-      ) : (
-        <motion.div
-          key="brain"
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          transition={pageTransition}
-          className="min-h-screen"
-        >
-          <header className="border-b border-border">
-            <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <motion.button
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  onClick={() => setMode("select")}
-                  className="text-muted-foreground hover:text-foreground transition-colors font-display text-sm"
-                >
-                  ← BACK
-                </motion.button>
-                <h1 className="text-2xl font-display font-black">
-                  <span className="text-primary text-glow-primary">ARCADE</span>
-                  <span className="text-secondary text-glow-secondary">.IO</span>
-                </h1>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-1.5">
-                  <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                  <span className="font-display text-xs text-primary">{wins}W</span>
-                  <span className="text-muted-foreground">/</span>
-                  <TrendingDown className="h-3.5 w-3.5 text-destructive" />
-                  <span className="font-display text-xs text-destructive">{losses}L</span>
-                </div>
-                <StatsBar />
-                <button
-                  onClick={() => toast.info("Leaderboards are coming in Arcade.io 2!")}
-                  className="rounded-lg px-3 py-1.5 bg-card border border-accent/30 hover:border-accent/60 transition-all"
-                  title="Leaderboard"
-                >
-                  <Trophy className="h-4 w-4 text-accent" />
-                </button>
-                <button
-                  onClick={() => navigate("/entertainment")}
-                  className="relative overflow-hidden rounded-lg px-3 py-1.5 bg-card border border-border hover:border-[hsl(35,95%,55%)]/60 transition-all cursor-pointer"
-                  title="Entertainment Arcade"
-                >
-                  <div className="absolute top-0 left-0 right-0 h-[3px] flex">
-                    <div className="flex-1 bg-[hsl(145,70%,40%)]" />
-                    <div className="flex-1 bg-[hsl(210,90%,55%)]" />
-                    <div className="flex-1 bg-[hsl(35,95%,55%)]" />
-                  </div>
-                  <span className="font-display text-xs text-foreground flex items-center gap-1">
-                    🎮
-                  </span>
-                </button>
-              </div>
-            </div>
-          </header>
-
-          <main className="max-w-5xl mx-auto px-6 py-10">
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mb-8"
-            >
-              <h2 className="text-3xl font-display font-bold text-foreground mb-2">Choose Your Challenge</h2>
-              <p className="text-muted-foreground">Pick a puzzle to test your brain power.</p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {games.map((game, i) => (
-                <GameCard key={game.id} game={game} index={i} />
-              ))}
-            </div>
-          </main>
-        </motion.div>
-      )}
-    </AnimatePresence>
-
-      <ContactModal />
-    </motion.div>
+const library = [
+  ...games.map((g) => ({ ...g, section: "Puzzles", url: "/game/" + g.id })),
+  ...entertainmentGames
+    .filter((g) => g.available)
+    .map((g) => ({ ...g, section: "Action", url: "/entertainment/" + g.id })),
+];
+export default function Index() {
+  const [params, setParams] = useSearchParams();
+  const mode = params.get("mode");
+  const category =
+    mode === "brain" ? "Puzzles" : mode === "action" ? "Action" : "All games";
+  const [search, setSearch] = useState("");
+  const [name, setName] = useState(getPlayerName);
+  const [edit, setEdit] = useState(false);
+  const visible = library.filter(
+    (g) =>
+      (category === "All games" || category === g.section) &&
+      g.name.toLowerCase().includes(search.toLowerCase().trim()),
   );
-};
-
-export default Index;
+  return (
+    <main className="arcade-home">
+      <div className="arcade-shell">
+        <nav className="arcade-nav">
+          <div>
+            <Gamepad2 />
+            <strong>VORTEX ARCADE</strong>
+          </div>
+          <button aria-label="Edit player name" onClick={() => setEdit(!edit)}>
+            {getPlayerName()} <Pencil size={14} />
+          </button>
+        </nav>
+        {edit && (
+          <form
+            className="club-box"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (name.trim().length < 2) return;
+              setPlayerName(name.trim());
+              setEdit(false);
+            }}
+          >
+            <label>
+              Player name
+              <input
+                value={name}
+                minLength={2}
+                maxLength={20}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </label>
+            <button className="club-cta">Save name</button>
+          </form>
+        )}
+        <section className="arcade-hero">
+          <div>
+            <h1>
+              Arcade<span>.io</span>
+            </h1>
+            <p>Mini Games</p>
+            <div className="hero-actions">
+              <Link to="/rooms">
+                <Users size={18} />
+                Play with friends
+              </Link>
+              <Link to="/leaderboard">
+                <Trophy size={18} />
+                Leaderboard
+              </Link>
+            </div>
+          </div>
+          <img src="/arcade-icon.png" alt="Arcade.io brain and gamepad logo" />
+        </section>
+        <div className="shelf-heading">
+          <h2>Game library</h2>
+          <span>{playerPoints().toLocaleString()} solo points</span>
+        </div>
+        <div className="shelf-tools">
+          <div className="filters">
+            {["All games", "Puzzles", "Action"].map((v) => (
+              <button
+                key={v}
+                aria-pressed={category === v}
+                onClick={() =>
+                  setParams(
+                    v === "All games"
+                      ? {}
+                      : { mode: v === "Puzzles" ? "brain" : "action" },
+                  )
+                }
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          <label className="game-search">
+            <Search size={16} />
+            <input
+              placeholder="Find a game"
+              aria-label="Find a game"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+        </div>
+        <div className="game-shelf">
+          {visible.map((g) => (
+            <Link key={g.url} to={g.url}>
+              <div className={"tile-art " + g.section.toLowerCase()}>
+                {g.icon}
+              </div>
+              <strong>{g.name}</strong>
+              <small>
+                {g.section} · {g.difficulty}
+              </small>
+            </Link>
+          ))}
+        </div>
+        {!visible.length && <p>No games match your search.</p>}
+        <ContactModal />
+      </div>
+    </main>
+  );
+}

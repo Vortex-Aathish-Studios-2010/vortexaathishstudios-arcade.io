@@ -85,9 +85,9 @@ const EntertainmentPage = () => {
             </div>
             {/* Leaderboard */}
             <button
-              onClick={() => toast.info("Leaderboards are coming in Arcade.io 2!")}
+              onClick={() => navigate("/leaderboard")}
               className="rounded-lg px-3 py-1.5 bg-[hsl(var(--sport-card))]/50 border border-[hsl(var(--sport-accent))]/15 opacity-80 hover:opacity-100 transition-all"
-              title="Coming in Arcade.io 2"
+              title="Leaderboard"
             >
               <Trophy className="h-4 w-4 text-[hsl(var(--sport-accent))]/50" />
             </button>

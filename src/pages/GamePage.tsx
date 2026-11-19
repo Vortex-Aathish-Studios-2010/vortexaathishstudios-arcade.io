@@ -120,13 +120,11 @@ const GamePage = () => {
             </span>
           )}
           <button
-            onClick={() => {
-              import("sonner").then(({ toast }) => toast.info("Multiplayer VS Mode is coming in Arcade.io 2!"));
-            }}
+            onClick={() => navigate("/rooms")}
             className="flex items-center gap-1.5 bg-card border border-secondary/30 rounded-lg px-2.5 py-1 text-secondary hover:border-secondary/60 transition-all"
           >
             <Users className="h-3.5 w-3.5" />
-            <span className="font-display text-xs">VS</span>
+            <span className="font-display text-xs">Rooms</span>
           </button>
           <button
             onClick={() => setShowTutorial(true)}

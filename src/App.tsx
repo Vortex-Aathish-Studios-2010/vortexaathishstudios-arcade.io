@@ -1,4 +1,7 @@
-import { useState, useEffect } from "react";
+import "./arcade.css";
+import { watchScores } from "@/lib/arcade";
+const Rooms = lazy(() => import("./pages/Rooms"));
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,10 +11,10 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { UsernameGate } from "@/components/UsernameGate";
 import { DeviceProvider } from "@/lib/DeviceContext";
 import Index from "./pages/Index";
-import GamePage from "./pages/GamePage";
-import EntertainmentPage from "./pages/EntertainmentPage";
-import EntertainmentGamePage from "./pages/EntertainmentGamePage";
-import LeaderboardPage from "./pages/LeaderboardPage";
+const GamePage = lazy(() => import("./pages/GamePage"));
+const EntertainmentPage = lazy(() => import("./pages/EntertainmentPage"));
+const EntertainmentGamePage = lazy(() => import("./pages/EntertainmentGamePage"));
+const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 import NotFound from "./pages/NotFound";
 import { BigNotificationProvider } from "./components/BigNotification";
 import { ensureAnonymousAuth } from "@/lib/auth";
@@ -26,8 +29,10 @@ import { Capacitor } from '@capacitor/core';
 const queryClient = new QueryClient();
 
 const AppFlow = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(Capacitor.isNativePlatform());
   const [needsUsername, setNeedsUsername] = useState(() => !getPlayerName());
+
+  useEffect(() => { if (!needsUsername) return watchScores(); }, [needsUsername]);
 
   useEffect(() => {
     const connectOnlineFeatures = () => {
@@ -49,6 +54,7 @@ const AppFlow = () => {
         // Not running in Capacitor / error
       }
 
+      if (!Capacitor.isNativePlatform()) return;
       try {
         CapApp.addListener('backButton', ({ canGoBack }) => {
           if (!canGoBack) {
@@ -71,7 +77,7 @@ const AppFlow = () => {
     return () => {
       document.removeEventListener('click', handleGlobalClick);
       window.removeEventListener("online", connectOnlineFeatures);
-      CapApp.removeAllListeners();
+      if (Capacitor.isNativePlatform()) void CapApp.removeAllListeners();
     };
   }, []);
 
@@ -89,14 +95,16 @@ const AppFlow = () => {
               <UsernameGate onComplete={() => setNeedsUsername(false)} />
             ) : (
               <BrowserRouter>
+                <Suspense fallback={<div className="club-page" role="status">Loading game…</div>}>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/game/:id" element={<GamePage />} />
                   <Route path="/entertainment" element={<EntertainmentPage />} />
                   <Route path="/entertainment/:id" element={<EntertainmentGamePage />} />
+                  <Route path="/rooms" element={<Rooms/>} />
                   <Route path="/leaderboard" element={<LeaderboardPage />} />
                   <Route path="*" element={<NotFound />} />
-                </Routes>
+                </Routes></Suspense>
               </BrowserRouter>
             )}
           </TooltipProvider>
