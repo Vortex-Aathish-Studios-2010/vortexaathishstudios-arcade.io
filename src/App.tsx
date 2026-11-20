@@ -1,6 +1,5 @@
 import "./arcade.css";
 import { watchScores } from "@/lib/arcade";
-const Rooms = lazy(() => import("./pages/Rooms"));
 import { lazy, Suspense, useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -25,6 +24,8 @@ import { App as CapApp } from '@capacitor/app';
 import { SplashScreen as CapSplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
+
+const Rooms = lazy(() => import("./pages/Rooms"));
 
 const queryClient = new QueryClient();
 
