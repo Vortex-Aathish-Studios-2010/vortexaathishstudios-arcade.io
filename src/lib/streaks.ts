@@ -1,6 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
-import { getAuthUserId } from "./auth";
-
 const POINTS_KEY = "brainpuzzle_points";
 const ENT_POINTS_KEY = "entertainment_points";
 
@@ -26,6 +23,7 @@ export const getPoints = (): number => {
 export const addPoints = (pts: number) => {
   const current = getPoints();
   localStorage.setItem(POINTS_KEY, String(current + pts));
+  window.dispatchEvent(new Event("arcade-score"));
 };
 
 // Entertainment Arcade points
@@ -36,6 +34,7 @@ export const getEntertainmentPoints = (): number => {
 export const addEntertainmentPoints = (pts: number) => {
   const current = getEntertainmentPoints();
   localStorage.setItem(ENT_POINTS_KEY, String(current + pts));
+  window.dispatchEvent(new Event("arcade-score"));
 };
 
 export const updateStreak = (gameId: string) => {
@@ -75,49 +74,14 @@ export const getWins = (gameId: string): number =>
 export const getLosses = (gameId: string): number =>
   parseInt(localStorage.getItem(lossesKey(gameId)) || "0", 10);
 
-// Sync to Leaderboard
-export const syncLeaderboard = async () => {
-  const name = getPlayerName();
-  if (!name.trim()) return;
-
-  const authUserId = await getAuthUserId();
-  if (!authUserId) return;
-
-  const wins = getTotalWins();
-  const losses = getTotalLosses();
-
-  try {
-    const { data: existing } = await supabase
-      .from("leaderboard")
-      .select("id, wins, losses")
-      .eq("user_id", authUserId)
-      .maybeSingle();
-
-    if (existing) {
-      if (existing.wins !== wins || existing.losses !== losses) {
-        await supabase
-          .from("leaderboard")
-          .update({ wins, losses, player_name: name.trim(), updated_at: new Date().toISOString() })
-          .eq("id", existing.id);
-      }
-    } else {
-      await supabase
-        .from("leaderboard")
-        .insert({ player_name: name.trim(), wins, losses, user_id: authUserId });
-    }
-  } catch (e) {
-    console.error("Leaderboard sync failed:", e);
-  }
-};
-
 export const addWin = (gameId: string) => {
   localStorage.setItem(winsKey(gameId), String(getWins(gameId) + 1));
-  syncLeaderboard();
+  window.dispatchEvent(new Event("arcade-score"));
 };
 
 export const addLoss = (gameId: string) => {
   localStorage.setItem(lossesKey(gameId), String(getLosses(gameId) + 1));
-  syncLeaderboard();
+  window.dispatchEvent(new Event("arcade-score"));
 };
 
 export const getTotalWins = (): number => {
@@ -157,4 +121,7 @@ const PLAYER_NAME_KEY = "brainpuzzle_player_name";
 export const getPlayerId = (): string | null => localStorage.getItem(PLAYER_ID_KEY);
 export const setPlayerId = (id: string) => localStorage.setItem(PLAYER_ID_KEY, id);
 export const getPlayerName = (): string => localStorage.getItem(PLAYER_NAME_KEY) || "";
-export const setPlayerName = (name: string) => localStorage.setItem(PLAYER_NAME_KEY, name);
+export const setPlayerName = (name: string) => {
+  localStorage.setItem(PLAYER_NAME_KEY, name);
+  window.dispatchEvent(new Event("arcade-score"));
+};

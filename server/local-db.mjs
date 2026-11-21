@@ -1,0 +1,29 @@
+import { DatabaseSync } from "node:sqlite";
+import { readFileSync } from "node:fs";
+// The preview uses the same queries and schema as the hosted D1 database.
+export function openArcadeDB(filename = ":memory:") {
+  const sqlite = new DatabaseSync(filename);
+  if (
+    !sqlite
+      .prepare("SELECT name FROM sqlite_master WHERE name='arcade_rooms'")
+      .get()
+  ) {
+    sqlite.exec(
+      readFileSync(
+        new URL("../migrations/0001_arcade.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+  }
+  return {
+    prepare(sql) {
+      const query = sqlite.prepare(sql);
+      const bind = (...values) => ({
+        first: () => query.get(...values),
+        all: () => ({ results: query.all(...values) }),
+        run: () => ({ meta: query.run(...values) }),
+      });
+      return { ...bind(), bind };
+    },
+  };
+}

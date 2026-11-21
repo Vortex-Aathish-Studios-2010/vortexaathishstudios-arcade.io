@@ -147,7 +147,7 @@ export const SnakeGame = ({ onComplete }: Props) => {
         <span className="text-muted-foreground">Speed: <span className="font-display text-accent">{Math.round((1 - speed / INITIAL_SPEED) * 100)}%</span></span>
       </div>
       {obstacles.size > 0 && (
-        <div className="text-xs font-display text-destructive">⚠ {obstacles.size} obstacles</div>
+        <div className="text-xs font-display text-destructive">{obstacles.size} obstacles</div>
       )}
       <div className="relative bg-card border border-border p-1 rounded-xl inline-block max-w-full overflow-hidden">
         {gameOver && (

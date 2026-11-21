@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { localArcade } from "./server/dev-plugin.mjs";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
@@ -11,7 +12,7 @@ export default defineConfig({
       overlay: false,
     },
   },
-  plugins: [react()],
+  plugins: [react(), localArcade()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

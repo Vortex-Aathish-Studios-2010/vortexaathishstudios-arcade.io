@@ -4,7 +4,7 @@ android {
     namespace = "com.vortexaathishstudios.arcadeio"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.vortexaathishstudios.arcadeio"
+        applicationId "com.vortexaathishatudios.arcadeio"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -17,6 +17,10 @@ android {
         }
     }
     buildTypes {
+        debug {
+            applicationIdSuffix ".preview"
+            versionNameSuffix "-preview"
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

@@ -1,14 +1,6 @@
 import React from "react";
 import { Layers, LayoutGrid, Box, Hash, Dna, Type, Activity, Crosshair } from "lucide-react";
 
-import memoryIcon from "@/assets/icons/memory.png";
-import slidingIcon from "@/assets/icons/sliding.png";
-import tetrisIcon from "@/assets/icons/tetris.png";
-import sudokuIcon from "@/assets/icons/sudoku.png";
-import konoodleIcon from "@/assets/icons/konoodle.png";
-import wordsearchIcon from "@/assets/icons/wordsearch.png";
-import snakeIcon from "@/assets/icons/snake.png";
-import tictactoeIcon from "@/assets/icons/tictactoe.png";
 
 export interface GameInfo {
   id: string;
@@ -30,12 +22,12 @@ export const games: GameInfo[] = [
     id: "memory",
     name: "Memory Match",
     description: "Flip cards and find matching pairs",
-    icon: <GameIcon src={memoryIcon} alt="Memory Match" />,
+    icon: <GameIcon src="/covers/memory.webp" alt="Memory Match" />,
     color: "primary",
     available: true,
     difficulty: "Easy",
     tutorial: [
-      "Tap a card to flip it over and reveal the emoji underneath.",
+      "Tap a card to flip it over and reveal the symbol underneath.",
       "Tap a second card to try to find a matching pair.",
       "If both cards match, they stay face up. If not, they flip back.",
       "Try to match all pairs in as few moves as possible!",
@@ -46,7 +38,7 @@ export const games: GameInfo[] = [
     id: "sliding",
     name: "Sliding Puzzle",
     description: "Arrange numbered tiles in order",
-    icon: <GameIcon src={slidingIcon} alt="Sliding Puzzle" />,
+    icon: <GameIcon src="/covers/sliding.webp" alt="Sliding Puzzle" />,
     color: "accent",
     available: true,
     difficulty: "Hard",
@@ -62,7 +54,7 @@ export const games: GameInfo[] = [
     id: "tetris",
     name: "Block Stack",
     description: "Stack falling blocks to clear lines",
-    icon: <GameIcon src={tetrisIcon} alt="Block Stack" />,
+    icon: <GameIcon src="/covers/tetris.webp" alt="Block Stack" />,
     color: "primary",
     available: true,
     difficulty: "Medium",
@@ -78,7 +70,7 @@ export const games: GameInfo[] = [
     id: "sudoku",
     name: "Sudoku",
     description: "Fill the grid with numbers 1-9",
-    icon: <GameIcon src={sudokuIcon} alt="Sudoku" />,
+    icon: <GameIcon src="/covers/sudoku.webp" alt="Sudoku" />,
     color: "secondary",
     available: true,
     difficulty: "Hard",
@@ -94,7 +86,7 @@ export const games: GameInfo[] = [
     id: "konoodle",
     name: "Konoodle",
     description: "Fit puzzle pieces into the board",
-    icon: <GameIcon src={konoodleIcon} alt="Konoodle" />,
+    icon: <GameIcon src="/covers/konoodle.webp" alt="Konoodle" />,
     color: "accent",
     available: true,
     difficulty: "Hard",
@@ -110,7 +102,7 @@ export const games: GameInfo[] = [
     id: "wordsearch",
     name: "Word Search",
     description: "Find hidden words in the grid",
-    icon: <GameIcon src={wordsearchIcon} alt="Word Search" />,
+    icon: <GameIcon src="/covers/wordsearch.webp" alt="Word Search" />,
     color: "primary",
     available: true,
     difficulty: "Easy",
@@ -126,7 +118,7 @@ export const games: GameInfo[] = [
     id: "snake",
     name: "Snake",
     description: "Grow the snake by eating food",
-    icon: <GameIcon src={snakeIcon} alt="Snake" />,
+    icon: <GameIcon src="/covers/snake.webp" alt="Snake" />,
     color: "secondary",
     available: true,
     difficulty: "Medium",
@@ -142,7 +134,7 @@ export const games: GameInfo[] = [
     id: "tictactoe",
     name: "Tic Tac Toe",
     description: "Get three in a row to win",
-    icon: <GameIcon src={tictactoeIcon} alt="Tic Tac Toe" />,
+    icon: <GameIcon src="/covers/tictactoe.webp" alt="Tic Tac Toe" />,
     color: "secondary",
     available: true,
     difficulty: "Easy",

@@ -16,7 +16,7 @@ interface GameTutorialProps {
 export const GameTutorial = ({ game, open, onClose }: GameTutorialProps) => {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md bg-card border-border">
+      <DialogContent className="tutorial-sheet max-w-md bg-card border-border">
         <DialogHeader>
           <DialogTitle className="font-display text-xl flex items-center gap-2">
             <span className="text-2xl">{game.icon}</span> How to Play {game.name}

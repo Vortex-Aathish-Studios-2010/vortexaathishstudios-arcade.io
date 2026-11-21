@@ -1,5 +1,10 @@
+import { Capacitor } from "@capacitor/core";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+if (import.meta.env.PROD && 'serviceWorker' in navigator && !Capacitor.isNativePlatform()) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.warn));
+}

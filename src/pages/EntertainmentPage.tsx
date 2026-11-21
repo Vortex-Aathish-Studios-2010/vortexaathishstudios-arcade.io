@@ -1,3 +1,4 @@
+import { Gamepad2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -85,9 +86,9 @@ const EntertainmentPage = () => {
             </div>
             {/* Leaderboard */}
             <button
-              onClick={() => toast.info("Leaderboards are coming in Arcade.io 2!")}
+              onClick={() => navigate("/leaderboard")}
               className="rounded-lg px-3 py-1.5 bg-[hsl(var(--sport-card))]/50 border border-[hsl(var(--sport-accent))]/15 opacity-80 hover:opacity-100 transition-all"
-              title="Coming in Arcade.io 2"
+              title="Leaderboard"
             >
               <Trophy className="h-4 w-4 text-[hsl(var(--sport-accent))]/50" />
             </button>
@@ -110,7 +111,7 @@ const EntertainmentPage = () => {
             transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
             className="inline-block text-6xl mb-4"
           >
-            🏟️
+            <Gamepad2 size={44} aria-hidden="true"/>
           </motion.div>
           <h2 className="text-4xl font-sport tracking-wide text-[hsl(var(--sport-text))] mb-2">
             GAME ON!

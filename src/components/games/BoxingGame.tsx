@@ -1,3 +1,4 @@
+import { Hand } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { addEntertainmentPoints } from "@/lib/streaks";
@@ -68,7 +69,7 @@ export const BoxingGame = ({ onComplete }: { onComplete?: (score: number) => voi
         const next = Math.max(0, prev - playerDmg);
         if (next <= 0) {
           setGameOver(true);
-          setMessage("🏆 KNOCKOUT! You win!");
+          setMessage("KNOCKOUT! You win!");
           addEntertainmentPoints(100 - (100 - playerHp));
           sfx.levelComplete();
           onComplete?.(100);
@@ -82,7 +83,7 @@ export const BoxingGame = ({ onComplete }: { onComplete?: (score: number) => voi
         const next = Math.max(0, prev - botDmg);
         if (next <= 0) {
           setGameOver(true);
-          setMessage("💀 You got knocked out!");
+          setMessage("You got knocked out!");
           sfx.error();
           onComplete?.(0);
         }
@@ -154,7 +155,7 @@ export const BoxingGame = ({ onComplete }: { onComplete?: (score: number) => voi
             transition={{ duration: 0.2 }}
             className="text-5xl"
           >
-            🥊
+            <Hand size={42} aria-hidden="true"/>
           </motion.div>
           <span className="font-sport text-[10px] text-[hsl(var(--sport-text))] mt-1">YOU</span>
         </div>
@@ -165,7 +166,7 @@ export const BoxingGame = ({ onComplete }: { onComplete?: (score: number) => voi
             transition={{ duration: 0.2 }}
             className="text-5xl scale-x-[-1]"
           >
-            🥊
+            <Hand size={42} aria-hidden="true"/>
           </motion.div>
           <span className="font-sport text-[10px] text-[hsl(var(--sport-muted))] mt-1">BOT</span>
         </div>
@@ -200,19 +201,19 @@ export const BoxingGame = ({ onComplete }: { onComplete?: (score: number) => voi
             onClick={() => attack("jab")}
             className="px-5 py-3 bg-[hsl(var(--sport-primary))]/20 border border-[hsl(var(--sport-primary))]/50 text-[hsl(var(--sport-primary))] rounded-xl font-sport tracking-wider hover:bg-[hsl(var(--sport-primary))]/30 transition-all"
           >
-            👊 JAB
+            JAB
           </button>
           <button
             onClick={() => attack("hook")}
             className="px-5 py-3 bg-[hsl(var(--sport-accent))]/20 border border-[hsl(var(--sport-accent))]/50 text-[hsl(var(--sport-accent))] rounded-xl font-sport tracking-wider hover:bg-[hsl(var(--sport-accent))]/30 transition-all"
           >
-            💥 HOOK
+            HOOK
           </button>
           <button
             onClick={() => attack("dodge")}
             className="px-5 py-3 bg-[hsl(var(--sport-secondary))]/20 border border-[hsl(var(--sport-secondary))]/50 text-[hsl(var(--sport-secondary))] rounded-xl font-sport tracking-wider hover:bg-[hsl(var(--sport-secondary))]/30 transition-all"
           >
-            🛡️ DODGE
+            DODGE
           </button>
         </div>
       )}
