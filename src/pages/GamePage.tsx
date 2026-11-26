@@ -1,5 +1,6 @@
+import { useRecentGame } from "@/lib/recentGames";
 import { useState, useCallback, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { games } from "@/lib/gameData";
 import { MemoryGame } from "@/components/games/MemoryGame";
 import { SlidingPuzzle } from "@/components/games/SlidingPuzzle";
@@ -36,7 +37,10 @@ const HIDE_LEVEL_IDS = new Set(["tetris", "snake", "konoodle", "tictactoe"]);
 const GamePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnToLibrary = () => location.state?.fromLibrary ? navigate(-1) : navigate("/", { replace: true });
   const game = games.find((g) => g.id === id);
+  useRecentGame(game?.id);
   const GameComponent = id ? gameComponents[id] : null;
 
   const needsTutorial = id ? !isTutorialShown(id) : false;
@@ -90,12 +94,8 @@ const GamePage = () => {
   const showDeviceToggle = id === "snake" || id === "tetris" || id === "konoodle";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96, filter: "blur(8px)" }}
-      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-      exit={{ opacity: 0, scale: 1.04, filter: "blur(12px)" }}
-      transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
-      className="min-h-screen bg-black flex flex-col"
+    <div
+      className="game-stage min-h-screen bg-black flex flex-col"
     >
       <Starfield />
       {/* Header */}
@@ -103,10 +103,10 @@ const GamePage = () => {
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.1 }}
-        className="relative z-10 flex items-center justify-between px-4 py-3 border-b border-border bg-background/80 backdrop-blur-md"
+        className="play-header relative z-10 flex items-center justify-between px-4 py-3 border-b border-border bg-background/80 backdrop-blur-md"
       >
         <button
-          onClick={() => navigate("/?mode=brain")}
+          onClick={returnToLibrary}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -120,16 +120,14 @@ const GamePage = () => {
             </span>
           )}
           <button
-            onClick={() => {
-              import("sonner").then(({ toast }) => toast.info("Multiplayer VS Mode is coming in Arcade.io 2!"));
-            }}
+            onClick={() => navigate("/rooms")}
             className="flex items-center gap-1.5 bg-card border border-secondary/30 rounded-lg px-2.5 py-1 text-secondary hover:border-secondary/60 transition-all"
           >
             <Users className="h-3.5 w-3.5" />
-            <span className="font-display text-xs">VS</span>
+            <span className="font-display text-xs">Rooms</span>
           </button>
           <button
-            onClick={() => setShowTutorial(true)}
+            aria-label="How to play" onClick={() => setShowTutorial(true)}
             className="text-muted-foreground hover:text-foreground transition-colors p-1"
           >
             <HelpCircle className="h-4.5 w-4.5" />
@@ -138,7 +136,8 @@ const GamePage = () => {
       </motion.div>
 
       {/* Game fills all remaining space */}
-      <div className="relative z-10 flex-1 flex items-start justify-center p-4 pt-6">
+      <div className="puzzle-layout relative z-10 flex-1 flex items-start justify-center p-2 pt-4 sm:p-4 sm:pt-6">
+        <aside className="play-guide"><img src={`/covers/${game.id}.webp`} alt=""/><div><span>{game.difficulty} · Puzzles</span><h2>How to play</h2><ol>{game.tutorial.map(step=><li key={step}>{step}</li>)}</ol></div></aside>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -195,7 +194,7 @@ const GamePage = () => {
       <OnScreenControls gameId={id} />
 
       {/* Device toggle removed to prevent confusing the user with multiple controls UI */}
-    </motion.div>
+    </div>
   );
 };
 

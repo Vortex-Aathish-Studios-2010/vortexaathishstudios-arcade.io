@@ -250,7 +250,7 @@ export const MultiplayerResult = ({ roomId, playerId, gameId, onClose }: Multipl
         <div className="text-center mb-4">
           <Trophy className="h-8 w-8 text-accent mx-auto mb-2" />
           <h2 className="font-display text-lg font-bold text-foreground">
-            {allDone ? (me?.is_winner ? "YOU WON! 🎉" : "YOU LOST") : "Waiting for others..."}
+            {allDone ? (me?.is_winner ? "YOU WON!" : "YOU LOST") : "Waiting for others..."}
           </h2>
         </div>
         <div className="space-y-2 mb-4">

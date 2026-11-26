@@ -23,3 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+.arcade-local/
+
+# Upload signing keys stay outside source control.
+*.jks
+*.keystore
+keystore.properties

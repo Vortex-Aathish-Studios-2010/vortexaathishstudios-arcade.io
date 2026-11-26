@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Users, ArrowLeft, RotateCcw, Trophy } from "lucide-react";
@@ -115,6 +116,7 @@ const botMove = (board: Board, difficulty: Difficulty): number => {
 const CHANNEL_PREFIX = "ttt-game-";
 
 export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: number) => void }> = ({ onComplete }) => {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<GameMode>(null);
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   const [board, setBoard] = useState<Board>(Array(9).fill(null));
@@ -163,18 +165,18 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
       setGameOver(true);
       if (mode === "bot") {
         if (winner === "X") {
-          setResult("You Win! 🎉");
+          setResult("You Win!");
           const pts = difficulty === "hard" ? 50 : difficulty === "medium" ? 30 : 15;
           addPoints(pts);
           updateStreak("tictactoe");
           toast.success(`+${pts} points!`);
           onComplete?.(pts);
         } else {
-          setResult("Bot Wins 🤖");
+          setResult("Bot Wins");
           onComplete?.(0);
         }
       } else {
-        setResult(winner === myMark ? "You Win! 🎉" : `${opponentName} Wins!`);
+        setResult(winner === myMark ? "You Win!" : `${opponentName} Wins!`);
         if (winner === myMark) {
           addPoints(30);
           updateStreak("tictactoe");
@@ -346,10 +348,7 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
           </div>
         </button>
         <button
-          onClick={() => {
-            setMode("friend");
-            if (!playerId) setFriendStep("choice");
-          }}
+          onClick={() => navigate("/rooms")}
           className="w-full flex items-center gap-4 p-5 rounded-xl border-2 border-secondary/30 bg-card hover:border-secondary/60 hover:bg-secondary/10 transition-all"
         >
           <Users className="h-8 w-8 text-secondary group-hover:scale-110 transition-transform" />
@@ -508,6 +507,7 @@ export const TicTacToeGame: React.FC<{ level?: number; onComplete?: (score: numb
           return (
             <motion.button
               key={i}
+              aria-label={`Row ${Math.floor(i / 3) + 1}, column ${(i % 3) + 1}: ${cell ?? "empty"}`}
               whileTap={!cell && !gameOver ? { scale: 0.9 } : undefined}
               onClick={() => handleCellClick(i)}
               className={`aspect-square rounded-xl border-2 flex items-center justify-center text-3xl font-display font-black transition-all ${
