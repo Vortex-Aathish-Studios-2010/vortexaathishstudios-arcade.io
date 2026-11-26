@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+def releaseCode = System.getenv('ARCADE_VERSION_CODE') ?: '1'
+def releaseName = System.getenv('ARCADE_VERSION_NAME') ?: '2.0.0'
+def uploadKey = System.getenv('ARCADE_UPLOAD_KEYSTORE')
+def uploadAlias = System.getenv('ARCADE_UPLOAD_KEY_ALIAS')
+def uploadStorePassword = System.getenv('ARCADE_UPLOAD_STORE_PASSWORD')
+def uploadKeyPassword = System.getenv('ARCADE_UPLOAD_KEY_PASSWORD')
+
 android {
     namespace = "com.vortexaathishstudios.arcadeio"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,13 +14,23 @@ android {
         applicationId "com.vortexaathishatudios.arcadeio"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode releaseCode.toInteger()
+        versionName releaseName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        if (uploadKey && uploadAlias && uploadStorePassword && uploadKeyPassword) {
+            playUpload {
+                storeFile file(uploadKey)
+                storePassword uploadStorePassword
+                keyAlias uploadAlias
+                keyPassword uploadKeyPassword
+            }
         }
     }
     buildTypes {
@@ -22,6 +39,9 @@ android {
             versionNameSuffix "-preview"
         }
         release {
+            if (signingConfigs.findByName('playUpload')) {
+                signingConfig signingConfigs.playUpload
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

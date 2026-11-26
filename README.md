@@ -1,73 +1,76 @@
-# Welcome to your Lovable project
+# Arcade.io Mini Games
 
-## Project info
+The Android game by Vortex Aathish Studios. The published application ID is
+`com.vortexaathishatudios.arcadeio` — keep this exact spelling for Play Store updates.
+The Java namespace is separate and remains `com.vortexaathishstudios.arcadeio`.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Play and develop
 
-## How can I edit this code?
+- Dark launcher with phone, tablet and desktop layouts, original Play Store icon and illustrated game covers.
+- 16 solo games with local scores. Android includes game assets for offline play from installation; the web edition caches them after its first complete load.
+- Online two-player Tic Tac Toe and Four in a Row rooms with six-character codes.
+- Rankings refresh every two seconds. Offline solo points sync when a named player reconnects; room wins earn 20 points and draws earn 5.
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Use Node.js 22.13 or later (the local backend uses `node:sqlite`).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm ci
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Vite serves the game and local room API together. Local data is stored in ignored
+`.arcade-local/game.sqlite`. Production API source is in `server/`, with schema in
+`migrations/0001_arcade.sql` for a Cloudflare D1 binding named `DB`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+npm test
+npm run test:rooms
+npx tsc --noEmit -p tsconfig.app.json
+npm run build
+```
 
-**Use GitHub Codespaces**
+## Android preview
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Install JDK 21+, the Android SDK and build tools, then:
 
-## What technologies are used for this project?
+```sh
+npm run android:sync
+cd android
+./gradlew assembleDebug
+```
 
-This project is built with:
+The debug app is **Arcade.io Preview**, package
+`com.vortexaathishatudios.arcadeio.preview`. It can coexist with the installed
+Play Store app. It is not a Play Store update.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Play Store update
 
-## How can I deploy this project?
+`npm run android:release` checks package identity and public Android API access,
+builds and embeds the web assets, then produces an upload-signed Android App Bundle.
+Set these environment variables securely in the build environment:
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+| Variable | Value |
+| --- | --- |
+| `ARCADE_VERSION_CODE` | An unused integer higher than **all** version codes already uploaded to Play Console |
+| `ARCADE_VERSION_NAME` | Display version; defaults to `2.0.0` |
+| `ARCADE_UPLOAD_KEYSTORE` | Absolute path to this app's existing Play upload keystore |
+| `ARCADE_UPLOAD_KEY_ALIAS` | Existing upload key alias |
+| `ARCADE_UPLOAD_STORE_PASSWORD` | Keystore password |
+| `ARCADE_UPLOAD_KEY_PASSWORD` | Key password |
+| `VITE_ARCADE_API_URL` | Public HTTPS origin of the game API |
 
-## Can I connect a custom domain to my Lovable project?
+Do not commit signing keys or passwords. `VITE_` values are public app configuration,
+so never put a secret in them. `npm run android:release -- --check` only checks prerequisites.
+The current hosted API is `https://vortex-arcade-minigames.ajuponnu2009.chatgpt.site`.
 
-Yes, you can!
+The output is `android/app/build/outputs/bundle/release/app-release.aab`.
+Upload it to the existing app's internal testing track first. Verify an upgrade
+from the currently published version, airplane-mode gameplay, touch controls,
+rotation, and rooms between two devices before production rollout.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Public rankings store the chosen display name, scores and an anonymous player
+identifier; room state is also stored. Update the store's privacy/data-safety
+answers to match this online functionality. The previous “No data collected”
+declaration does not describe the new online features.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+See [release notes](release-notes/en-US.txt) for the player-facing update text.
