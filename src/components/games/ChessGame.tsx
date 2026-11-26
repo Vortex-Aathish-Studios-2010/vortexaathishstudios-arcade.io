@@ -238,7 +238,7 @@ export const ChessGame = ({ initialMode = "bot" }: { initialMode?: "bot" | "frie
           ))}
         </div>
 
-        <div className="grid grid-cols-8 grid-rows-8 w-full aspect-square rounded overflow-hidden" style={{ width: "min(85vw, 440px)" }}>
+        <div className="grid grid-cols-8 grid-rows-8 w-full aspect-square rounded overflow-hidden" style={{ width: "min(94vw, 620px)" }}>
           {displayBoard.map((row, dr) =>
             row.map((piece, dc) => {
               const [r, c] = toDisplayCoords(dr, dc);

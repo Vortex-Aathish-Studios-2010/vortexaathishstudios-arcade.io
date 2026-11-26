@@ -212,7 +212,7 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
         className="memory-grid"
         style={
           {
-            "--board-width": config.cols * 60 + "px",
+            "--board-width": Math.min(760, config.cols * 110) + "px",
             gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
           } as React.CSSProperties
         }

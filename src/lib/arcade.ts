@@ -1,9 +1,9 @@
 import { Capacitor } from "@capacitor/core";
-import { getPoints, getEntertainmentPoints, getPlayerName } from "./streaks";
+import { getPoints, getEntertainmentPoints, getPlayerName, getPlayerAvatar } from "./streaks";
 
 const base = (
   import.meta.env.VITE_ARCADE_API_URL ||
-  (Capacitor.isNativePlatform()
+  ((Capacitor.isNativePlatform() || location.hostname.endsWith(".github.io"))
     ? "https://vortex-arcade-minigames.ajuponnu2009.chatgpt.site"
     : "")
 ).replace(/\/$/, "");
@@ -16,8 +16,10 @@ export type Room = {
   board: string;
   result: string;
   me: string;
+  hostAvatar?: string;
+  guestAvatar?: string;
 };
-export type Rank = { name: string; score: number };
+export type Rank = { name: string; score: number; avatar?: string };
 export class ArcadeError extends Error {
   constructor(
     message: string,
@@ -60,31 +62,37 @@ export async function api<T>(path: string, body?: object): Promise<T> {
 }
 
 export const playerPoints = () => getPoints() + getEntertainmentPoints();
-export const syncProfile = () =>
-  api("profile", { name: getPlayerName(), score: playerPoints() });
-
+export type SyncState = "name" | "offline" | "pending" | "syncing" | "saved" | "error";
+let syncState: SyncState = "pending";
+export const getSyncState = (): SyncState => !getPlayerName() ? "name" : !navigator.onLine ? "offline" : syncState;
+function reportSync(state: SyncState) { syncState = state; window.dispatchEvent(new Event("arcade-sync")); }
+export async function syncProfile() {
+  if (!getPlayerName()) { reportSync("name"); return; }
+  if (!navigator.onLine) { reportSync("offline"); throw new ArcadeError("Your points are saved on this device. Reconnect to sync.", 0); }
+  reportSync("syncing");
+  const score = playerPoints();
+  try {
+    await api("profile", { name: getPlayerName(), score, avatar: getPlayerAvatar() });
+    localStorage.setItem("arcade.synced-points", String(score));
+    reportSync("saved");
+  } catch (error) { reportSync("error"); throw error; }
+}
 export function watchScores() {
   let timer: number;
-  let disposed = false;
-  const send = () => {
+  let disposed = false, busy = false, dirty = false;
+  async function send() {
     window.clearTimeout(timer);
-    if (navigator.onLine && getPlayerName()) {
-      syncProfile().catch(() => {
-        if (!disposed) timer = window.setTimeout(send, 30000);
-      });
-    }
-  };
-  const changed = () => {
-    window.clearTimeout(timer);
-    timer = window.setTimeout(send, 350);
-  };
-  send();
+    if (busy) { dirty = true; return; }
+    busy = true; dirty = false;
+    try { await syncProfile(); }
+    catch { if (!disposed) timer = window.setTimeout(send, 15000); }
+    finally { busy = false; if (!disposed && dirty) timer = window.setTimeout(send, 350); }
+  }
+  const changed = () => { reportSync("pending"); window.clearTimeout(timer); timer = window.setTimeout(send, 350); };
+  const visible = () => { if (!document.hidden) void send(); };
+  void send();
   window.addEventListener("arcade-score", changed);
   window.addEventListener("online", send);
-  return () => {
-    disposed = true;
-    window.clearTimeout(timer);
-    window.removeEventListener("arcade-score", changed);
-    window.removeEventListener("online", send);
-  };
+  document.addEventListener("visibilitychange", visible);
+  return () => { disposed = true; window.clearTimeout(timer); window.removeEventListener("arcade-score", changed); window.removeEventListener("online", send); document.removeEventListener("visibilitychange", visible); };
 }

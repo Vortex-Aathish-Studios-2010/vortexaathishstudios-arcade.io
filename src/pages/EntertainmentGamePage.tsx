@@ -162,12 +162,12 @@ const EntertainmentGamePage = () => {
       </motion.div>
 
       {/* Game Content */}
-      <div className="relative z-10 flex-1 flex items-start justify-center p-2 sm:p-4 pt-4 sm:pt-6">
+      <div className="action-layout relative z-10 flex-1 flex items-start justify-center p-2 sm:p-4 pt-4 sm:pt-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.5, type: "spring", stiffness: 100 }}
-          className="w-full max-w-3xl flex items-center justify-center min-h-[500px]"
+          className="game-canvas-pane w-full flex items-center justify-center"
         >
           {matchMode === "select" && renderMultiplayerSelection()}
           {matchMode === "friends" && renderFriendsSelection()}

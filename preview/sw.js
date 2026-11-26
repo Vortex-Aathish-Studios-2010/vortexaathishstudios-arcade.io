@@ -1,11 +1,11 @@
-const cacheName = 'arcade-solo-41e822d8e8b166b6';
+const cacheName = "arcade-preview-d2cb9e80465d03e6";
 const scope = self.registration.scope;
 const files = ['index.html', 'manifest.webmanifest', 'arcade-icon-192.png', 'arcade-icon.png'].map(path => new URL(path, scope).href);
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('arcade-solo-') && key !== cacheName).map(key => caches.delete(key)))).then(() => self.clients.claim()));
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => (key.startsWith('arcade-solo-') || key.startsWith('arcade-preview-')) && key !== cacheName).map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || !event.request.url.startsWith(scope)) return;

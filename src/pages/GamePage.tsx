@@ -142,7 +142,7 @@ const GamePage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5, type: "spring", stiffness: 120 }}
-          className="relative w-full max-w-3xl"
+          className="game-canvas-pane relative w-full"
         >
           <div className={countdown !== null ? "blur-md pointer-events-none" : ""}>
             <GameComponent level={level} onComplete={multiplayerRoom && gameReady ? handleGameComplete : undefined} />

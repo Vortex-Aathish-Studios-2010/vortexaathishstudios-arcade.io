@@ -43,7 +43,7 @@ export async function arcade(request, db) {
   const headers = { "cache-control": "no-store", vary: "Origin" };
   if (
     origin === url.origin ||
-    ["https://localhost", "http://localhost", "capacitor://localhost"].includes(
+    ["https://localhost", "http://localhost", "capacitor://localhost", "https://vortex-aathish-studios-2010.github.io"].includes(
       origin,
     )
   ) {
@@ -62,7 +62,7 @@ export async function arcade(request, db) {
     if (path === "leaders" && !write) {
       const { results } = await db
         .prepare(
-          "SELECT name, solo + bonus AS score FROM arcade_players WHERE solo + bonus > 0 ORDER BY score DESC, name, id LIMIT 50",
+          "SELECT name, avatar, solo + bonus AS score FROM arcade_players WHERE solo + bonus > 0 ORDER BY score DESC, name, id LIMIT 50",
         )
         .all();
       return json(results);
@@ -84,6 +84,8 @@ export async function arcade(request, db) {
       : {};
     if (path === "profile" && write) {
       const name = String(body.name || "").trim();
+      const avatar = body.avatar ?? null;
+      if (avatar !== null && !["orbit","fox","bot","ninja","owl","cat","dragon","skull","diver","bear"].includes(avatar)) throw new GameError("Choose an available avatar.");
       if (
         name.length < 2 ||
         name.length > 20 ||
@@ -94,9 +96,9 @@ export async function arcade(request, db) {
         throw new GameError("Invalid player profile");
       await db
         .prepare(
-          "INSERT INTO arcade_players(id,name,solo) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,solo=MAX(arcade_players.solo,excluded.solo)",
+          "INSERT INTO arcade_players(id,name,solo,avatar) VALUES(?,?,?,COALESCE(?,'orbit')) ON CONFLICT(id) DO UPDATE SET name=excluded.name,solo=MAX(arcade_players.solo,excluded.solo),avatar=COALESCE(?,arcade_players.avatar)",
         )
-        .bind(id, name, body.score)
+        .bind(id, name, body.score, avatar, avatar)
         .run();
       return json({ ok: true });
     }
@@ -131,7 +133,7 @@ export async function arcade(request, db) {
     const lookup = () =>
       db
         .prepare(
-          "SELECT r.*, h.name AS hostName,g.name AS guestName FROM arcade_rooms r JOIN arcade_players h ON r.host=h.id LEFT JOIN arcade_players g ON r.guest=g.id WHERE r.code=? AND expires>?",
+          "SELECT r.*, h.name AS hostName,g.name AS guestName,h.avatar AS hostAvatar,g.avatar AS guestAvatar FROM arcade_rooms r JOIN arcade_players h ON r.host=h.id LEFT JOIN arcade_players g ON r.guest=g.id WHERE r.code=? AND expires>?",
         )
         .bind(code, now)
         .first();
@@ -199,6 +201,8 @@ export async function arcade(request, db) {
       board: room.board,
       result: room.result,
       me,
+      hostAvatar: room.hostAvatar,
+      guestAvatar: room.guestAvatar,
     });
   } catch (error) {
     if (!(error instanceof GameError))

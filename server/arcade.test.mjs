@@ -61,9 +61,12 @@ for (const [game, moves] of [
       assert.equal(state.result, "X");
       assert.deepEqual((await call("a", "leaders")).data[0], {
         name: "Player a",
+        avatar: "orbit",
         score: 22,
       });
-      await call("a", "profile", { name: "Player a", score: 10 });
+      assert.equal((await call("a", "profile", {name:"Player a", score:10, avatar:"invalid"})).status,400);
+      await call("a", "profile", { name: "Player a", score: 10, avatar:"fox" });
+      assert.equal((await call("a", "leaders")).data[0].avatar,"fox");
       await call("a", "profile", { name: "Player a", score: 6 });
       assert.equal((await call("b", "leaders")).data[0].score, 30);
       await call("b", path + "/leave", {});

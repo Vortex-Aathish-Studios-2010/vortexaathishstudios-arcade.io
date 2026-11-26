@@ -1,0 +1,24 @@
+const eyes = <><circle cx="37" cy="49" r="4" fill="#111820"/><circle cx="63" cy="49" r="4" fill="#111820"/></>;
+export const AVATARS = [
+  {id:"orbit",name:"Orbit",bg:"#284a59"}, {id:"fox",name:"Fox",bg:"#683d2d"},
+  {id:"bot",name:"Byte",bg:"#354e41"}, {id:"ninja",name:"Shade",bg:"#453b5e"},
+  {id:"owl",name:"Scout",bg:"#5a4931"}, {id:"cat",name:"Miso",bg:"#4c5267"},
+  {id:"dragon",name:"Drake",bg:"#3c5150"}, {id:"skull",name:"Bones",bg:"#57433e"},
+  {id:"diver",name:"Reef",bg:"#284d60"}, {id:"bear",name:"Bruno",bg:"#4e453a"},
+];
+const portraits: Record<string, React.ReactNode> = {
+  orbit:<><path d="M19 100V82Q50 59 81 82V100" fill="#cddbdc"/><rect x="20" y="15" width="60" height="66" rx="27" fill="#e6eee9"/><rect x="26" y="26" width="48" height="38" rx="18" fill="#152b3d"/><path d="M34 35H52" stroke="#6fb5c4" strokeWidth="6" strokeLinecap="round"/><rect x="35" y="73" width="30" height="8" rx="3" fill="#ff995f"/><circle cx="69" cy="78" r="3" fill="#284a59"/></>,
+  fox:<><path d="M17 48L16 13L40 30L61 30L84 13L83 48L73 72L50 86L27 72Z" fill="#e99d58"/><path d="M21 22L34 35L23 43M78 22L66 35L77 43" fill="#6d3c2d"/><path d="M21 53L50 62L79 53L69 74L50 86L31 74Z" fill="#f1dfb7"/>{eyes}<path d="M43 62H57L50 70Z" fill="#302820"/></>,
+  bot:<><path d="M50 15V26" stroke="#e2c97c" strokeWidth="5"/><circle cx="50" cy="12" r="6" fill="#ff995f"/><rect x="15" y="38" width="70" height="24" rx="7" fill="#8caa9a"/><rect x="24" y="26" width="52" height="52" rx="12" fill="#d5dec7"/><rect x="31" y="38" width="38" height="21" rx="6" fill="#273a36"/><path d="M39 44V51M61 44V51" stroke="#e4d185" strokeWidth="4" strokeLinecap="round"/><path d="M39 66H61" stroke="#587668" strokeWidth="5"/><path d="M31 84H69L77 100H23Z" fill="#8caa9a"/></>,
+  ninja:<><path d="M19 99L25 76Q13 49 25 27Q50 3 75 27Q86 49 75 76L83 99" fill="#24242f"/><path d="M25 42Q50 34 75 42L71 58Q50 66 29 58Z" fill="#e2be9d"/>{eyes}<path d="M21 35H79V44H21Z" fill="#bb6763"/><path d="M77 35L95 29L86 45L98 55L76 43" fill="#bb6763"/><path d="M34 68H66L58 85H42Z" fill="#363645"/></>,
+  owl:<><path d="M22 28L17 12L43 23H57L83 12L78 28Q94 66 70 82L50 92L30 82Q6 66 22 28" fill="#c7a674"/><path d="M23 29Q50 22 50 55Q50 22 77 29L75 61L50 80L25 61Z" fill="#eddfbb"/><circle cx="35" cy="48" r="13" fill="#ad8149"/><circle cx="65" cy="48" r="13" fill="#ad8149"/><circle cx="35" cy="48" r="6" fill="#252a29"/><circle cx="65" cy="48" r="6" fill="#252a29"/><path d="M44 60H56L50 71Z" fill="#d18341"/></>,
+  cat:<><path d="M19 45L22 13L43 29L62 29L79 13L83 49Q85 81 51 86Q14 80 19 45" fill="#c5c8d6"/><path d="M26 24L37 35L26 40M75 24L66 35L77 40" fill="#ae838b"/>{eyes}<path d="M45 61H55L50 67Z" fill="#9c6474"/><path d="M29 60L12 56M29 66L12 69M71 60L88 56M71 66L88 69M50 68L42 73M50 68L58 73" stroke="#555b6a" strokeWidth="3" strokeLinecap="round"/></>,
+  dragon:<><path d="M24 38L17 9L39 28L61 28L83 9L77 39L86 64L67 87H33L14 64Z" fill="#8cba9c"/><path d="M42 23L50 9L58 23L50 34Z" fill="#dec283"/><path d="M27 44L43 49M73 44L57 49" stroke="#163b33" strokeWidth="6" strokeLinecap="round"/><path d="M32 63Q50 54 68 63L64 78H36Z" fill="#c7d5a9"/><circle cx="42" cy="65" r="3" fill="#3c6553"/><circle cx="58" cy="65" r="3" fill="#3c6553"/><path d="M27 60L23 70L34 66M73 60L77 70L66 66" fill="#eee2bd"/></>,
+  skull:<><path d="M22 45Q22 14 50 14Q78 14 78 45V61L66 68V83H34V68L22 61Z" fill="#e5ddc4"/><path d="M29 42L44 45V57L32 59ZM71 42L56 45V57L68 59Z" fill="#292629"/><path d="M50 55L44 67H56Z" fill="#292629"/><path d="M41 74V84M50 74V84M59 74V84" stroke="#746357" strokeWidth="3"/><path d="M29 22L63 16L82 28V36H19V28Z" fill="#be6a55"/></>,
+  diver:<><path d="M20 100V77L36 70H64L80 77V100" fill="#dfad60"/><rect x="17" y="19" width="66" height="64" rx="28" fill="#dbaa59"/><circle cx="50" cy="49" r="25" fill="#735b39"/><circle cx="50" cy="49" r="20" fill="#193b4c"/><path d="M38 39L52 33M35 49L45 44" stroke="#83bdc6" strokeWidth="4" strokeLinecap="round"/><circle cx="50" cy="18" r="3" fill="#f3d390"/><circle cx="19" cy="49" r="3" fill="#f3d390"/><circle cx="81" cy="49" r="3" fill="#f3d390"/><path d="M43 80V94H57V80" fill="#735b39"/></>,
+  bear:<><circle cx="23" cy="28" r="15" fill="#a78058"/><circle cx="77" cy="28" r="15" fill="#a78058"/><circle cx="23" cy="28" r="8" fill="#6a4d3a"/><circle cx="77" cy="28" r="8" fill="#6a4d3a"/><rect x="20" y="25" width="60" height="60" rx="26" fill="#c29c70"/>{eyes}<ellipse cx="50" cy="66" rx="19" ry="15" fill="#ead0a1"/><path d="M43 59H57L50 67Z" fill="#40362b"/><path d="M50 67V74M43 75H57" stroke="#40362b" strokeWidth="3" strokeLinecap="round"/></>,
+};
+export function PlayerAvatar({id="orbit",size=48,className=""}:{id?:string,size?:number,className?:string}) {
+  const avatar=AVATARS.find(a=>a.id===id)||AVATARS[0];
+  return <svg className={`player-avatar ${className}`} width={size} height={size} viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="25" fill={avatar.bg}/>{portraits[avatar.id]}</svg>;
+}

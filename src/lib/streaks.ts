@@ -8,13 +8,21 @@ const lossesKey = (gameId: string) => `brainpuzzle_losses_${gameId}`;
 const tutorialKey = (gameId: string) => `brainpuzzle_tutorial_shown_${gameId}`;
 const levelKey = (gameId: string) => `brainpuzzle_level_${gameId}`;
 
-export const getStreak = (gameId?: string): number => {
-  if (!gameId) {
-    const allKeys = Object.keys(localStorage).filter(k => k.startsWith("brainpuzzle_streak_"));
-    return allKeys.reduce((sum, k) => sum + parseInt(localStorage.getItem(k) || "0", 10), 0);
-  }
-  return parseInt(localStorage.getItem(streakKey(gameId)) || "0", 10);
-};
+function currentStreak(key: string, dateKey: string, now = new Date()) {
+  const last = localStorage.getItem(dateKey);
+  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+  return last === now.toDateString() || last === yesterday.toDateString()
+    ? Math.max(0, Number(localStorage.getItem(key)) || 0) : 0;
+}
+export const getDailyStreak = () => currentStreak("arcade.daily.streak", "arcade.daily.last");
+export const getStreak = (gameId?: string): number => gameId
+  ? currentStreak(streakKey(gameId), lastPlayKey(gameId)) : getDailyStreak();
+function recordDay(key: string, dateKey: string) {
+  const today = new Date().toDateString();
+  if (localStorage.getItem(dateKey) === today) return;
+  localStorage.setItem(key, String(currentStreak(key, dateKey) + 1));
+  localStorage.setItem(dateKey, today);
+}
 
 export const getPoints = (): number => {
   return parseInt(localStorage.getItem(POINTS_KEY) || "0", 10);
@@ -38,28 +46,13 @@ export const addEntertainmentPoints = (pts: number) => {
 };
 
 export const updateStreak = (gameId: string) => {
-  const key = streakKey(gameId);
-  const lpKey = lastPlayKey(gameId);
-  const lastPlay = localStorage.getItem(lpKey);
-  const today = new Date().toDateString();
-
-  if (lastPlay === today) return;
-
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  if (lastPlay === yesterday.toDateString()) {
-    const streak = parseInt(localStorage.getItem(key) || "0", 10) + 1;
-    localStorage.setItem(key, String(streak));
-  } else {
-    localStorage.setItem(key, "1");
-  }
-
-  localStorage.setItem(lpKey, today);
+  recordDay(streakKey(gameId), lastPlayKey(gameId));
+  recordDay("arcade.daily.streak", "arcade.daily.last");
+  window.dispatchEvent(new Event("arcade-profile"));
 };
 
 export const getAllGameStreaks = (): Record<string, number> => {
-  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe", "taprush", "reaction", "color", "aim", "rps", "cups", "number", "gravityflip"];
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe", "chess", "tap-rush", "color-switch", "stack-tower", "one-shot", "avoid-walls", "three-cups", "gravity-flip"];
   const streaks: Record<string, number> = {};
   for (const id of gameIds) {
     streaks[id] = getStreak(id);
@@ -75,22 +68,24 @@ export const getLosses = (gameId: string): number =>
   parseInt(localStorage.getItem(lossesKey(gameId)) || "0", 10);
 
 export const addWin = (gameId: string) => {
+  updateStreak(gameId);
   localStorage.setItem(winsKey(gameId), String(getWins(gameId) + 1));
   window.dispatchEvent(new Event("arcade-score"));
 };
 
 export const addLoss = (gameId: string) => {
+  updateStreak(gameId);
   localStorage.setItem(lossesKey(gameId), String(getLosses(gameId) + 1));
   window.dispatchEvent(new Event("arcade-score"));
 };
 
 export const getTotalWins = (): number => {
-  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe", "taprush", "reaction", "color", "aim", "rps", "cups", "number", "gravityflip"];
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe", "chess", "tap-rush", "color-switch", "stack-tower", "one-shot", "avoid-walls", "three-cups", "gravity-flip"];
   return gameIds.reduce((sum, id) => sum + getWins(id), 0);
 };
 
 export const getTotalLosses = (): number => {
-  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe", "taprush", "reaction", "color", "aim", "rps", "cups", "number", "gravityflip"];
+  const gameIds = ["memory", "sliding", "tetris", "sudoku", "konoodle", "wordsearch", "snake", "tictactoe", "chess", "tap-rush", "color-switch", "stack-tower", "one-shot", "avoid-walls", "three-cups", "gravity-flip"];
   return gameIds.reduce((sum, id) => sum + getLosses(id), 0);
 };
 
@@ -123,5 +118,13 @@ export const setPlayerId = (id: string) => localStorage.setItem(PLAYER_ID_KEY, i
 export const getPlayerName = (): string => localStorage.getItem(PLAYER_NAME_KEY) || "";
 export const setPlayerName = (name: string) => {
   localStorage.setItem(PLAYER_NAME_KEY, name);
+  window.dispatchEvent(new Event("arcade-profile"));
   window.dispatchEvent(new Event("arcade-score"));
+};
+
+export const getPlayerAvatar = () => localStorage.getItem("arcade.avatar") || "orbit";
+export const setPlayerAvatar = (avatar: string) => {
+  localStorage.setItem("arcade.avatar", avatar);
+  window.dispatchEvent(new Event("arcade-score"));
+  window.dispatchEvent(new Event("arcade-profile"));
 };

@@ -7,6 +7,8 @@ The Java namespace is separate and remains `com.vortexaathishstudios.arcadeio`.
 ## Play and develop
 
 - Dark launcher with phone, tablet and desktop layouts, original Play Store icon and illustrated game covers.
+- A larger matte interface, editable username and ten illustrated avatars, plus a daily play streak.
+- Shell Game starts with three slow swaps; each win advances a level, a miss drops one level, and points remain saved.
 - 16 solo games with local scores. Android includes game assets for offline play from installation; the web edition caches them after its first complete load.
 - Online two-player Tic Tac Toe and Four in a Row rooms with six-character codes.
 - Rankings refresh every two seconds. Offline solo points sync when a named player reconnects; room wins earn 20 points and draws earn 5.
@@ -20,7 +22,7 @@ npm run dev
 
 Vite serves the game and local room API together. Local data is stored in ignored
 `.arcade-local/game.sqlite`. Production API source is in `server/`, with schema in
-`migrations/0001_arcade.sql` for a Cloudflare D1 binding named `DB`.
+`migrations/` for a Cloudflare D1 binding named `DB`. Apply migrations in order; the avatar migration preserves existing players and scores.
 
 ```sh
 npm test
@@ -28,6 +30,15 @@ npm run test:rooms
 npx tsc --noEmit -p tsconfig.app.json
 npm run build
 ```
+
+## Public browser preview
+
+After `npm run build`, run `python3 scripts/build-preview.py` to regenerate the
+self-contained GitHub Pages edition in `preview/`. It includes all solo games,
+profiles, live rankings and two-player rooms. Solo games cache for offline use
+after the first load. Online features use the hosted API with the GitHub Pages
+origin explicitly allowed by the server. Offline points remain visible and retry
+sync when connected. A username is required to appear in public rankings.
 
 ## Android preview
 
