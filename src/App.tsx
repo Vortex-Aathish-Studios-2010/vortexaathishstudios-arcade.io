@@ -16,8 +16,6 @@ const EntertainmentGamePage = lazy(() => import("./pages/EntertainmentGamePage")
 const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 import NotFound from "./pages/NotFound";
 import { BigNotificationProvider } from "./components/BigNotification";
-import { ensureAnonymousAuth } from "@/lib/auth";
-import { isSupabaseConfigured } from "@/integrations/supabase/client";
 import { getPlayerName } from "@/lib/streaks";
 import { OfflineWarning } from "./components/OfflineWarning";
 import { App as CapApp } from '@capacitor/app';
@@ -33,19 +31,14 @@ const AppFlow = () => {
   const [showSplash, setShowSplash] = useState(Capacitor.isNativePlatform());
   const [needsUsername, setNeedsUsername] = useState(() => !getPlayerName());
 
-  useEffect(() => { if (!needsUsername) return watchScores(); }, [needsUsername]);
+  useEffect(() => watchScores(), []);
+  useEffect(() => {
+    const profileChanged = () => setNeedsUsername(!getPlayerName());
+    window.addEventListener("arcade-profile", profileChanged);
+    return () => window.removeEventListener("arcade-profile", profileChanged);
+  }, []);
 
   useEffect(() => {
-    const connectOnlineFeatures = () => {
-      if (isSupabaseConfigured && navigator.onLine) {
-        void ensureAnonymousAuth().catch(() => {
-          // Online features can retry when they are opened.
-        });
-      }
-    };
-    connectOnlineFeatures();
-    window.addEventListener("online", connectOnlineFeatures);
-
     const initCapacitor = async () => {
       try {
         await StatusBar.setStyle({ style: Style.Dark });
@@ -77,7 +70,6 @@ const AppFlow = () => {
     document.addEventListener('click', handleGlobalClick);
     return () => {
       document.removeEventListener('click', handleGlobalClick);
-      window.removeEventListener("online", connectOnlineFeatures);
       if (Capacitor.isNativePlatform()) void CapApp.removeAllListeners();
     };
   }, []);

@@ -4,6 +4,8 @@ import { Clock3, Gamepad2, Play, Search, Ticket, X, Zap } from "lucide-react";
 import { games } from "@/lib/gameData";
 import { entertainmentGames } from "@/lib/entertainmentData";
 import { playerPoints } from "@/lib/arcade";
+import { getDailyStreak } from "@/lib/streaks";
+import { Flame } from "lucide-react";
 import { getRecentGames } from "@/lib/recentGames";
 
 const library = [
@@ -57,6 +59,7 @@ export default function Index() {
 
   return (
     <main className="studio-main">
+      <div className="daily-streak"><Flame size={17}/><strong>{getDailyStreak()} day streak</strong><span>Play a round each day</span></div>
       <header className="screen-title">
         <h1>Game library</h1>
         <Link

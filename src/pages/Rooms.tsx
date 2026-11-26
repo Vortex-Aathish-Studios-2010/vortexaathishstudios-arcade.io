@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Users } from "lucide-react";
 import { api, ArcadeError, Room, syncProfile } from "@/lib/arcade";
 
+import { PlayerAvatar } from "@/components/PlayerAvatar";
+
 const titles = { trio: "Tic Tac Toe", four: "Four in a Row" };
 export default function Rooms() {
   const [active, setActive] = useState(
@@ -28,13 +30,14 @@ export default function Rooms() {
     let timer: number;
     async function read() {
       const seq = revision.current;
+      let finished = false;
       try {
         if (!document.hidden) {
           const latest = await api<Room>("rooms/" + active);
           if (done || seq !== revision.current) return;
           setRoom(latest);
           setMessage("");
-          if (latest.result) return;
+          if (latest.result) { finished = true; return; }
         }
       } catch (e) {
         if (done || seq !== revision.current) return;
@@ -45,7 +48,7 @@ export default function Rooms() {
         }
         setMessage("Connection interrupted. Reconnecting…");
       } finally {
-        if (!done) timer = window.setTimeout(read, 1000);
+        if (!done && !finished) timer = window.setTimeout(read, 1000);
       }
     }
     void read();
@@ -167,10 +170,7 @@ export default function Rooms() {
             </div>
             {room && (
               <>
-                <p>
-                  {room.host} (X) ·{" "}
-                  {room.guest ? room.guest + " (O)" : "Waiting for a friend…"}
-                </p>
+                <div className="room-players"><span><PlayerAvatar id={room.hostAvatar} size={42}/>{room.host} (X)</span><span><PlayerAvatar id={room.guestAvatar} size={42}/>{room.guest ? room.guest + " (O)" : "Waiting for a friend…"}</span></div>
                 <h2 aria-live="polite">
                   {room.result
                     ? room.result === "draw"

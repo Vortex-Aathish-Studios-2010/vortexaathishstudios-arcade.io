@@ -15,6 +15,9 @@ export function openArcadeDB(filename = ":memory:") {
       ),
     );
   }
+  if (!sqlite.prepare("PRAGMA table_info(arcade_players)").all().some(c => c.name === "avatar")) {
+    sqlite.exec(readFileSync(new URL("../migrations/0002_avatars.sql", import.meta.url), "utf8"));
+  }
   return {
     prepare(sql) {
       const query = sqlite.prepare(sql);

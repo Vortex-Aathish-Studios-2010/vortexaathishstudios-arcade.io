@@ -1,13 +1,14 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Gamepad2, Trophy, UsersRound, UserRound } from "lucide-react";
-import { getPlayerName } from "@/lib/streaks";
+import { getPlayerName, getPlayerAvatar } from "@/lib/streaks";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PlayerAvatar } from "./PlayerAvatar";
 import { ContactModal } from "./ContactModal";
 import { UsernameGate } from "./UsernameGate";
 
@@ -18,6 +19,8 @@ const destinations = [
 ];
 
 export function ArcadeShell({ onProfile }: { onProfile: () => void }) {
+  const [, refresh] = useState(0);
+  useEffect(() => { const changed = () => refresh(v=>v+1); window.addEventListener("arcade-profile", changed); return () => window.removeEventListener("arcade-profile", changed); }, []);
   const [editing, setEditing] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
@@ -45,11 +48,9 @@ export function ArcadeShell({ onProfile }: { onProfile: () => void }) {
         <button
           className="profile-btn"
           onClick={() => setEditing(true)}
-          aria-label="Edit player name"
+          aria-label="Edit player profile"
         >
-          <span className="avatar-icon">
-            <UserRound size={19} />
-          </span>
+          <PlayerAvatar id={getPlayerAvatar()} size={38}/>
           <span>{getPlayerName() || "Player profile"}</span>
         </button>
       </header>

@@ -1,75 +1,21 @@
 import { useState } from "react";
-import { getPlayerName, setPlayerName } from "@/lib/streaks";
-import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
-
-export function UsernameGate({
-  onComplete,
-}: {
-  onComplete: (username: string) => void;
-}) {
-  const [name, setName] = useState(getPlayerName);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  return (
-    <form
-      className="profile-form"
-      onSubmit={async (e) => {
-        e.preventDefault();
-        const trimmed = name.trim();
-        if (busy) return;
-        if (trimmed.length < 2 || trimmed.length > 20) {
-          setError("Use 2 to 20 characters.");
-          return;
-        }
-        if (
-          trimmed !== getPlayerName() &&
-          isSupabaseConfigured &&
-          navigator.onLine
-        ) {
-          setBusy(true);
-          const controller = new AbortController();
-          const timer = window.setTimeout(() => controller.abort(), 2500);
-          try {
-            const { data } = await supabase
-              .from("leaderboard")
-              .select("id")
-              .eq("player_name", trimmed)
-              .abortSignal(controller.signal)
-              .maybeSingle();
-            if (data) {
-              setError("That name is taken. Choose another.");
-              return;
-            }
-          } catch {
-            /* Local play can continue offline. */
-          } finally {
-            window.clearTimeout(timer);
-            setBusy(false);
-          }
-        }
-        setPlayerName(trimmed);
-        onComplete(trimmed);
-      }}
-    >
-      <label>
-        Player name
-        <input
-          value={name}
-          maxLength={20}
-          autoComplete="nickname"
-          placeholder="Your username"
-          required
-          onChange={(e) => {
-            setError("");
-            setName(e.target.value);
-          }}
-        />
-      </label>
-      <p>This name appears in rooms and on the leaderboard.</p>
-      {error && <p role="alert">{error}</p>}
-      <button disabled={busy} className="solid-button">
-        {busy ? "Checking…" : "Save player name"}
-      </button>
-    </form>
-  );
+import { getPlayerName, setPlayerName, getPlayerAvatar, setPlayerAvatar, getDailyStreak } from "@/lib/streaks";
+import { AVATARS, PlayerAvatar } from "./PlayerAvatar";
+import { Flame } from "lucide-react";
+export function UsernameGate({onComplete}:{onComplete:(username:string)=>void}) {
+  const [name,setName]=useState(getPlayerName);
+  const [avatar,setAvatar]=useState(getPlayerAvatar);
+  const [error,setError]=useState("");
+  return <form className="profile-form" onSubmit={e=>{
+    e.preventDefault(); const clean=name.trim();
+    if(clean.length<2||clean.length>20){setError("Use 2 to 20 characters.");return;}
+    setPlayerAvatar(avatar); setPlayerName(clean); onComplete(clean);
+  }}>
+    <div className="profile-preview"><PlayerAvatar id={avatar} size={76}/><div><strong>{name.trim()||"Your player"}</strong><span><Flame size={16}/>{getDailyStreak()} day streak</span></div></div>
+    <label>Username<input value={name} maxLength={20} autoComplete="nickname" placeholder="Your username" required onChange={e=>{setError("");setName(e.target.value);}}/></label>
+    <fieldset><legend>Choose your avatar</legend><div className="avatar-grid">{AVATARS.map(a=><button type="button" key={a.id} aria-label={`Choose ${a.name} avatar`} aria-pressed={avatar===a.id} onClick={()=>setAvatar(a.id)}><PlayerAvatar id={a.id} size={56}/><span>{a.name}</span></button>)}</div></fieldset>
+    <p>Your username and avatar appear in rooms and rankings. Saved points sync when you connect.</p>
+    {error&&<p role="alert">{error}</p>}
+    <button className="solid-button">Save profile</button>
+  </form>;
 }
