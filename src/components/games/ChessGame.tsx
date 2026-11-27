@@ -196,7 +196,7 @@ export const ChessGame = ({
           GPL v3
         </a>{" "}
         ·{" "}
-        <a href={publicAsset("engine/stockfish-v19.0.1-source.tar.gz")}>
+        <a href={publicAsset("engine/stockfish-v19.0.1-source.zip")}>
           Engine source
         </a>
       </small>
