@@ -61,7 +61,7 @@ export default function Index() {
     <main className="studio-main">
       <div className="daily-streak"><Flame size={17}/><strong>{getDailyStreak()} day streak</strong><span>Play a round each day</span></div>
       <header className="screen-title">
-        <h1>Game library</h1>
+        <h1 aria-label="Game library">Choose your next round.</h1>
         <Link
           className="points-chip"
           to="/leaderboard"
@@ -78,7 +78,7 @@ export default function Index() {
             <img src="/covers/gravity-flip.webp" alt="" loading="eager" />
             <div className="spotlight-copy">
               <span className="spotlight-label">
-                <Gamepad2 size={16} /> Featured game
+                <Gamepad2 size={16} /> THE RUN THAT PUSHES BACK
               </span>
               <h2>
                 Gravity Flip
@@ -91,7 +91,7 @@ export default function Index() {
                 state={{ fromLibrary: true }}
               >
                 <Play size={15} fill="currentColor" />
-                Play game
+                Start a run
               </Link>
             </div>
           </section>
@@ -122,7 +122,7 @@ export default function Index() {
       )}
       <section className="library-section" aria-labelledby="browse-title">
         <div className="browse-heading">
-          <h2 id="browse-title">Browse games</h2>
+          <h2 id="browse-title">Pick your arena</h2>
           <label className="search-games">
             <Search size={17} />
             <input
@@ -161,7 +161,7 @@ export default function Index() {
                 height="324"
               />
               <div>
-                <h3>{g.name}</h3>
+                <h3>{g.name}</h3><i className="poster-play"><Play size={18} fill="currentColor"/></i>
                 <span>
                   {g.section} · {g.difficulty}
                 </span>

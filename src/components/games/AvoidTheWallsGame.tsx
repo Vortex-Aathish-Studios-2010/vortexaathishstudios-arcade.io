@@ -1,3 +1,4 @@
+import { useMatchProgress,useGameRandom } from "@/lib/matchPlay";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDevice } from "@/lib/DeviceContext";
@@ -11,6 +12,7 @@ const PLAYER_SIZE = 24;
 const WALL_HEIGHT = 20;
 
 export const AvoidTheWallsGame = ({ onComplete }: { onComplete?: (score: number) => void }) => {
+  const random=useGameRandom();
   const [gameState, setGameState] = useState<"menu" | "playing" | "gameover">("menu");
   const [score, setScore] = useState(0);
 
@@ -26,6 +28,8 @@ export const AvoidTheWallsGame = ({ onComplete }: { onComplete?: (score: number)
   const [walls, setWalls] = useState([...wallsRef.current]);
   const [trail, setTrail] = useState([...trailRef.current]);
   const { device } = useDevice();
+
+  const inMatch = useMatchProgress(score);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -86,7 +90,7 @@ export const AvoidTheWallsGame = ({ onComplete }: { onComplete?: (score: number)
     frameCount.current++;
     if (frameCount.current % Math.floor(60 * (3.5 / speedRef.current)) === 0) {
       const gapWidth = Math.max(70, 110 - (speedRef.current * 4)); 
-      const gapX = Math.random() * (AREA_WIDTH - gapWidth);
+      const gapX = random() * (AREA_WIDTH - gapWidth);
       wallsRef.current.push({ id: Date.now(), y: -WALL_HEIGHT, gapX, gapWidth, passed: false });
     }
 

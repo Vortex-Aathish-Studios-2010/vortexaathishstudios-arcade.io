@@ -1,3 +1,4 @@
+import { useMatchProgress,useGameRandom } from "@/lib/matchPlay";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { addPoints, updateStreak, addLoss } from "@/lib/streaks";
@@ -72,8 +73,8 @@ const clearLines = (board: Board): [Board, number] => {
   return [[...newRows, ...remaining], cleared];
 };
 
-const randomPiece = (): Piece => {
-  const idx = Math.floor(Math.random() * SHAPES.length);
+const randomPiece = (random=Math.random): Piece => {
+  const idx = Math.floor(random() * SHAPES.length);
   return { shape: SHAPES[idx], x: Math.floor(COLS / 2) - 1, y: 0, color: idx };
 };
 
@@ -83,9 +84,10 @@ interface Props {
 }
 
 export const BlockStack = ({ onComplete }: Props) => {
+  const random=useGameRandom();
   const [board, setBoard] = useState<Board>(createBoard);
-  const [piece, setPiece] = useState<Piece>(randomPiece);
-  const [nextPiece, setNextPiece] = useState<Piece>(randomPiece);
+  const [piece, setPiece] = useState<Piece>(()=>randomPiece(random));
+  const [nextPiece, setNextPiece] = useState<Piece>(()=>randomPiece(random));
   const [score, setScore] = useState(0);
   const [lines, setLines] = useState(0);
   const [gameOver, setGameOver] = useState(false);
@@ -119,7 +121,7 @@ export const BlockStack = ({ onComplete }: Props) => {
         setLines((l) => l + clearedLines);
       }
       const np = nextPiece;
-      setNextPiece(randomPiece());
+      setNextPiece(randomPiece(random));
       if (collides(cleared, np)) {
         setGameOver(true);
         sfx.gameOver();
@@ -179,7 +181,9 @@ export const BlockStack = ({ onComplete }: Props) => {
     return () => window.removeEventListener("keydown", handler);
   }, [movePiece, hardDrop]);
 
-  const reset = () => { setBoard(createBoard()); setPiece(randomPiece()); setNextPiece(randomPiece()); setScore(0); setLines(0); setGameOver(false); };
+  const inMatch = useMatchProgress(score);
+
+  const reset = () => { setBoard(createBoard()); setPiece(randomPiece(random)); setNextPiece(randomPiece(random)); setScore(0); setLines(0); setGameOver(false); };
 
   const renderBoard = () => {
     const display = board.map((r) => [...r]);

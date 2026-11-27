@@ -1,21 +1,34 @@
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Users } from "lucide-react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Chess } from "chess.js";
+import { Users, Copy, Check, ArrowLeft, Play } from "lucide-react";
 import { api, ArcadeError, Room, syncProfile } from "@/lib/arcade";
-
+import { roomGames, roomGame } from "@/lib/roomCatalog.mjs";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
-
-const titles = { trio: "Tic Tac Toe", four: "Four in a Row" };
+import { ChessBoard } from "@/components/ChessBoard";
+const ChallengeRound = lazy(() =>
+  import("@/components/ChallengeRound").then((m) => ({
+    default: m.ChallengeRound,
+  })),
+);
 export default function Rooms() {
+  const [params] = useSearchParams();
+  const requested =
+    params.get("game") === "tictactoe" ? "trio" : params.get("game");
   const [active, setActive] = useState(
-    () => sessionStorage.getItem("arcade.room") || "",
-  );
-  const [room, setRoom] = useState<Room | null>(null);
-  const [game, setGame] = useState<Room["game"]>("trio");
-  const [code, setCode] = useState("");
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const revision = useRef(0);
+      () => sessionStorage.getItem("arcade.room") || "",
+    ),
+    [room, setRoom] = useState<Room | null>(null),
+    [game, setGame] = useState(() => roomGame(requested)?.id || "trio"),
+    [code, setCode] = useState(""),
+    [message, setMessage] = useState(""),
+    [busy, setBusy] = useState(false),
+    [copied, setCopied] = useState(false),
+    [now, setNow] = useState(Date.now());
+  const revision = useRef(0),
+    offset = useRef(0),
+    inFlight = useRef(false);
+  const config = roomGame(room?.game || game);
   function select(next: string) {
     revision.current++;
     sessionStorage.setItem("arcade.room", next);
@@ -24,41 +37,50 @@ export default function Rooms() {
     setMessage("");
     setCopied(false);
   }
+  function receive(next: Room) {
+    offset.current = (next.serverNow || Date.now()) - Date.now();
+    setRoom(next);
+  }
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now() + offset.current), 250);
+    return () => clearInterval(timer);
+  }, []);
   useEffect(() => {
     if (!active) return;
-    let done = false;
-    let timer: number;
+    let disposed = false,
+      timer: ReturnType<typeof setTimeout>;
     async function read() {
       const seq = revision.current;
       let finished = false;
       try {
-        if (!document.hidden) {
-          const latest = await api<Room>("rooms/" + active);
-          if (done || seq !== revision.current) return;
-          setRoom(latest);
+        if (!document.hidden && !inFlight.current) {
+          const next = await api<Room>("rooms/" + active);
+          if (disposed || seq !== revision.current) return;
+          receive(next);
           setMessage("");
-          if (latest.result) { finished = true; return; }
+          finished = Boolean(next.result);
         }
       } catch (e) {
-        if (done || seq !== revision.current) return;
+        if (disposed || seq !== revision.current) return;
         if (e instanceof ArcadeError && e.status === 404) {
           select("");
           setMessage(e.message);
-          return;
-        }
-        setMessage("Connection interrupted. Reconnecting…");
+          finished = true;
+        } else setMessage("Connection interrupted. Reconnecting…");
       } finally {
-        if (!done && !finished) timer = window.setTimeout(read, 1000);
+        if (!disposed && !finished) timer = setTimeout(read, 800);
       }
     }
     void read();
     return () => {
-      done = true;
-      window.clearTimeout(timer);
+      disposed = true;
+      clearTimeout(timer);
     };
   }, [active]);
   async function action(run: () => Promise<void>) {
-    if (busy) return;
+    if (inFlight.current) return;
+    inFlight.current = true;
+    revision.current++;
     setBusy(true);
     setMessage("");
     try {
@@ -66,91 +88,141 @@ export default function Rooms() {
     } catch (e) {
       setMessage(e instanceof Error ? e.message : "Please try again.");
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
-  const enter = (join: boolean) =>
-    action(async () => {
+  async function command(actionName: string, body: object = {}) {
+    await action(async () =>
+      receive(await api<Room>("rooms/" + active + "/" + actionName, body)),
+    );
+  }
+  async function enter(join: boolean) {
+    await action(async () => {
       await syncProfile();
       const next = join
         ? await api<Room>("rooms/" + code + "/join", {})
         : await api<{ code: string }>("rooms", { game });
       select(next.code);
     });
+  }
+  const chess = useMemo(() => {
+    const c = new Chess();
+    if (room?.game === "chess" && room.board) c.loadPgn(room.board);
+    return c;
+  }, [room?.board, room?.game]);
   const myTurn =
     room &&
     room.guest &&
     !room.result &&
-    (room.board.replace(/\./g, "").length % 2 ? "O" : "X") === room.me;
+    (room.game === "chess"
+      ? chess.turn() === "w"
+        ? "X"
+        : "O"
+      : room.board.replace(/\./g, "").length % 2
+        ? "O"
+        : "X") === room.me;
+  const result = room?.result
+    ? room.result === "draw"
+      ? "Draw · 5 points each"
+      : room.result === room.me
+        ? "You won · +20 points"
+        : "Opponent wins"
+    : "";
   return (
-    <main className="club-page">
+    <main className={"club-page rooms-page" + (active ? " in-room" : "")}>
       <div className="club-wrap">
         <header className="club-title">
           <Users />
-          <h1>{room ? titles[room.game] : "Play with friends"}</h1>
+          <h1>
+            {active ? config?.title || "Connecting…" : "Play with friends"}
+          </h1>
           <p>
             {active
-              ? "Private match"
-              : "Create a two-player room or enter a friend’s code."}
+              ? "Room " + active
+              : "Every game. One code. Choose your next match."}
           </p>
         </header>
         {!active ? (
           <>
-            <section className="club-box room-create">
-              <h2>Create a room</h2>
-              <label>
-                Game
-                <div className="game-select">
-                  <select
-                    value={game}
-                    onChange={(e) => setGame(e.target.value as Room["game"])}
-                  >
-                    <option value="trio">Tic Tac Toe</option>
-                    <option value="four">Four in a Row</option>
-                  </select>
-                  <ChevronDown size={16} aria-hidden="true" />
-                </div>
-              </label>
-              <button
-                className="club-cta"
-                disabled={busy}
-                onClick={() => enter(false)}
-              >
-                Create room
-              </button>
-            </section>
             <form
-              className="club-box"
+              className="room-join-bar"
               onSubmit={(e) => {
                 e.preventDefault();
                 void enter(true);
               }}
             >
-              <h2>Join a friend</h2>
-              <label>
-                Six-character code
-                <input
-                  value={code}
-                  maxLength={6}
-                  autoCapitalize="characters"
-                  placeholder="ABC234"
-                  onChange={(e) =>
-                    setCode(
-                      e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ""),
-                    )
-                  }
-                />
-              </label>
+              <label htmlFor="join-code">Have a room code?</label>
+              <input
+                id="join-code"
+                value={code}
+                maxLength={6}
+                autoCapitalize="characters"
+                placeholder="ABC234"
+                onChange={(e) =>
+                  setCode(
+                    e.target.value.toUpperCase().replace(/[^A-Z2-9]/g, ""),
+                  )
+                }
+              />
               <button
-                className="club-cta alt"
+                className="solid-button"
                 disabled={busy || code.length !== 6}
               >
                 Join room
               </button>
             </form>
+            <div className="room-picker-heading">
+              <h2>Choose a game</h2>
+              <span>{roomGames.length} ways to compete</span>
+            </div>
+            <section className="room-create-bar">
+              <div>
+                <small>SELECTED GAME</small>
+                <h2>{config.title}</h2>
+                <p>
+                  {config.mode === "challenge"
+                    ? `Two players start together. One attempt, up to ${config.seconds / 60} minutes. Highest score wins.`
+                    : "Take turns on the same board. Moves are checked by the server."}
+                </p>
+              </div>
+              <button
+                className="solid-button"
+                disabled={busy}
+                onClick={() => enter(false)}
+              >
+                <Play size={18} />
+                {busy ? "Creating…" : "Create room"}
+              </button>
+            </section>
+            <div
+              className="room-game-picker"
+              role="group"
+              aria-label="Multiplayer games"
+            >
+              {roomGames.map((g) => (
+                <button
+                  key={g.id}
+                  aria-pressed={game === g.id}
+                  onClick={() => setGame(g.id)}
+                >
+                  <img src={"/covers/" + g.cover + ".webp"} alt="" />
+                  <div>
+                    <span>
+                      {g.mode === "challenge"
+                        ? "SCORE CHALLENGE"
+                        : "SHARED BOARD"}
+                    </span>
+                    <strong>{g.title}</strong>
+                    <small>{g.detail}</small>
+                  </div>
+                  {game === g.id && <Check size={19} />}
+                </button>
+              ))}
+            </div>
           </>
         ) : (
-          <section className="club-box">
+          <section className="club-box room-arena">
             <div className="club-panel">
               <div>
                 <small>ROOM CODE</small>
@@ -165,59 +237,164 @@ export default function Rooms() {
                   })
                 }
               >
+                <Copy size={16} />
                 {copied ? "Copied" : "Copy code"}
               </button>
             </div>
             {room && (
               <>
-                <div className="room-players"><span><PlayerAvatar id={room.hostAvatar} size={42}/>{room.host} (X)</span><span><PlayerAvatar id={room.guestAvatar} size={42}/>{room.guest ? room.guest + " (O)" : "Waiting for a friend…"}</span></div>
-                <h2 aria-live="polite">
-                  {room.result
-                    ? room.result === "draw"
-                      ? "Draw · 5 points each"
-                      : room.result === room.me
-                        ? "You won · +20 points"
-                        : "Opponent wins"
-                    : room.guest
-                      ? myTurn
-                        ? "Your turn"
-                        : "Opponent’s turn"
-                      : "Share the room code"}
-                </h2>
-                <div className={"room-board " + room.game}>
-                  {[...room.board].map((v, i) => (
-                    <button
-                      key={i}
-                      aria-label={
-                        "Cell " + (i + 1) + ", " + (v === "." ? "empty" : v)
-                      }
-                      data-mark={v}
-                      disabled={
-                        busy ||
-                        !myTurn ||
-                        (room.game === "trio"
-                          ? v !== "."
-                          : room.board[i % 7] !== ".")
-                      }
-                      onClick={() =>
-                        action(async () => {
-                          const r = await api<Room>(
-                            "rooms/" + active + "/move",
-                            { cell: i, board: room.board },
-                          );
-                          revision.current++;
-                          setRoom(r);
-                        })
-                      }
-                    >
-                      {v === "." ? "" : v}
-                    </button>
-                  ))}
+                <div className="room-players">
+                  <span>
+                    <PlayerAvatar id={room.hostAvatar} size={48} />
+                    <span>
+                      <b>{room.host}</b>
+                      <small>
+                        {room.game === "chess"
+                          ? "White"
+                          : room.mode === "challenge"
+                            ? "Host"
+                            : "X"}
+                        {room.mode === "challenge"
+                          ? " · " +
+                            (room.hostDone
+                              ? "Finished"
+                              : room.hostReady
+                                ? "Ready"
+                                : "Not ready")
+                          : ""}
+                      </small>
+                    </span>
+                    {room.mode === "challenge" && (
+                      <strong>{room.hostScore}</strong>
+                    )}
+                  </span>
+                  <span>
+                    <PlayerAvatar id={room.guestAvatar} size={48} />
+                    <span>
+                      <b>{room.guest || "Waiting for a friend…"}</b>
+                      <small>
+                        {room.guest
+                          ? room.game === "chess"
+                            ? "Black"
+                            : room.mode === "challenge"
+                              ? "Guest"
+                              : "O"
+                          : ""}
+                        {room.mode === "challenge" && room.guest
+                          ? " · " +
+                            (room.guestDone
+                              ? "Finished"
+                              : room.guestReady
+                                ? "Ready"
+                                : "Not ready")
+                          : ""}
+                      </small>
+                    </span>
+                    {room.mode === "challenge" && (
+                      <strong>{room.guestScore}</strong>
+                    )}
+                  </span>
                 </div>
+                <h2 className="room-status" aria-live="polite">
+                  {result ||
+                    (!room.guest
+                      ? "Share the room code"
+                      : room.mode === "challenge"
+                        ? room.starts
+                          ? now < room.starts
+                            ? "Get ready"
+                            : "Match in progress"
+                          : "Ready up to play"
+                        : myTurn
+                          ? "Your turn"
+                          : "Opponent’s turn")}
+                </h2>
+                {room.mode === "challenge" ? (
+                  room.starts ? (
+                    <Suspense fallback={<p>Loading game…</p>}>
+                      <ChallengeRound
+                        key={room.code + room.starts}
+                        room={room}
+                        clockOffset={offset.current}
+                      />
+                    </Suspense>
+                  ) : (
+                    <div className="room-ready">
+                      <p>
+                        {config.detail} Both players use level one. Your
+                        friend’s score updates automatically.
+                      </p>
+                      <button
+                        className="solid-button"
+                        disabled={
+                          busy ||
+                          (room.me === "X" ? room.hostReady : room.guestReady)
+                        }
+                        onClick={() => command("ready")}
+                      >
+                        {(room.me === "X" ? room.hostReady : room.guestReady)
+                          ? "Ready"
+                          : "I’m ready"}
+                      </button>
+                      {room.me === "X" && (
+                        <button
+                          className="solid-button"
+                          disabled={
+                            busy ||
+                            !room.guest ||
+                            !room.hostReady ||
+                            !room.guestReady
+                          }
+                          onClick={() => command("start")}
+                        >
+                          Start match
+                        </button>
+                      )}
+                    </div>
+                  )
+                ) : room.game === "chess" ? (
+                  <ChessBoard
+                    chess={chess}
+                    orientation={room.me === "X" ? "w" : "b"}
+                    disabled={busy || !myTurn}
+                    onMove={(from, to, promotion) =>
+                      command("move", {
+                        from,
+                        to,
+                        promotion,
+                        board: room.board,
+                      })
+                    }
+                  />
+                ) : (
+                  <div className={"room-board " + room.game}>
+                    {[...room.board].map((v, i) => (
+                      <button
+                        key={i}
+                        aria-label={
+                          "Cell " + (i + 1) + ", " + (v === "." ? "empty" : v)
+                        }
+                        data-mark={v}
+                        disabled={
+                          busy ||
+                          !myTurn ||
+                          (room.game === "trio"
+                            ? v !== "."
+                            : room.board[i % 7] !== ".")
+                        }
+                        onClick={() =>
+                          command("move", { cell: i, board: room.board })
+                        }
+                      >
+                        {v === "." ? "" : v}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </>
             )}
             <button
-              className="club-light"
+              className="club-light room-leave"
               disabled={busy}
               onClick={() =>
                 action(async () => {
@@ -231,12 +408,13 @@ export default function Rooms() {
                 })
               }
             >
-              Close room
+              <ArrowLeft size={17} />
+              {room?.result ? "Back to games" : "Close room"}
             </button>
           </section>
         )}
         {message && (
-          <p role="status" className="club-help">
+          <p role="status" className="room-error">
             {message}
           </p>
         )}

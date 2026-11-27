@@ -1,3 +1,4 @@
+import { useMatchProgress, useGameRandom } from "@/lib/matchPlay";
 import { useState, useMemo, useCallback } from "react";
 import { addPoints, updateStreak, getGameLevel, incrementLevel, addWin } from "@/lib/streaks";
 import { sfx } from "@/lib/sounds";
@@ -13,7 +14,7 @@ const getDifficulty = (level: number): { removed: number; label: string } => {
   return { removed: Math.min(58, 45 + level * 2), label: "Master" };
 };
 
-const generateSudoku = (removedCount: number): { puzzle: number[][]; solution: number[][] } => {
+const generateSudoku = (removedCount: number, random = Math.random): { puzzle: number[][]; solution: number[][] } => {
   const board: number[][] = Array.from({ length: 9 }, () => Array(9).fill(0));
   const isValid = (b: number[][], r: number, c: number, n: number) => {
     for (let i = 0; i < 9; i++) if (b[r][i] === n || b[i][c] === n) return false;
@@ -24,7 +25,7 @@ const generateSudoku = (removedCount: number): { puzzle: number[][]; solution: n
   const solve = (b: number[][]): boolean => {
     for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
       if (b[r][c] === 0) {
-        const nums = [1,2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5);
+        const nums = [1,2,3,4,5,6,7,8,9].sort(() => random() - 0.5);
         for (const n of nums) { if (isValid(b, r, c, n)) { b[r][c] = n; if (solve(b)) return true; b[r][c] = 0; } }
         return false;
       }
@@ -33,7 +34,7 @@ const generateSudoku = (removedCount: number): { puzzle: number[][]; solution: n
   };
   solve(board);
   const solution = board.map((r) => [...r]);
-  const cells = Array.from({ length: 81 }, (_, i) => i).sort(() => Math.random() - 0.5);
+  const cells = Array.from({ length: 81 }, (_, i) => i).sort(() => random() - 0.5);
   let removed = 0;
   for (const idx of cells) { if (removed >= removedCount) break; board[Math.floor(idx / 9)][idx % 9] = 0; removed++; }
   return { puzzle: board, solution };
@@ -45,9 +46,10 @@ interface Props {
 }
 
 export const SudokuGame = ({ level: propLevel, onComplete }: Props) => {
+  const random = useGameRandom();
   const currentLevel = propLevel || getGameLevel("sudoku");
   const difficulty = getDifficulty(currentLevel);
-  const { puzzle: initialPuzzle, solution } = useMemo(() => generateSudoku(difficulty.removed), [currentLevel]);
+  const { puzzle: initialPuzzle, solution } = useMemo(() => generateSudoku(difficulty.removed, random), [currentLevel]);
   const [board, setBoard] = useState<number[][]>(() => initialPuzzle.map((r) => [...r]));
   const [fixed] = useState<boolean[][]>(() => initialPuzzle.map((r) => r.map((v) => v !== 0)));
   const [selected, setSelected] = useState<[number, number] | null>(null);
@@ -57,6 +59,8 @@ export const SudokuGame = ({ level: propLevel, onComplete }: Props) => {
   const [revealedCells, setRevealedCells] = useState<boolean[][]>(() =>
     Array.from({ length: 9 }, () => Array(9).fill(false))
   );
+
+  const inMatch = useMatchProgress(board.flatMap((row,r)=>row.map((n,c)=>!fixed[r][c] && n === solution[r][c] ? 2 : 0)).reduce((a,b)=>a+b,0));
 
   // Track which cells the player has filled (non-fixed, non-zero)
   const hasPlayerPlacedCells = board.some((row, r) =>
@@ -87,6 +91,7 @@ export const SudokuGame = ({ level: propLevel, onComplete }: Props) => {
   };
 
   const handleHint = useCallback(() => {
+    if (inMatch) return;
     if (won || showingSolution) return;
 
     // 1. Check for incorrect cells
@@ -122,7 +127,7 @@ export const SudokuGame = ({ level: propLevel, onComplete }: Props) => {
 
     if (emptyCells.length > 0) {
       // Pick a random empty cell to fill
-      const [r, c] = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      const [r, c] = emptyCells[Math.floor(random() * emptyCells.length)];
       newBoard[r][c] = solution[r][c];
       
       setBoard(newBoard);
@@ -210,7 +215,7 @@ export const SudokuGame = ({ level: propLevel, onComplete }: Props) => {
         </div>
       )}
 
-      {!won && !showingSolution && (
+      {!inMatch && !won && !showingSolution && (
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}

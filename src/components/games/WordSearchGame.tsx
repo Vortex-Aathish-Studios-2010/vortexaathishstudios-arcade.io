@@ -1,3 +1,4 @@
+import { useMatchProgress, useGameRandom } from "@/lib/matchPlay";
 import { useState, useMemo, useCallback, useRef } from "react";
 import { addPoints, updateStreak, getGameLevel, incrementLevel, addWin } from "@/lib/streaks";
 import { sfx } from "@/lib/sounds";
@@ -25,15 +26,15 @@ const getConfig = (level: number) => {
   return { gridSize, words: ALL_WORDS[wordSetIdx].slice(0, wordCount) };
 };
 
-const generateGrid = (words: string[], gridSize: number) => {
+const generateGrid = (words: string[], gridSize: number, random = Math.random) => {
   const grid: string[][] = Array.from({ length: gridSize }, () => Array(gridSize).fill(""));
   const placements = new Map<string, [number, number][]>();
   for (const word of words) {
     let placed = false;
     for (let attempt = 0; attempt < 300 && !placed; attempt++) {
-      const [dr, dc] = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
-      const r = Math.floor(Math.random() * gridSize);
-      const c = Math.floor(Math.random() * gridSize);
+      const [dr, dc] = DIRECTIONS[Math.floor(random() * DIRECTIONS.length)];
+      const r = Math.floor(random() * gridSize);
+      const c = Math.floor(random() * gridSize);
       const cells: [number, number][] = [];
       let valid = true;
       for (let i = 0; i < word.length; i++) {
@@ -47,7 +48,7 @@ const generateGrid = (words: string[], gridSize: number) => {
   }
   for (let r = 0; r < gridSize; r++)
     for (let c = 0; c < gridSize; c++)
-      if (grid[r][c] === "") grid[r][c] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+      if (grid[r][c] === "") grid[r][c] = String.fromCharCode(65 + Math.floor(random() * 26));
   return { grid, placements };
 };
 
@@ -57,14 +58,17 @@ interface Props {
 }
 
 export const WordSearchGame = ({ level: propLevel, onComplete }: Props) => {
+  const random = useGameRandom();
   const [currentLevel, setCurrentLevel] = useState(propLevel || getGameLevel("wordsearch"));
   const config = useMemo(() => getConfig(currentLevel), [currentLevel]);
-  const { grid, placements } = useMemo(() => generateGrid(config.words, config.gridSize), [currentLevel]);
+  const { grid, placements } = useMemo(() => generateGrid(config.words, config.gridSize, random), [currentLevel]);
   const [found, setFound] = useState<Set<string>>(new Set());
   const [selecting, setSelecting] = useState<[number, number][]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [levelComplete, setLevelComplete] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
+
+  const inMatch = useMatchProgress(found.size * 20);
 
   const cellKey = (r: number, c: number) => `${r},${c}`;
   const foundCells = useMemo(() => {

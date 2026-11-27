@@ -1,3 +1,4 @@
+import { useMatchProgress } from "@/lib/matchPlay";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RotateCcw } from "lucide-react";
@@ -28,6 +29,8 @@ export const StackTowerGame = ({ onComplete }: { onComplete?: (score: number) =>
   
   // Animation state for just-dropped block impact squish
   const [impactForce, setImpactForce] = useState(0);
+
+  const inMatch = useMatchProgress(score);
 
   const startGame = () => {
     blocksRef.current = [{ id: 0, x: (CONTAINER_WIDTH - INITIAL_WIDTH) / 2, width: INITIAL_WIDTH, hue: 200 }];

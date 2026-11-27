@@ -10,7 +10,10 @@ const base = (
 const tokenKey = "vortex.arcade.identity";
 export type Room = {
   code: string;
-  game: "trio" | "four";
+  game: string;
+  mode?: "board"|"chess"|"challenge";
+  starts?:number; ends?:number; serverNow?:number;
+  hostScore?:number;guestScore?:number;hostDone?:boolean;guestDone?:boolean;hostReady?:boolean;guestReady?:boolean;
   host: string;
   guest: string | null;
   board: string;
@@ -85,7 +88,7 @@ export function watchScores() {
     if (busy) { dirty = true; return; }
     busy = true; dirty = false;
     try { await syncProfile(); }
-    catch { if (!disposed) timer = window.setTimeout(send, 15000); }
+    catch { if (!disposed) timer = window.setTimeout(send, 5000); }
     finally { busy = false; if (!disposed && dirty) timer = window.setTimeout(send, 350); }
   }
   const changed = () => { reportSync("pending"); window.clearTimeout(timer); timer = window.setTimeout(send, 350); };
@@ -93,6 +96,7 @@ export function watchScores() {
   void send();
   window.addEventListener("arcade-score", changed);
   window.addEventListener("online", send);
+  window.addEventListener("storage", changed);
   document.addEventListener("visibilitychange", visible);
-  return () => { disposed = true; window.clearTimeout(timer); window.removeEventListener("arcade-score", changed); window.removeEventListener("online", send); document.removeEventListener("visibilitychange", visible); };
+  return () => { disposed = true; window.clearTimeout(timer); window.removeEventListener("arcade-score", changed); window.removeEventListener("online", send); window.removeEventListener("storage", changed); document.removeEventListener("visibilitychange", visible); };
 }

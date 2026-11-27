@@ -58,8 +58,8 @@ it("keeps category selection when returning from play and exposes the active nav
   );
   expect(screen.getByRole("searchbox")).toHaveValue("Memory");
   const nav = screen.getByRole("navigation", { name: "Arcade navigation" });
-  fireEvent.click(within(nav).getByRole("link", { name: "Leaderboard" }));
+  fireEvent.click(within(nav).getByRole("link", { name: "Rankings" }));
   expect(
-    within(nav).getByRole("link", { name: "Leaderboard" }),
+    within(nav).getByRole("link", { name: "Rankings" }),
   ).toHaveAttribute("aria-current", "page");
 });

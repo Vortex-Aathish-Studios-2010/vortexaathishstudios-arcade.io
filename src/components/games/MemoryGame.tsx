@@ -1,3 +1,4 @@
+import { useMatchProgress, useGameRandom } from "@/lib/matchPlay";
 import {
   Anchor,
   Bell,
@@ -121,6 +122,7 @@ interface Props {
 }
 
 export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
+  const random = useGameRandom();
   const [currentLevel, setCurrentLevel] = useState(
     propLevel || getGameLevel("memory"),
   );
@@ -130,12 +132,14 @@ export const MemoryGame = ({ level: propLevel, onComplete }: Props) => {
   const [moves, setMoves] = useState(0);
   const [gameWon, setGameWon] = useState(false);
 
+  const inMatch = useMatchProgress(cards.filter(c=>c.matched).length * 5);
+
   const initGame = (lvl: number) => {
     const cfg = getLevelConfig(lvl);
     setConfig(cfg);
     const symbolsInRound = Array.from({ length: cfg.pairs }, (_, i) => i);
     const shuffled = [...symbolsInRound, ...symbolsInRound]
-      .sort(() => Math.random() - 0.5)
+      .sort(() => random() - 0.5)
       .map((symbol, i) => ({ id: i, symbol, flipped: false, matched: false }));
     setCards(shuffled);
     setFlipped([]);

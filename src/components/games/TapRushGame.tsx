@@ -1,3 +1,4 @@
+import { useMatchProgress } from "@/lib/matchPlay";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Timer, Trophy, Play, RotateCcw } from "lucide-react";
@@ -13,6 +14,8 @@ export const TapRushGame = ({ onComplete }: { onComplete?: (score: number) => vo
     const saved = localStorage.getItem("tapRushBest");
     return saved ? parseInt(saved, 10) : 0;
   });
+
+  const inMatch = useMatchProgress(score);
 
   useEffect(() => {
     if (gameState === "playing" && timeLeft > 0) {
@@ -109,7 +112,7 @@ export const TapRushGame = ({ onComplete }: { onComplete?: (score: number) => vo
                 whileTap={{ scale: 0.9 }}
                 animate={{ boxShadow: ["0 0 30px rgba(var(--primary),0.4)", "0 0 60px rgba(var(--primary),0.8)", "0 0 30px rgba(var(--primary),0.4)"] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                onClick={startGame}
+                aria-label="Start Tap Rush" onClick={startGame}
                 className="w-32 h-32 rounded-full bg-primary flex items-center justify-center z-20"
               >
                 <Play className="h-12 w-12 text-primary-foreground ml-2" />
@@ -136,7 +139,7 @@ export const TapRushGame = ({ onComplete }: { onComplete?: (score: number) => vo
                   whileTap={{ scale: 0.9, backgroundColor: "hsl(var(--accent) / 0.8)" }}
                   animate={{ scale: [1, 1.05, 1], boxShadow: ["0 10px 0 rgba(var(--accent-foreground),0.3)", "0 20px 0 rgba(var(--accent-foreground),0.1)", "0 10px 0 rgba(var(--accent-foreground),0.3)"] }}
                   transition={{ duration: 1, repeat: Infinity }}
-                  onPointerDown={handleTap}
+                  aria-label="TAP" onPointerDown={handleTap}
                   className="relative w-48 h-48 rounded-full bg-accent text-accent-foreground border-4 border-accent-foreground/20 active:translate-y-4 active:shadow-[0_0_0_transparent] transition-all flex items-center justify-center select-none z-20 overflow-hidden"
                   style={{ touchAction: "manipulation" }}
                 >
@@ -190,7 +193,7 @@ export const TapRushGame = ({ onComplete }: { onComplete?: (score: number) => vo
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={startGame}
+                aria-label="Start Tap Rush" onClick={startGame}
                 className="mt-4 px-8 py-4 rounded-full bg-secondary text-secondary-foreground font-sport text-lg shadow-[0_0_20px_rgba(var(--secondary),0.4)] flex items-center gap-3"
               >
                 <RotateCcw className="h-5 w-5" /> REPLAY

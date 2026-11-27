@@ -28,7 +28,7 @@ const Rooms = lazy(() => import("./pages/Rooms"));
 const queryClient = new QueryClient();
 
 const AppFlow = () => {
-  const [showSplash, setShowSplash] = useState(Capacitor.isNativePlatform());
+  const [showSplash, setShowSplash] = useState(() => Capacitor.isNativePlatform() || !sessionStorage.getItem("arcade.booted.v3"));
   const [needsUsername, setNeedsUsername] = useState(() => !getPlayerName());
 
   useEffect(() => watchScores(), []);
@@ -83,7 +83,7 @@ const AppFlow = () => {
             <Sonner />
             <OfflineWarning />
             {showSplash ? (
-              <SplashScreen onComplete={() => setShowSplash(false)} />
+              <SplashScreen onComplete={() => { sessionStorage.setItem("arcade.booted.v3", "1"); setShowSplash(false); }} />
             ) : (
               <BrowserRouter>
                 <Suspense fallback={<div className="club-page" role="status">Loading game…</div>}>

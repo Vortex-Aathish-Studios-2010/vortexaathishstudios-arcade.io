@@ -91,11 +91,11 @@ export const games: GameInfo[] = [
     available: true,
     difficulty: "Hard",
     tutorial: [
-      "Step 1: Place a piece on the board, then hit SHUFFLE to randomly reposition it.",
-      "Step 2: Fill the remaining spaces with the other pieces.",
-      "Drag pieces from the tray onto the board, or click to select and place.",
-      "Use the ROTATE button to change a piece's orientation before placing.",
-      "Stuck? Hit SHOW SOLUTION to watch the puzzle solve itself!",
+      "The locked pieces are your starting clues. Fill every remaining space.",
+      "Choose a piece, then tap the board, or drag it into position.",
+      "A pale outline shows a valid fit. Red means the piece cannot fit there.",
+      "Use Rotate (R) and Flip (F) to change the shape's orientation.",
+      "Move placed pieces, return them to the tray, or use Undo to try again.",
     ],
   },
   {

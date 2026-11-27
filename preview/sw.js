@@ -1,6 +1,6 @@
-const cacheName = "arcade-preview-d2cb9e80465d03e6";
+const cacheName = "arcade-preview-07d340f259a8e999";
 const scope = self.registration.scope;
-const files = ['index.html', 'manifest.webmanifest', 'arcade-icon-192.png', 'arcade-icon.png'].map(path => new URL(path, scope).href);
+const files = ["index.html", "manifest.webmanifest", "arcade-icon-192.png", "arcade-icon.png", "avatars.png", "engine/stockfish-19-lite-single.js", "engine/Copying.txt", "engine/SOURCE.txt", "engine/stockfish-19-lite-single.wasm", "engine/README.md", "engine/stockfish-v19.0.1-source.tar.gz"].map(path => new URL(path, scope).href);
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()));
 });
