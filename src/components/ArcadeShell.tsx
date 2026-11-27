@@ -13,9 +13,9 @@ import { ContactModal } from "./ContactModal";
 import { UsernameGate } from "./UsernameGate";
 
 const destinations = [
-  { to: "/", label: "Library", icon: Gamepad2 },
-  { to: "/rooms", label: "Rooms", icon: UsersRound },
-  { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { to: "/", label: "Play", icon: Gamepad2 },
+  { to: "/rooms", label: "Versus", icon: UsersRound },
+  { to: "/leaderboard", label: "Rankings", icon: Trophy },
 ];
 
 export function ArcadeShell({ onProfile }: { onProfile: () => void }) {

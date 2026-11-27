@@ -120,7 +120,7 @@ const GamePage = () => {
             </span>
           )}
           <button
-            onClick={() => navigate("/rooms")}
+            onClick={() => navigate("/rooms?game="+game.id)}
             className="flex items-center gap-1.5 bg-card border border-secondary/30 rounded-lg px-2.5 py-1 text-secondary hover:border-secondary/60 transition-all"
           >
             <Users className="h-3.5 w-3.5" />
@@ -191,7 +191,7 @@ const GamePage = () => {
         />
       )}
 
-      <OnScreenControls gameId={id} />
+      {id!=="snake"&&<OnScreenControls gameId={id} />}
 
       {/* Device toggle removed to prevent confusing the user with multiple controls UI */}
     </div>

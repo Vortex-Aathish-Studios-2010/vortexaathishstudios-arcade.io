@@ -1,3 +1,4 @@
+import { useMatchProgress } from "@/lib/matchPlay";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RotateCcw, Target } from "lucide-react";
@@ -27,6 +28,8 @@ export const OneShotAimGame = ({ onComplete }: { onComplete?: (score: number) =>
   const [particles, setParticles] = useState<Particle[]>([]);
   const [trail, setTrail] = useState(trailRef.current);
   const [recoil, setRecoil] = useState(0); // cannon recoil animation state
+
+  const inMatch = useMatchProgress(score);
 
   const startGame = () => {
     targetRef.current = { x: AREA_WIDTH / 2, y: 50, direction: 1, speed: 2.5 };

@@ -10,7 +10,10 @@ The Java namespace is separate and remains `com.vortexaathishstudios.arcadeio`.
 - A larger matte interface, editable username and ten illustrated avatars, plus a daily play streak.
 - Shell Game starts with three slow swaps; each win advances a level, a miss drops one level, and points remain saved.
 - 16 solo games with local scores. Android includes game assets for offline play from installation; the web edition caches them after its first complete load.
-- Online two-player Tic Tac Toe and Four in a Row rooms with six-character codes.
+- Online rooms for all 16 games, plus Four in a Row. Chess, Tic Tac Toe and Four in a Row share a server-validated board; the other games use timed score challenges with readiness, a shared countdown, live scores and one attempt per player.
+- Gravity Flip increases speed and narrows passable gaps with score. Snake uses smooth canvas animation, keyboard, swipe and touch controls. Konoodle supports measured touch dragging, rotate/flip, valid-drop previews and undo.
+- Chess uses chess.js rules and the bundled Stockfish 19 lite engine, set to 2000 Elo with a 1.2-second move budget. This is an engine setting, not a measured rating. Local two-player chess rotates toward the next player.
+- An animated loading screen credits Founder Aathish Kannayil Ajesh and Co-founder Aagney Kannayil Aajehs.
 - Rankings refresh every two seconds. Offline solo points sync when a named player reconnects; room wins earn 20 points and draws earn 5.
 
 Use Node.js 22.13 or later (the local backend uses `node:sqlite`).
@@ -22,7 +25,7 @@ npm run dev
 
 Vite serves the game and local room API together. Local data is stored in ignored
 `.arcade-local/game.sqlite`. Production API source is in `server/`, with schema in
-`migrations/` for a Cloudflare D1 binding named `DB`. Apply migrations in order; the avatar migration preserves existing players and scores.
+`migrations/` for a Cloudflare D1 binding named `DB`. Apply migrations in order; the avatar and room migrations preserve existing players and scores.
 
 ```sh
 npm test
@@ -39,6 +42,10 @@ profiles, live rankings and two-player rooms. Solo games cache for offline use
 after the first load. Online features use the hosted API with the GitHub Pages
 origin explicitly allowed by the server. Offline points remain visible and retry
 sync when connected. A username is required to appear in public rankings.
+
+Reloading an active score challenge submits its saved attempt; it does not grant a new attempt. Scores are submitted by clients for casual play and are not an anti-cheat or rated competition system. Chess and other shared-board moves are validated on the server.
+
+Stockfish binaries, GPL-3.0 license, corresponding source archive and provenance are in `public/engine/`. The engine runs in a worker and is cached for offline play.
 
 ## Android preview
 

@@ -1,3 +1,4 @@
+import { useMatchProgress, useGameRandom } from "@/lib/matchPlay";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { addPoints, updateStreak, addWin } from "@/lib/streaks";
@@ -9,10 +10,10 @@ const SIZE = 4;
 const TOTAL = SIZE * SIZE;
 const createSolved = () => [...Array(TOTAL - 1).keys()].map((i) => i + 1).concat(0);
 
-const shuffle = (arr: number[]): number[] => {
+const shuffle = (arr: number[], random = Math.random): number[] => {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   let inversions = 0;
@@ -71,7 +72,8 @@ interface Props {
 }
 
 export const SlidingPuzzle = ({ onComplete }: Props) => {
-  const [tiles, setTiles] = useState<number[]>(() => shuffle(createSolved()));
+  const random = useGameRandom();
+  const [tiles, setTiles] = useState<number[]>(() => shuffle(createSolved(), random));
   const [moves, setMoves] = useState(0);
   const [won, setWon] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -80,6 +82,8 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
   const dragStart = useRef<{ index: number; x: number; y: number } | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const solveTimeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const inMatch = useMatchProgress(tiles.filter((n,i)=>n !== 0 && n === i+1).length);
 
   useEffect(() => {
     if (!running || won) { clearInterval(timerRef.current); return; }
@@ -120,6 +124,7 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
   };
 
   const handleViewSolution = useCallback(() => {
+    if (inMatch) return;
     if (won || solvingInProgress) return;
     setSolvingInProgress(true);
     setRunning(false);
@@ -198,7 +203,7 @@ export const SlidingPuzzle = ({ onComplete }: Props) => {
     solveTimeouts.current.forEach(clearTimeout);
     solveTimeouts.current = [];
     setSolvingInProgress(false);
-    setTiles(shuffle(createSolved()));
+    setTiles(shuffle(createSolved(), random));
     setMoves(0);
     setWon(false);
     setElapsed(0);

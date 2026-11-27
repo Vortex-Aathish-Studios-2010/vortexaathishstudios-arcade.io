@@ -1,0 +1,7 @@
+Stockfish.js 19.0.1, lite single-thread build. Copyright 2026 Chess.com, LLC,
+Stockfish authors and contributors. Distributed unmodified under GPL-3.0.
+License: Copying.txt in this directory.
+Corresponding source and build scripts: stockfish-v19.0.1-source.zip in this directory.
+Upstream source: https://github.com/nmrugg/stockfish.js/tree/v19.0.1
+Lite neural network and build instructions are documented in the source.
+Engine binaries match the stockfish@19.0.1 npm distribution.

@@ -1,8 +1,5 @@
-Meet the new Arcade.io:
-• A fresh dark design for phones, tablets and larger screens.
-• 16 solo mini games with offline play.
-• Create or join a friend’s room with a six-character code for Tic Tac Toe and Four in a Row.
-• Live arcade rankings and score sync when you reconnect.
-• Updated game artwork, touch controls and quicker navigation.
-
-Friend rooms and live rankings need an internet connection.
+A new arcade look, animated loading screen and ten character avatars.
+Play every game with friends using room codes, shared boards or live score challenges. Rankings sync automatically.
+Enjoy tougher Gravity Flip runs, smoother Snake movement and rebuilt Konoodle touch controls.
+Chess now has complete rules, a stronger Stockfish opponent and a rotating board for two players on one device.
+Solo games work offline.

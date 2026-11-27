@@ -16,13 +16,14 @@ with tempfile.TemporaryDirectory() as tmp:
         s=p.read_text()
         s,n1=re.subn(r'src="(/(?:covers/[^"]+|arcade-icon\.png))"',r'src={imageFor("\1")}',s)
         s,n2=re.subn(r'src=\{("/covers/" \+ g.id \+ "\.webp"|\x60/covers/\$\{game\.id\}\.webp\x60)\}',r'src={imageFor(\1)}',s)
-        if n1+n2: p.write_text('import { imageFor } from "@/portableArt";\n'+s)
+        s,n3=re.subn(r"src=\{'/covers/'\+g.cover\+'\.webp'\}","src={imageFor('/covers/'+g.cover+'.webp')}",s)
+        if n1+n2+n3: p.write_text('import { imageFor } from "@/portableArt";\n'+s)
     app=project/'src/App.tsx'
     s=app.read_text().replace('BrowserRouter','HashRouter')
     app.write_text(s)
     entry=project/'src/main.tsx'
     entry.write_text(entry.read_text().split("if (import.meta.env.PROD")[0])
-    subprocess.run([str(project/'node_modules/.bin/esbuild'),'src/main.tsx','--bundle','--minify','--jsx=automatic','--format=iife','--target=es2020','--loader:.css=empty','--define:process.env.NODE_ENV="production"','--define:import.meta.env='+json.dumps({'VITE_ARCADE_API_URL':'https://vortex-arcade-minigames.ajuponnu2009.chatgpt.site'}),'--outfile=bundle.js'],cwd=project,check=True)
+    subprocess.run([str(project/'node_modules/.bin/esbuild'),'src/main.tsx','--bundle','--minify','--jsx=automatic','--format=iife','--target=es2020','--loader:.css=empty','--define:process.env.NODE_ENV="production"','--define:import.meta.env='+json.dumps({'VITE_ARCADE_API_URL':'https://vortex-arcade-minigames.ajuponnu2009.chatgpt.site','VITE_PUBLIC_BASE':'./'}),'--outfile=bundle.js'],cwd=project,check=True)
     css=next((root/'dist/assets').glob('index-*.css')).read_text().replace('/type/barlow-condensed-800.ttf',uri(root/'public/type/barlow-condensed-800.ttf','font/ttf'))
     js=(project/'bundle.js').read_text() + ";if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.warn));}"
     js=re.sub(r'(?i)</script',lambda _:r'<\/script',js)
@@ -30,10 +31,13 @@ with tempfile.TemporaryDirectory() as tmp:
     dest.write_text(doc)
     print('Playable preview created',dest.stat().st_size,'bytes')
 
+shutil.copy2(root/'public/avatars.png',root/'preview/avatars.png')
+shutil.copytree(root/'public/engine',root/'preview/engine',dirs_exist_ok=True)
+preview_assets = ['index.html','manifest.webmanifest','arcade-icon-192.png','arcade-icon.png','avatars.png'] + ['engine/'+p.name for p in (root/'preview/engine').iterdir() if p.is_file()]
 cache_name = 'arcade-preview-' + hashlib.sha256(dest.read_bytes()).hexdigest()[:16]
 worker = r"""const cacheName = __CACHE_NAME__;
 const scope = self.registration.scope;
-const files = ['index.html', 'manifest.webmanifest', 'arcade-icon-192.png', 'arcade-icon.png'].map(path => new URL(path, scope).href);
+const files = __FILES__.map(path => new URL(path, scope).href);
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(files)).then(() => self.skipWaiting()));
 });
@@ -47,4 +51,4 @@ self.addEventListener('fetch', event => {
   event.respondWith(caches.open(cacheName).then(async cache => (await cache.match(path)) || fetch(event.request)));
 });
 """
-(root/'preview/sw.js').write_text(worker.replace('__CACHE_NAME__',json.dumps(cache_name)))
+(root/'preview/sw.js').write_text(worker.replace('__CACHE_NAME__',json.dumps(cache_name)).replace('__FILES__',json.dumps(preview_assets)))

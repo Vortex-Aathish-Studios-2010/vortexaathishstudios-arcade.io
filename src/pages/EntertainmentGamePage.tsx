@@ -94,7 +94,7 @@ const EntertainmentGamePage = () => {
         <div className="launch-actions">
           <button className="solid-button" onClick={() => setMatchMode("bot")}>{id === "chess" ? "Play against bot" : "Play solo"}</button>
           {id === "chess" && <button onClick={() => setMatchMode("local_friend")}>Two on this device</button>}
-          <button onClick={() => navigate("/rooms")}><Users size={16}/> Online rooms</button>
+          <button onClick={() => navigate("/rooms?game="+game.id)}><Users size={16}/> Online rooms</button>
         </div>
       </div>
     </section>

@@ -1,3 +1,5 @@
+import { useContext } from "react";
+import { MatchContext, useGameRandom } from "@/lib/matchPlay";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Flame, Play, RotateCcw } from "lucide-react";
@@ -8,9 +10,11 @@ import { nextShellLevel, shellSettings } from "@/lib/shellGame";
 type Phase = "ready" | "showing" | "covering" | "shuffling" | "guessing" | "result";
 const position = ["17%", "50%", "83%"];
 export const ThreeCupsGame = ({ onComplete }: { onComplete?: (score: number, won?: boolean) => void }) => {
+  const match = useContext(MatchContext);
+  const random = useGameRandom();
   const [phase, setPhase] = useState<Phase>("ready");
   const phaseRef = useRef<Phase>("ready");
-  const [level, setLevel] = useState(() => getGameLevel("three-cups"));
+  const [level, setLevel] = useState(() => match ? 1 : getGameLevel("three-cups"));
   const [roundLevel, setRoundLevel] = useState(level);
   const [cups, setCups] = useState([0, 1, 2]);
   const [ball, setBall] = useState(1);
@@ -29,14 +33,14 @@ export const ThreeCupsGame = ({ onComplete }: { onComplete?: (score: number, won
     clearTimeout(timer.current);
     const config = shellSettings(level);
     setRoundLevel(level); setSelected(null); setCups([0, 1, 2]); setSwap({pair:[-1,-1],count:0});
-    setBall(Math.floor(Math.random() * 3));
+    setBall(Math.floor(random() * 3));
     change("showing");
     let order = [0, 1, 2];
     let completed = 0;
     function shuffle() {
       if (completed === config.swaps) { change("guessing"); return; }
-      const a = Math.floor(Math.random() * 3);
-      const b = (a + 1 + Math.floor(Math.random() * 2)) % 3;
+      const a = Math.floor(random() * 3);
+      const b = (a + 1 + Math.floor(random() * 2)) % 3;
       const pair = [order[a], order[b]];
       order = [...order]; [order[a], order[b]] = [order[b], order[a]];
       completed++;

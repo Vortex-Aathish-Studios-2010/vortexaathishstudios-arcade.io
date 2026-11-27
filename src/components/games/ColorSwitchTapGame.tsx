@@ -1,3 +1,4 @@
+import { useMatchProgress,useGameRandom } from "@/lib/matchPlay";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RotateCcw } from "lucide-react";
@@ -12,6 +13,7 @@ const COLORS = [
 ];
 
 export const ColorSwitchTapGame = ({ onComplete }: { onComplete?: (score: number) => void }) => {
+  const random=useGameRandom();
   const [gameState, setGameState] = useState<"menu" | "playing" | "gameover">("menu");
   const [score, setScore] = useState(0);
   const [currentColor, setCurrentColor] = useState(COLORS[0]);
@@ -25,6 +27,8 @@ export const ColorSwitchTapGame = ({ onComplete }: { onComplete?: (score: number
 
   const timerRef = useRef<number | null>(null);
 
+  const inMatch = useMatchProgress(score);
+
   const endGame = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     setGameState("gameover");
@@ -36,13 +40,13 @@ export const ColorSwitchTapGame = ({ onComplete }: { onComplete?: (score: number
   const nextTurnRef = useRef<() => void>();
 
   nextTurnRef.current = () => {
-    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const randomColor = COLORS[Math.floor(random() * COLORS.length)];
     setCurrentColor(randomColor);
     
     let currentRule = stateRefs.current.rule;
-    if (Math.random() < 0.2) {
-        const isNotRule = Math.random() < 0.3; 
-        const ruleTarget = COLORS[Math.floor(Math.random() * COLORS.length)].id;
+    if (random() < 0.2) {
+        const isNotRule = random() < 0.3;
+        const ruleTarget = COLORS[Math.floor(random() * COLORS.length)].id;
         currentRule = { type: isNotRule ? "not" : "only", targetId: ruleTarget };
         stateRefs.current.rule = currentRule;
         setRule(currentRule);
@@ -74,7 +78,7 @@ export const ColorSwitchTapGame = ({ onComplete }: { onComplete?: (score: number
     stateRefs.current.score = 0;
     stateRefs.current.speed = 2200;
     
-    const initialRule = { type: "only" as const, targetId: COLORS[Math.floor(Math.random() * COLORS.length)].id };
+    const initialRule = { type: "only" as const, targetId: COLORS[Math.floor(random() * COLORS.length)].id };
     stateRefs.current.rule = initialRule;
     setRule(initialRule);
     

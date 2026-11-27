@@ -107,7 +107,7 @@ export const solvePuzzle = (
         let valid = true;
 
         for (const [dr, dc] of orientation) {
-          const nr = targetR + dr, nc = targetC + dc;
+          const nr = targetR + dr - orientation[0][0], nc = targetC + dc - orientation[0][1];
           if (nr < 0 || nr >= BOARD_ROWS || nc < 0 || nc >= BOARD_COLS || board[nr][nc]) {
             valid = false;
             break;

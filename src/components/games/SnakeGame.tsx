@@ -1,191 +1,312 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { addPoints, updateStreak, addLoss } from "@/lib/streaks";
+import { useEffect, useRef, useState } from "react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  Play,
+  RotateCcw,
+} from "lucide-react";
+import { addPoints, updateStreak } from "@/lib/streaks";
 import { sfx } from "@/lib/sounds";
-import { toast } from "sonner";
-import { useDevice } from "@/lib/DeviceContext";
-
-const COLS = 25;
-const ROWS = 20;
-const INITIAL_SPEED = 140;
-type Pos = [number, number];
-
-const randomFood = (snake: Pos[], obstacles: Set<string>): Pos => {
-  const occupied = new Set([...snake.map(([r, c]) => `${r},${c}`), ...obstacles]);
-  let pos: Pos;
-  do { pos = [Math.floor(Math.random() * ROWS), Math.floor(Math.random() * COLS)]; } while (occupied.has(`${pos[0]},${pos[1]}`));
-  return pos;
-};
-
-const generateObstacles = (count: number, snake: Pos[], food: Pos): Set<string> => {
-  const occupied = new Set(snake.map(([r, c]) => `${r},${c}`));
-  occupied.add(`${food[0]},${food[1]}`);
-  const obs = new Set<string>();
-  let attempts = 0;
-  while (obs.size < count && attempts < 500) {
-    const r = Math.floor(Math.random() * ROWS);
-    const c = Math.floor(Math.random() * COLS);
-    const key = `${r},${c}`;
-    if (!occupied.has(key) && !obs.has(key)) obs.add(key);
-    attempts++;
-  }
-  return obs;
-};
-
-interface Props {
+import { advanceSnake, SnakeCell } from "@/lib/snakePhysics";
+import { useGameRandom, useMatchProgress } from "@/lib/matchPlay";
+export const SnakeGame = ({
+  onComplete,
+}: {
   level?: number;
   onComplete?: (score: number) => void;
-}
-
-export const SnakeGame = ({ onComplete }: Props) => {
-  const initialSnake: Pos[] = [[10, 12], [10, 11], [10, 10]];
-  const [snake, setSnake] = useState<Pos[]>(initialSnake);
-  const [food, setFood] = useState<Pos>(() => randomFood(initialSnake, new Set()));
-  const [dir, setDir] = useState<Pos>([0, 1]);
-  const [gameOver, setGameOver] = useState(false);
-  const [score, setScore] = useState(0);
-  const [started, setStarted] = useState(false);
-  const [obstacles, setObstacles] = useState<Set<string>>(new Set());
-  const [obstacleTarget, setObstacleTarget] = useState(0);
-  const dirRef = useRef<Pos>([0, 1]);
-  const moveQueue = useRef<Pos[]>([]);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
-  const { device } = useDevice();
-
-  // Points per food increase with length, obstacles appear as snake grows
-  const getPointsPerFood = () => 10 + Math.floor(snake.length / 5) * 5;
-
-  const tick = useCallback(() => {
-    setSnake((prev) => {
-      if (moveQueue.current.length > 0) {
-        dirRef.current = moveQueue.current.shift()!;
-        setDir(dirRef.current);
-      }
-      const d = dirRef.current;
-      const head: Pos = [prev[0][0] + d[0], prev[0][1] + d[1]];
-      if (head[0] < 0 || head[0] >= ROWS || head[1] < 0 || head[1] >= COLS) {
-        setGameOver(true);
-        sfx.gameOver();
-        setScore((s) => { addPoints(s); updateStreak("snake"); addLoss("snake"); toast.info(`Game Over! +${s} points`); onComplete?.(s); return s; });
-        return prev;
-      }
-      if (prev.some(([r, c]) => r === head[0] && c === head[1])) {
-        setGameOver(true);
-        sfx.gameOver();
-        setScore((s) => { addPoints(s); updateStreak("snake"); addLoss("snake"); toast.info(`Game Over! +${s} points`); onComplete?.(s); return s; });
-        return prev;
-      }
-      if (obstacles.has(`${head[0]},${head[1]}`)) {
-        setGameOver(true);
-        sfx.gameOver();
-        setScore((s) => { addPoints(s); updateStreak("snake"); addLoss("snake"); toast.info(`Hit obstacle! +${s} points`); onComplete?.(s); return s; });
-        return prev;
-      }
-      const newSnake = [head, ...prev];
-      if (head[0] === food[0] && head[1] === food[1]) {
-        const pts = getPointsPerFood();
-        setScore((s) => s + pts);
-        sfx.eat();
-        // Add obstacles every 5 foods eaten — ensure exact count
-        if (newSnake.length % 5 === 0) {
-          const count = 2;
-          const newObs = generateObstacles(count, newSnake, food);
-          setObstacles((o) => new Set([...o, ...newObs]));
-        }
-        setFood(randomFood(newSnake, obstacles));
-      } else newSnake.pop();
-      return newSnake;
-    });
-  }, [food, obstacles]);
-
+}) => {
+  const [round, setRound] = useState(0),
+    [phase, setPhase] = useState<"ready" | "playing" | "over">("ready"),
+    [score, setScore] = useState(0);
+  const canvas = useRef<HTMLCanvasElement>(null),
+    queue = useRef<SnakeCell[]>([]),
+    dir = useRef<SnakeCell>([1, 0]),
+    touch = useRef<SnakeCell | null>(null),
+    callback = useRef(onComplete);
+  callback.current = onComplete;
+  const random = useGameRandom();
+  useMatchProgress(score);
+  const start = () => {
+    queue.current = [];
+    dir.current = [1, 0];
+    setScore(0);
+    setPhase("playing");
+    setRound((r) => r + 1);
+  };
+  function turn(next: SnakeCell) {
+    const prev = queue.current.at(-1) || dir.current;
+    if (prev[0] === -next[0] && prev[1] === -next[1]) return;
+    if (queue.current.length < 2) queue.current.push(next);
+  }
   useEffect(() => {
-    if (!started || gameOver) { clearInterval(intervalRef.current); return; }
-    // Speed increases with length
-    const speed = Math.max(INITIAL_SPEED - (snake.length - 3) * 3, 50);
-    intervalRef.current = setInterval(tick, speed);
-    return () => clearInterval(intervalRef.current);
-  }, [tick, gameOver, started, snake.length]);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const map: Record<string, Pos> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
-      if (map[e.key]) {
+    const key = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).closest("input,textarea")) return;
+      const keys: Record<string, SnakeCell> = {
+        ArrowUp: [0, -1],
+        ArrowDown: [0, 1],
+        ArrowLeft: [-1, 0],
+        ArrowRight: [1, 0],
+        w: [0, -1],
+        s: [0, 1],
+        a: [-1, 0],
+        d: [1, 0],
+      };
+      if (keys[e.key]) {
         e.preventDefault();
-        sfx.move();
-        if (!started) setStarted(true);
-        const [dr, dc] = map[e.key];
-        const lastQueued = moveQueue.current.length > 0 ? moveQueue.current[moveQueue.current.length - 1] : dirRef.current;
-        if (lastQueued[0] + dr !== 0 || lastQueued[1] + dc !== 0) {
-          if (moveQueue.current.length < 3) moveQueue.current.push([dr, dc]);
-        }
+        if (phase === "ready") start();
+        turn(keys[e.key]);
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [started]);
-
-  const reset = () => {
-    sfx.click();
-    setSnake(initialSnake);
-    setFood(randomFood(initialSnake, new Set()));
-    dirRef.current = [0, 1];
-    setDir([0, 1]);
-    moveQueue.current = [];
-    setGameOver(false);
-    setScore(0);
-    setStarted(false);
-    setObstacles(new Set());
-  };
-
-  const snakeSet = new Set(snake.map(([r, c]) => `${r},${c}`));
-  const speed = Math.max(INITIAL_SPEED - (snake.length - 3) * 3, 50);
-
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [phase]);
+  useEffect(() => {
+    const el = canvas.current,
+      ctx = el?.getContext("2d");
+    if (!el || !ctx) return;
+    const cols = 24,
+      rows = 18,
+      cell = 28;
+    el.width = cols * cell;
+    el.height = rows * cell;
+    let snake: SnakeCell[] = [
+        [7, 9],
+        [6, 9],
+        [5, 9],
+        [4, 9],
+      ],
+      previous = snake,
+      rocks: SnakeCell[] = [],
+      points = 0,
+      t = 0,
+      last = 0,
+      elapsed = 0,
+      raf = 0,
+      finished = false;
+    let sparks: {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      life: number;
+    }[] = [];
+    function pickFood(): SnakeCell {
+      const empty: SnakeCell[] = [];
+      for (let y = 0; y < rows; y++)
+        for (let x = 0; x < cols; x++)
+          if (![...snake, ...rocks].some((p) => p[0] === x && p[1] === y))
+            empty.push([x, y]);
+      return empty[Math.floor(random() * empty.length)] || [-1, -1];
+    }
+    let food = pickFood();
+    const speed = () => Math.max(65, 155 - (snake.length - 4) * 4);
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)")
+      .matches;
+    function finish() {
+      if (finished) return;
+      finished = true;
+      setPhase("over");
+      setScore(points);
+      addPoints(points);
+      updateStreak("snake");
+      callback.current?.(points);
+      sfx.gameOver();
+    }
+    function step() {
+      if (queue.current.length) dir.current = queue.current.shift()!;
+      const result = advanceSnake(snake, dir.current, food, cols, rows, rocks);
+      if (result.collision) {
+        finish();
+        return;
+      }
+      previous = snake;
+      snake = result.snake;
+      if (result.ate) {
+        points += 10 + Math.floor((snake.length - 4) / 5) * 5;
+        setScore(points);
+        sfx.eat();
+        for (let i = 0; i < 12; i++)
+          sparks.push({
+            x: (food[0] + 0.5) * cell,
+            y: (food[1] + 0.5) * cell,
+            vx: (Math.random() - 0.5) * 150,
+            vy: (Math.random() - 0.5) * 150,
+            life: 1,
+          });
+        food = pickFood();
+        if (food[0] < 0) finish();
+      }
+    }
+    function draw() {
+      ctx.fillStyle = "#13231f";
+      ctx.fillRect(0, 0, el.width, el.height);
+      ctx.fillStyle = "#20342a";
+      for (let y = 0; y < rows; y++)
+        for (let x = 0; x < cols; x++) {
+          ctx.beginPath();
+          ctx.arc((x + 0.5) * cell, (y + 0.5) * cell, 1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      const pulse = 1 + Math.sin(t / 180) * 0.12;
+      ctx.save();
+      ctx.translate((food[0] + 0.5) * cell, (food[1] + 0.5) * cell);
+      ctx.scale(pulse, pulse);
+      ctx.fillStyle = "#ed9570";
+      ctx.beginPath();
+      ctx.roundRect(-8, -8, 16, 16, 5);
+      ctx.fill();
+      ctx.fillStyle = "#a8ce96";
+      ctx.fillRect(1, -13, 3, 6);
+      ctx.restore();
+      const alpha = smooth ? Math.min(1, elapsed / speed()) : 1;
+      const positions = snake.map((p, i) => {
+        const old = previous[i] || previous.at(-1)!;
+        return [
+          (old[0] + (p[0] - old[0]) * alpha + 0.5) * cell,
+          (old[1] + (p[1] - old[1]) * alpha + 0.5) * cell,
+        ];
+      });
+      ctx.strokeStyle = "#1b3f2e";
+      ctx.lineWidth = 24;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      positions.forEach((p, i) =>
+        i ? ctx.lineTo(p[0], p[1] + 3) : ctx.moveTo(p[0], p[1] + 3),
+      );
+      ctx.stroke();
+      ctx.strokeStyle = "#b4ce7d";
+      ctx.lineWidth = 20;
+      ctx.beginPath();
+      positions.forEach((p, i) =>
+        i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]),
+      );
+      ctx.stroke();
+      positions.forEach((p, i) => {
+        if (i % 2 && i > 0) {
+          ctx.fillStyle = "#94b56a";
+          ctx.beginPath();
+          ctx.arc(p[0], p[1], 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+      const head = positions[0];
+      ctx.save();
+      ctx.translate(head[0], head[1]);
+      ctx.rotate(Math.atan2(dir.current[1], dir.current[0]));
+      ctx.fillStyle = "#d9e99f";
+      ctx.beginPath();
+      ctx.roundRect(-12, -12, 26, 24, 9);
+      ctx.fill();
+      ctx.fillStyle = "#112d25";
+      ctx.beginPath();
+      ctx.arc(5, -6, 3, 0, Math.PI * 2);
+      ctx.arc(5, 6, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      sparks.forEach((p) => {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = "#f8bc81";
+        ctx.fillRect(p.x, p.y, 4, 4);
+      });
+      ctx.globalAlpha = 1;
+    }
+    function frame(now: number) {
+      const dt = last ? Math.min(now - last, 40) : 0;
+      last = now;
+      t += dt;
+      if (phase === "playing" && !finished) {
+        elapsed += dt;
+        while (elapsed >= speed() && !finished) {
+          elapsed -= speed();
+          step();
+        }
+      }
+      sparks.forEach((p) => {
+        p.x += (p.vx * dt) / 1000;
+        p.y += (p.vy * dt) / 1000;
+        p.life -= dt / 600;
+      });
+      sparks = sparks.filter((p) => p.life > 0);
+      draw();
+      if (!finished) raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, [round, phase, random]);
   return (
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex gap-4 text-sm">
-        <span className="text-muted-foreground">Score: <span className="font-display text-foreground">{score}</span></span>
-        <span className="text-muted-foreground">Length: <span className="font-display text-primary">{snake.length}</span></span>
-        <span className="text-muted-foreground">Speed: <span className="font-display text-accent">{Math.round((1 - speed / INITIAL_SPEED) * 100)}%</span></span>
+    <section className="snake-game">
+      <div className="game-hud">
+        <div>
+          <span>SCORE</span>
+          <strong>{score}</strong>
+        </div>
+        <div>
+          <span>THE GREEN ROOM</span>
+          <strong>Snake</strong>
+        </div>
       </div>
-      {obstacles.size > 0 && (
-        <div className="text-xs font-display text-destructive">{obstacles.size} obstacles</div>
-      )}
-      <div className="relative bg-card border border-border p-1 rounded-xl inline-block max-w-full overflow-hidden">
-        {gameOver && (
-          <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl">
-            <p className="text-2xl font-display font-black text-primary mb-4 drop-shadow-[0_0_10px_hsl(var(--primary))]">GAME OVER</p>
-            <button onClick={reset} className="pointer-events-auto px-6 py-3 bg-primary text-primary-foreground rounded-xl font-display text-base glow-primary hover:brightness-110 active:scale-95 transition-all">
-              PLAY AGAIN
+      <div className="snake-stage">
+        <canvas
+          ref={canvas}
+          aria-label="Snake arena"
+          onPointerDown={(e) => {
+            touch.current = [e.clientX, e.clientY];
+            e.currentTarget.setPointerCapture(e.pointerId);
+          }}
+          onPointerUp={(e) => {
+            if (!touch.current) return;
+            const dx = e.clientX - touch.current[0],
+              dy = e.clientY - touch.current[1];
+            touch.current = null;
+            if (Math.max(Math.abs(dx), Math.abs(dy)) < 12) return;
+            if (phase === "ready") start();
+            turn(
+              Math.abs(dx) > Math.abs(dy)
+                ? [Math.sign(dx), 0]
+                : [0, Math.sign(dy)],
+            );
+          }}
+        />
+        {phase !== "playing" && (
+          <div className="game-overlay">
+            <span className="eyebrow">
+              {phase === "over" ? "RUN COMPLETE" : "SNAKE"}
+            </span>
+            <h2>{phase === "over" ? `${score} points` : "Keep growing."}</h2>
+            <p>Eat, weave, and leave yourself a way out.</p>
+            <button className="solid-button" onClick={start}>
+              {phase === "over" ? <RotateCcw size={18} /> : <Play size={18} />}{" "}
+              {phase === "over" ? "Play again" : "Start snake"}
             </button>
           </div>
         )}
-        {Array.from({ length: ROWS }, (_, r) => (
-          <div key={r} className="flex">
-            {Array.from({ length: COLS }, (_, c) => {
-              const key = `${r},${c}`;
-              const isHead = snake[0][0] === r && snake[0][1] === c;
-              const isSnake = snakeSet.has(key);
-              const isFood = food[0] === r && food[1] === c;
-              const isObstacle = obstacles.has(key);
-              return (
-                <div key={c} className={`w-3 h-3 sm:w-4 sm:h-4 rounded-sm transition-colors ${isHead ? "bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.6)]"
-                    : isSnake ? "bg-primary/50"
-                      : isFood ? "bg-accent shadow-[0_0_8px_hsl(var(--accent)/0.5)]"
-                        : isObstacle ? "bg-destructive/60 shadow-[0_0_4px_hsl(var(--destructive)/0.4)]"
-                          : "bg-background/20"
-                  }`} />
-              );
-            })}
-          </div>
+      </div>
+      <div className="snake-controls">
+        {[
+          [ArrowLeft, [-1, 0], "Left"],
+          [ArrowUp, [0, -1], "Up"],
+          [ArrowDown, [0, 1], "Down"],
+          [ArrowRight, [1, 0], "Right"],
+        ].map(([Icon, d, label]: any) => (
+          <button
+            key={label}
+            aria-label={"Move " + label.toLowerCase()}
+            onPointerDown={() => {
+              if (phase === "ready") start();
+              turn(d);
+            }}
+          >
+            <Icon size={24} />
+          </button>
         ))}
       </div>
-      {!started && !gameOver && (
-        <p className="text-sm text-muted-foreground font-display animate-pulse">
-          {(!device || device === "laptop") ? "Press any arrow key or swipe to start" : "Use virtual controls or swipe to start"}
-        </p>
-      )}
-      <p className="text-xs text-muted-foreground pb-20 sm:pb-0">
-        {(!device || device === "laptop") ? "Arrow keys or swipe" : "Virtual controls"} · Obstacles appear as you grow!
+      <p className="club-help">
+        Arrow keys, WASD, swipe, or the buttons. Your snake gets faster as it
+        grows.
       </p>
-    </div>
+    </section>
   );
 };
