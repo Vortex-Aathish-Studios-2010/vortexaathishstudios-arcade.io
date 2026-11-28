@@ -1,3 +1,4 @@
+import { publicAsset } from "./assets";
 import React from "react";
 import { Layers, LayoutGrid, Box, Hash, Dna, Type, Activity, Crosshair } from "lucide-react";
 
@@ -14,7 +15,7 @@ export interface GameInfo {
 }
 
 const GameIcon = ({ src, alt }: { src: string; alt: string }) => (
-  <img src={src} alt={alt} className="w-full h-full object-contain drop-shadow-lg" draggable={false} />
+  <img src={publicAsset(src)} alt={alt} className="w-full h-full object-contain drop-shadow-lg" draggable={false} />
 );
 
 export const games: GameInfo[] = [

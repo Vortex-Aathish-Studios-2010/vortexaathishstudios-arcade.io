@@ -50,10 +50,10 @@ export const roomGames = [
   {
     id: "snake",
     title: "Snake",
-    mode: "challenge",
+    mode: "live",
     seconds: 180,
     cover: "snake",
-    detail: "Grow your snake. One run, highest score.",
+    detail: "One shared arena. Wrap around walls and dodge bombs.",
   },
   {
     id: "trio",
@@ -119,8 +119,8 @@ export const roomGames = [
   },
   {
     id: "gravity-flip",
-    title: "Gravity Flip Runner",
-    mode: "challenge",
+    title: "Gravity Run",
+    mode: "live",
     seconds: 180,
     cover: "gravity-flip",
     detail: "Race the same course. Highest distance wins.",

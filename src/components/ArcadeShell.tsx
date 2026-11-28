@@ -1,3 +1,4 @@
+import { publicAsset } from "@/lib/assets";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Gamepad2, Trophy, UsersRound, UserRound } from "lucide-react";
@@ -32,7 +33,7 @@ export function ArcadeShell({ onProfile }: { onProfile: () => void }) {
     <div className="studio-shell">
       <header className="app-chrome">
         <Link to="/" aria-label="Arcade.io home" className="studio-brand">
-          <img src="/arcade-icon.png" alt="" width="40" height="40" />
+          <img src={publicAsset("arcade-icon.png")} alt="" width="40" height="40" />
           <span>
             ARCADE<span>.IO</span>
           </span>

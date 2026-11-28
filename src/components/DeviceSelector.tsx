@@ -6,7 +6,8 @@ export type DeviceType = "laptop" | "phone" | "tablet";
 const DEVICE_KEY = "arcade_device_type";
 
 export const getDeviceType = (): DeviceType | null => {
-  return localStorage.getItem(DEVICE_KEY) as DeviceType | null;
+  const saved=localStorage.getItem(DEVICE_KEY);
+  return saved === "phone" || saved === "tablet" || saved === "laptop" ? saved : null;
 };
 
 export const setDeviceType = (device: DeviceType) => {

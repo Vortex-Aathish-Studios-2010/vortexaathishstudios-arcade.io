@@ -21,6 +21,7 @@ const play = (freq: number, type: OscillatorType, duration: number, volume = 0.1
 };
 
 export const sfx = {
+  explosion: () => {try {const c=ctx(),o=c.createOscillator(),g=c.createGain();o.type='sawtooth';o.frequency.setValueAtTime(150,c.currentTime);o.frequency.exponentialRampToValueAtTime(30,c.currentTime+.4);g.gain.setValueAtTime(.14,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.45);o.connect(g).connect(c.destination);o.start();o.stop(c.currentTime+.45);}catch{}},
   flip: () => play(600, "sine", 0.1, 0.1),
   match: () => {
     play(523, "sine", 0.15, 0.12);

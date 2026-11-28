@@ -4,11 +4,11 @@ const config: CapacitorConfig = {
   appId: 'com.vortexaathishatudios.arcadeio',
   appName: 'Arcade.io',
   webDir: 'dist',
-  backgroundColor: '#101116',
+  backgroundColor: '#111713',
   plugins: {
     SplashScreen: {
       launchShowDuration: 0,
-      backgroundColor: "#101116",
+      backgroundColor: "#111713",
       showSpinner: false,
       androidSplashResourceName: "arcade_launch",
       splashFullScreen: true,

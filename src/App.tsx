@@ -1,5 +1,6 @@
 import "./arcade.css";
-import { watchScores } from "@/lib/arcade";
+import { useOnline } from "@/lib/connectivity";
+import { watchScores, hasRegisteredUsername } from "@/lib/arcade";
 import { lazy, Suspense, useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -17,7 +18,6 @@ const LeaderboardPage = lazy(() => import("./pages/LeaderboardPage"));
 import NotFound from "./pages/NotFound";
 import { BigNotificationProvider } from "./components/BigNotification";
 import { getPlayerName } from "@/lib/streaks";
-import { OfflineWarning } from "./components/OfflineWarning";
 import { App as CapApp } from '@capacitor/app';
 import { SplashScreen as CapSplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -28,14 +28,17 @@ const Rooms = lazy(() => import("./pages/Rooms"));
 const queryClient = new QueryClient();
 
 const AppFlow = () => {
+  const online=useOnline();
   const [showSplash, setShowSplash] = useState(() => Capacitor.isNativePlatform() || !sessionStorage.getItem("arcade.booted.v3"));
-  const [needsUsername, setNeedsUsername] = useState(() => !getPlayerName());
+  const [needsUsername, setNeedsUsername] = useState(() => !hasRegisteredUsername());
 
+  const [skipUsername,setSkipUsername]=useState(()=>sessionStorage.getItem("arcade.offline-solo")==="1");
   useEffect(() => watchScores(), []);
   useEffect(() => {
-    const profileChanged = () => setNeedsUsername(!getPlayerName());
+    const profileChanged = () => setNeedsUsername(!hasRegisteredUsername());
     window.addEventListener("arcade-profile", profileChanged);
-    return () => window.removeEventListener("arcade-profile", profileChanged);
+    window.addEventListener("arcade-username", profileChanged);
+    return () => {window.removeEventListener("arcade-profile", profileChanged);window.removeEventListener("arcade-username", profileChanged);};
   }, []);
 
   useEffect(() => {
@@ -81,7 +84,6 @@ const AppFlow = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <OfflineWarning />
             {showSplash ? (
               <SplashScreen onComplete={() => { sessionStorage.setItem("arcade.booted.v3", "1"); setShowSplash(false); }} />
             ) : (
@@ -89,9 +91,9 @@ const AppFlow = () => {
                 <Suspense fallback={<div className="club-page" role="status">Loading game…</div>}>
                 <Routes>
                   <Route element={<ArcadeShell onProfile={() => setNeedsUsername(false)}/>}>
-                    <Route path="/" element={<Index/>}/>
+                    <Route path="/" element={needsUsername&&!skipUsername ? <main className="club-page first-launch"><section className="club-wrap"><header className="club-title"><h1>Create your player</h1><p>Pick your name. Make it yours.</p></header><UsernameGate onComplete={()=>setNeedsUsername(false)} onPlaySolo={()=>{sessionStorage.setItem("arcade.offline-solo","1");setSkipUsername(true);}}/></section></main> : <Index/>}/>
                     <Route path="/entertainment" element={<Navigate replace to="/?mode=action"/>}/>
-                    <Route path="/rooms" element={needsUsername ? <main className="club-page"><section className="club-wrap"><header className="club-title"><h1>Play with friends</h1></header><UsernameGate onComplete={()=>setNeedsUsername(false)}/></section></main> : <Rooms/>}/>
+                    <Route path="/rooms" element={needsUsername && online ? <main className="club-page"><section className="club-wrap"><header className="club-title"><h1>Play with friends</h1></header><UsernameGate onComplete={()=>setNeedsUsername(false)}/></section></main> : <Rooms/>}/>
                     <Route path="/leaderboard" element={<LeaderboardPage/>}/>
                   </Route>
                   <Route path="/game/:id" element={<GamePage/>}/>

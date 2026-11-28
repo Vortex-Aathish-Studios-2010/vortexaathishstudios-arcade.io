@@ -1,3 +1,4 @@
+import { publicAsset } from "@/lib/assets";
 import { useEffect, useRef } from "react";
 export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const complete = useRef(onComplete);
@@ -10,7 +11,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
     <div className="arcade-boot">
       <div className="boot-frame" />
       <div className="boot-mark">
-        <img src="/arcade-icon.png" alt="" />
+        <img src={publicAsset("arcade-icon.png")} alt="" />
         <div className="boot-word" aria-label="Arcade.io">
           {"ARCADE".split("").map((letter, i) => (
             <span key={i} style={{ animationDelay: i * 70 + "ms" }}>

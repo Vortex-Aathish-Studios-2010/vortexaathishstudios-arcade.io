@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:rooms": "node --test server/arcade.test.mjs",
+    "test:rooms": "node --test server/*.test.mjs",
     "android:sync": "npm run build && cap sync android",
     "android:release": "node scripts/android-release.mjs"
   },
