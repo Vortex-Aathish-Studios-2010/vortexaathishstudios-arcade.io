@@ -1,3 +1,4 @@
+import { publicAsset } from "@/lib/assets";
 import { useRecentGame } from "@/lib/recentGames";
 import { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -16,7 +17,7 @@ import { ArrowLeft, HelpCircle, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { isTutorialShown, markTutorialShown, getGameLevel } from "@/lib/streaks";
 import { reportScore } from "@/lib/multiplayer";
-import { useDevice } from "@/lib/DeviceContext";
+import { useDevice, useGameOrientation } from "@/lib/DeviceContext";
 import { OnScreenControls } from "@/components/OnScreenControls";
 import { Monitor, Smartphone, Tablet } from "lucide-react";
 import { Starfield } from "@/components/Starfield";
@@ -53,6 +54,7 @@ const GamePage = () => {
   const [gameReady, setGameReady] = useState(false);
   const level = id ? getGameLevel(id) : 1;
   const { device, setDevice } = useDevice();
+  useGameOrientation(id);
 
   const handleTutorialClose = useCallback(() => {
     setShowTutorial(false);
@@ -137,7 +139,7 @@ const GamePage = () => {
 
       {/* Game fills all remaining space */}
       <div className="puzzle-layout relative z-10 flex-1 flex items-start justify-center p-2 pt-4 sm:p-4 sm:pt-6">
-        <aside className="play-guide"><img src={`/covers/${game.id}.webp`} alt=""/><div><span>{game.difficulty} · Puzzles</span><h2>How to play</h2><ol>{game.tutorial.map(step=><li key={step}>{step}</li>)}</ol></div></aside>
+        <aside className="play-guide"><img src={publicAsset(`covers/${game.id}.webp`)} alt=""/><div><span>{game.difficulty} · Puzzles</span><h2>How to play</h2><ol>{game.tutorial.map(step=><li key={step}>{step}</li>)}</ol></div></aside>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

@@ -1,11 +1,15 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link,useSearchParams } from "react-router-dom";
 import { Chess } from "chess.js";
 import { Users, Copy, Check, ArrowLeft, Play } from "lucide-react";
 import { api, ArcadeError, Room, syncProfile } from "@/lib/arcade";
 import { roomGames, roomGame } from "@/lib/roomCatalog.mjs";
+import { publicAsset } from "@/lib/assets";
+import { useOnline } from "@/lib/connectivity";
+import { useGameOrientation } from "@/lib/DeviceContext";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { ChessBoard } from "@/components/ChessBoard";
+const LiveRound=lazy(()=>import("@/components/LiveRound").then(m=>({default:m.LiveRound})));
 const ChallengeRound = lazy(() =>
   import("@/components/ChallengeRound").then((m) => ({
     default: m.ChallengeRound,
@@ -13,6 +17,7 @@ const ChallengeRound = lazy(() =>
 );
 export default function Rooms() {
   const [params] = useSearchParams();
+  const online=useOnline();
   const requested =
     params.get("game") === "tictactoe" ? "trio" : params.get("game");
   const [active, setActive] = useState(
@@ -29,6 +34,7 @@ export default function Rooms() {
     offset = useRef(0),
     inFlight = useRef(false);
   const config = roomGame(room?.game || game);
+  useGameOrientation(room?.starts && !room.result ? room.game : null);
   function select(next: string) {
     revision.current++;
     sessionStorage.setItem("arcade.room", next);
@@ -39,7 +45,7 @@ export default function Rooms() {
   }
   function receive(next: Room) {
     offset.current = (next.serverNow || Date.now()) - Date.now();
-    setRoom(next);
+    setRoom(previous=>previous?.code===next.code&&(previous.revision||0)>(next.revision||0)?previous:next);
   }
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now() + offset.current), 250);
@@ -56,6 +62,11 @@ export default function Rooms() {
         if (!document.hidden && !inFlight.current) {
           const next = await api<Room>("rooms/" + active);
           if (disposed || seq !== revision.current) return;
+          if(next.matchmaking&&!next.guest&&next.me==='X'){
+            const paired=await api<{code:string}>('quick-match',{game:next.game});
+            if(disposed||seq!==revision.current)return;
+            if(paired.code!==active){select(paired.code);return;}
+          }
           receive(next);
           setMessage("");
           finished = Boolean(next.result);
@@ -97,12 +108,12 @@ export default function Rooms() {
       receive(await api<Room>("rooms/" + active + "/" + actionName, body)),
     );
   }
-  async function enter(join: boolean) {
+  async function enter(join: boolean,quick=false) {
     await action(async () => {
       await syncProfile();
       const next = join
         ? await api<Room>("rooms/" + code + "/join", {})
-        : await api<{ code: string }>("rooms", { game });
+        : await api<{ code: string }>(quick?"quick-match":"rooms", { game });
       select(next.code);
     });
   }
@@ -129,8 +140,9 @@ export default function Rooms() {
         ? "You won · +20 points"
         : "Opponent wins"
     : "";
+  if(!online&&!active)return <main className="club-page"><section className="offline-room"><Users/><h1>Multiplayer needs internet.</h1><p>You can still play solo!</p><Link to="/" className="solid-button">Back to solo games</Link></section></main>;
   return (
-    <main className={"club-page rooms-page" + (active ? " in-room" : "")}>
+    <main className={"club-page rooms-page" + (active ? " in-room" : "") + (room?.mode === "live" && room.starts ? " live-room" : "")}>
       <div className="club-wrap">
         <header className="club-title">
           <Users />
@@ -181,7 +193,7 @@ export default function Rooms() {
                 <small>SELECTED GAME</small>
                 <h2>{config.title}</h2>
                 <p>
-                  {config.mode === "challenge"
+                  {config.mode === "live" ? "Play together in real time. See your opponent on the same screen." : config.mode === "challenge"
                     ? `Two players start together. One attempt, up to ${config.seconds / 60} minutes. Highest score wins.`
                     : "Take turns on the same board. Moves are checked by the server."}
                 </p>
@@ -194,6 +206,7 @@ export default function Rooms() {
                 <Play size={18} />
                 {busy ? "Creating…" : "Create room"}
               </button>
+              <button className="club-light" disabled={busy} onClick={()=>enter(false,true)}>Quick match</button>
             </section>
             <div
               className="room-game-picker"
@@ -206,10 +219,10 @@ export default function Rooms() {
                   aria-pressed={game === g.id}
                   onClick={() => setGame(g.id)}
                 >
-                  <img src={"/covers/" + g.cover + ".webp"} alt="" />
+                  <img src={publicAsset("covers/" + g.cover + ".webp")} alt="" />
                   <div>
                     <span>
-                      {g.mode === "challenge"
+                      {g.mode === "live" ? "LIVE MULTIPLAYER" : g.mode === "challenge"
                         ? "SCORE CHALLENGE"
                         : "SHARED BOARD"}
                     </span>
@@ -251,10 +264,10 @@ export default function Rooms() {
                       <small>
                         {room.game === "chess"
                           ? "White"
-                          : room.mode === "challenge"
+                          : (room.mode === "challenge" || room.mode === "live")
                             ? "Host"
                             : "X"}
-                        {room.mode === "challenge"
+                        {(room.mode === "challenge" || room.mode === "live")
                           ? " · " +
                             (room.hostDone
                               ? "Finished"
@@ -264,7 +277,7 @@ export default function Rooms() {
                           : ""}
                       </small>
                     </span>
-                    {room.mode === "challenge" && (
+                    {(room.mode === "challenge" || room.mode === "live") && (
                       <strong>{room.hostScore}</strong>
                     )}
                   </span>
@@ -276,11 +289,11 @@ export default function Rooms() {
                         {room.guest
                           ? room.game === "chess"
                             ? "Black"
-                            : room.mode === "challenge"
+                            : (room.mode === "challenge" || room.mode === "live")
                               ? "Guest"
                               : "O"
                           : ""}
-                        {room.mode === "challenge" && room.guest
+                        {(room.mode === "challenge" || room.mode === "live") && room.guest
                           ? " · " +
                             (room.guestDone
                               ? "Finished"
@@ -290,7 +303,7 @@ export default function Rooms() {
                           : ""}
                       </small>
                     </span>
-                    {room.mode === "challenge" && (
+                    {(room.mode === "challenge" || room.mode === "live") && (
                       <strong>{room.guestScore}</strong>
                     )}
                   </span>
@@ -298,8 +311,8 @@ export default function Rooms() {
                 <h2 className="room-status" aria-live="polite">
                   {result ||
                     (!room.guest
-                      ? "Share the room code"
-                      : room.mode === "challenge"
+                      ? room.matchmaking ? "Finding another player…" : "Share the room code"
+                      : (room.mode === "challenge" || room.mode === "live")
                         ? room.starts
                           ? now < room.starts
                             ? "Get ready"
@@ -309,20 +322,15 @@ export default function Rooms() {
                           ? "Your turn"
                           : "Opponent’s turn")}
                 </h2>
-                {room.mode === "challenge" ? (
+                {(room.mode === "challenge" || room.mode === "live") ? (
                   room.starts ? (
                     <Suspense fallback={<p>Loading game…</p>}>
-                      <ChallengeRound
-                        key={room.code + room.starts}
-                        room={room}
-                        clockOffset={offset.current}
-                      />
+                      {room.mode==='live'?<LiveRound key={room.code+room.starts} room={room} onSnapshot={receive}/>:<ChallengeRound key={room.code+room.starts} room={room} clockOffset={offset.current}/>}
                     </Suspense>
                   ) : (
                     <div className="room-ready">
                       <p>
-                        {config.detail} Both players use level one. Your
-                        friend’s score updates automatically.
+                        {config.detail} Both players must be ready before the host starts.
                       </p>
                       <button
                         className="solid-button"
@@ -401,8 +409,8 @@ export default function Rooms() {
                   try {
                     await api("rooms/" + active + "/leave", {});
                   } catch (e) {
-                    if (!(e instanceof ArcadeError && e.status === 404))
-                      throw e;
+                    // Leaving must always return to solo, even if the network vanished.
+                    // The server expires waiting rooms and detects live disconnects.
                   }
                   select("");
                 })

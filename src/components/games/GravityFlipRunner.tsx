@@ -1,3 +1,4 @@
+import { createCanvasResolution } from "@/lib/canvasResolution";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Play, RotateCcw, ArrowUpDown } from "lucide-react";
 import { addEntertainmentPoints, updateStreak } from "@/lib/streaks";
@@ -44,17 +45,16 @@ export const GravityFlipRunner = ({
     return () => window.removeEventListener("keydown", key);
   }, [start]);
   useEffect(() => {
-    const surface = canvas.current,
-      ctx = surface?.getContext("2d");
-    if (!surface || !ctx) return;
+    const canvasEl=canvas.current;if(!canvasEl)return;
+    const resolution=createCanvasResolution(canvasEl,900,460);if(!resolution)return;
+    const ctx=resolution.context;
     const W = 900,
       H = 460,
       TOP = 40,
       BOTTOM = 420,
       X = 150,
       S = RUNNER_SIZE;
-    surface.width = W;
-    surface.height = H;
+
     let y = BOTTOM - S,
       direction = 1,
       distance = 0,
@@ -228,7 +228,7 @@ export const GravityFlipRunner = ({
       if (running) raf = requestAnimationFrame(frame);
     }
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    return () => {cancelAnimationFrame(raf);resolution.dispose();};
   }, [round, phase, random]);
   const difficulty = gravityDifficulty(score);
   return (

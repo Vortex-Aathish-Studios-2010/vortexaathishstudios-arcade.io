@@ -1,3 +1,4 @@
+import { publicAsset } from "@/lib/assets";
 import { useRecentGame } from "@/lib/recentGames";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -16,7 +17,7 @@ import { MultiplayerLobby, MultiplayerResult } from "@/components/MultiplayerLob
 
 import { ArrowLeft, Bot, Users, Smartphone, Globe, Plus, LogIn, Monitor, Tablet, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useDevice } from "@/lib/DeviceContext";
+import { useDevice, useGameOrientation } from "@/lib/DeviceContext";
 import { addWin, addLoss } from "@/lib/streaks";
 
 const gameComponents: Record<string, React.FC<{ onComplete?: (score: number, isWin?: boolean) => void; initialMode?: "bot" | "friend" }>> = {
@@ -37,13 +38,14 @@ const EntertainmentGamePage = () => {
   const returnToLibrary = () => location.state?.fromLibrary ? navigate(-1) : navigate("/", { replace: true });
   const game = entertainmentGames.find((g) => g.id === id);
   useRecentGame(game?.id);
-  const [matchMode, setMatchMode] = useState<"select" | "bot" | "friends" | "local_friend" | null>("select");
+  const [matchMode, setMatchMode] = useState<"select" | "bot" | "friends" | "local_friend" | null>(() => location.state?.solo ? "bot" : "select");
   const [showMultiplayer, setShowMultiplayer] = useState(false);
   const [multiplayerRoom, setMultiplayerRoom] = useState<{ roomId: string; playerId: string } | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [gameReady, setGameReady] = useState(false);
   const { device, setDevice } = useDevice();
+  useGameOrientation(matchMode === "select" ? null : id);
 
   const GameComponent = id ? gameComponents[id] : null;
 
@@ -88,7 +90,7 @@ const EntertainmentGamePage = () => {
 
   const renderMultiplayerSelection = () => (
     <section className="launch-card">
-      <img src={`/covers/${game.id}.webp`} alt=""/>
+      <img src={publicAsset(`covers/${game.id}.webp`)} alt=""/>
       <div className="launch-copy"><span>{game.difficulty} · Action</span>
         <h2>{game.name}</h2><p>{game.description}</p>
         <div className="launch-actions">

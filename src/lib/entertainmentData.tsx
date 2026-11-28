@@ -1,3 +1,4 @@
+import { publicAsset } from "./assets";
 import React from "react";
 
 export interface EntertainmentGameInfo {
@@ -12,7 +13,7 @@ export interface EntertainmentGameInfo {
 }
 
 const GameIcon = ({ src, alt }: { src: string; alt: string }) => (
-  <img src={src} alt={alt} className="w-full h-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] transition-transform group-hover:scale-110" draggable={false} />
+  <img src={publicAsset(src)} alt={alt} className="w-full h-full object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] transition-transform group-hover:scale-110" draggable={false} />
 );
 
 export const entertainmentGames: EntertainmentGameInfo[] = [

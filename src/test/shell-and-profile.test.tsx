@@ -4,6 +4,7 @@ import { ThreeCupsGame } from "@/components/games/ThreeCupsGame";
 import { UsernameGate } from "@/components/UsernameGate";
 import { getGameLevel, getEntertainmentPoints, getStreak, getDailyStreak, updateStreak, getPlayerAvatar, getPlayerName } from "@/lib/streaks";
 import { shellSettings } from "@/lib/shellGame";
+vi.mock("@/lib/arcade",()=>({api:vi.fn(async()=>({available:true})),hasRegisteredUsername:()=>false,playerPoints:()=>0}));
 vi.mock("@/lib/sounds",()=>({sfx:{place:vi.fn(),correct:vi.fn(),error:vi.fn()}}));
 beforeEach(()=>{localStorage.clear();vi.useFakeTimers();vi.setSystemTime(new Date(2026,10,26,12));});
 afterEach(()=>{cleanup();vi.restoreAllMocks();vi.useRealTimers();});
@@ -34,11 +35,12 @@ it("counts consecutive calendar days once and resets after a missed day",()=>{
  vi.setSystemTime(new Date(2026,10,29,9));expect(getStreak("three-cups")).toBe(0);
  updateStreak("three-cups");expect(getDailyStreak()).toBe(1);
 });
-it("persists a username and one of ten selectable avatars",()=>{
+it("persists a username and one of ten selectable avatars",async()=>{
  const complete=vi.fn();render(<UsernameGate onComplete={complete}/>);
  expect(screen.getAllByRole("button",{name:/Choose .* avatar/})).toHaveLength(10);
  fireEvent.change(screen.getByRole("textbox",{name:"Username"}),{target:{value:"  Vortex  "}});
  fireEvent.click(screen.getByRole("button",{name:"Choose Fox avatar"}));
- fireEvent.click(screen.getByRole("button",{name:"Save profile"}));
+ await act(async()=>vi.advanceTimersByTimeAsync(300));
+ await act(async()=>fireEvent.click(screen.getByRole("button",{name:"Save profile"})));
  expect(getPlayerName()).toBe("Vortex");expect(getPlayerAvatar()).toBe("fox");expect(complete).toHaveBeenCalledWith("Vortex");
 });

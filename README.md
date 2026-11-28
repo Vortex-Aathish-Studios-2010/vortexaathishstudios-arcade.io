@@ -10,7 +10,7 @@ The Java namespace is separate and remains `com.vortexaathishstudios.arcadeio`.
 - A larger matte interface, editable username and ten illustrated avatars, plus a daily play streak.
 - Shell Game starts with three slow swaps; each win advances a level, a miss drops one level, and points remain saved.
 - 16 solo games with local scores. Android includes game assets for offline play from installation; the web edition caches them after its first complete load.
-- Online rooms for all 16 games, plus Four in a Row. Chess, Tic Tac Toe and Four in a Row share a server-validated board; the other games use timed score challenges with readiness, a shared countdown, live scores and one attempt per player.
+- Online rooms for all 16 games, plus Four in a Row. Chess, Tic Tac Toe and Four in a Row share a server-validated board; Snake shares a server-authoritative arena, Gravity Run shows both players on the same course, and the other games use timed score challenges with readiness, a shared countdown, live scores and one attempt per player.
 - Gravity Flip increases speed and narrows passable gaps with score. Snake uses smooth canvas animation, keyboard, swipe and touch controls. Konoodle supports measured touch dragging, rotate/flip, valid-drop previews and undo.
 - Chess uses chess.js rules and the bundled Stockfish 19 lite engine, set to 2000 Elo with a 1.2-second move budget. This is an engine setting, not a measured rating. Local two-player chess rotates toward the next player.
 - An animated loading screen credits Founder Aathish Kannayil Ajesh and Co-founder Aagney Kannayil Aajehs.
@@ -46,6 +46,12 @@ sync when connected. A username is required to appear in public rankings.
 Reloading an active score challenge submits its saved attempt; it does not grant a new attempt. Scores are submitted by clients for casual play and are not an anti-cheat or rated competition system. Chess and other shared-board moves are validated on the server.
 
 Stockfish binaries, GPL-3.0 license, corresponding source archive and provenance are in `public/engine/`. The engine runs in a worker and is cached for offline play.
+
+## Device orientation and offline play
+
+The Android APK embeds all 16 solo games, images, synthesized audio, fonts and the chess engine. It needs no initial internet connection or sign-in for solo play. Scores, settings and progress stay on the device and sync when connected. First launch can continue into solo play offline; reserving or changing a globally unique username requires internet. Online rooms and live rankings need a connection.
+
+Phones use portrait menus and board games; Snake, Konoodle and Gravity Flip switch to landscape while playing. Returning to the menu restores portrait. Tablets keep system rotation and adapt between portrait and landscape; laptop windows use the wide keyboard-and-mouse layout. Resizing does not remount the current game. Android may override requested rotation in multi-window mode; responsive layouts remain available.
 
 ## Android preview
 
@@ -92,3 +98,9 @@ answers to match this online functionality. The previous “No data collected”
 declaration does not describe the new online features.
 
 See [release notes](release-notes/en-US.txt) for the player-facing update text.
+
+## Live games and player names
+
+Snake uses a 48 × 30 shared arena with wall wrapping, safe bomb spawning, separate food growth, and authoritative body/bomb collisions. Gravity Run shares a course and streams both players' positions and gravity flips. Clients render with requestAnimationFrame and bounded prediction; HTTP input/snapshot requests run about every 100 ms without overlapping. Network latency and device performance still affect play. A 10-second missed heartbeat ends the live round. Quick-match pairs waiting players for the selected game; room codes remain available.
+
+Names are 3–15 ASCII letters, numbers or underscores, case-insensitive. Availability is advisory; the database's unique index decides the reservation atomically. Migration 0004 preserves existing scores and reserves valid legacy names for their original anonymous identity. Profiles are tied to this device's saved identity, not a password account; clearing app data loses that identity and local progress.

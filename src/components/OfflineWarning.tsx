@@ -1,45 +1,19 @@
-import { useState, useEffect } from 'react';
-import { Network } from '@capacitor/network';
-import { WifiOff } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Capacitor } from "@capacitor/core";
+import { WifiOff, HardDriveDownload } from "lucide-react";
+import { useOnline } from "@/lib/connectivity";
 
-export const OfflineWarning = () => {
-  const [isOffline, setIsOffline] = useState(false);
-
-  useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const status = await Network.getStatus();
-        setIsOffline(!status.connected);
-      } catch (e) {}
-    };
-    checkStatus();
-
-    let listener: any;
-    try {
-      Network.addListener('networkStatusChange', status => {
-        setIsOffline(!status.connected);
-      }).then(l => listener = l);
-    } catch(e) {}
-
-    return () => {
-      if (listener) listener.remove();
-    };
-  }, []);
-
+// In the launcher, never cover the game or its touch controls with a warning.
+export function OfflineWarning() {
+  const online = useOnline();
+  if (!Capacitor.isNativePlatform() && online) return null;
   return (
-    <AnimatePresence>
-      {isOffline && (
-        <motion.div
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -50 }}
-          className="fixed top-[env(safe-area-inset-top,1rem)] left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 px-4 py-2 bg-destructive/90 backdrop-blur text-destructive-foreground rounded-full shadow-lg border border-destructive/50 pointer-events-none"
-        >
-          <WifiOff className="w-4 h-4" />
-          <span className="text-sm font-display font-medium">Offline Mode</span>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div className="offline-ready" role="status">
+      {online ? <HardDriveDownload size={16} /> : <WifiOff size={16} />}
+      <span>
+        {online
+          ? "16 solo games installed · ready offline"
+          : "Offline · all 16 solo games ready"}
+      </span>
+    </div>
   );
-};
+}

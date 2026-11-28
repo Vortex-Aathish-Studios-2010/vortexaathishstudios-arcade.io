@@ -23,7 +23,7 @@ for (const [game, moves] of [
         return { status: response.status, data: await response.json() };
       };
       for (const p of ["a", "b", "c"])
-        await call(p, "profile", { name: "Player " + p, score: 2 });
+        await call(p, "profile", { name: "Player_" + p, score: 2 });
       const {
         data: { code },
       } = await call("a", "rooms", { game });
@@ -60,14 +60,14 @@ for (const [game, moves] of [
       }
       assert.equal(state.result, "X");
       assert.deepEqual((await call("a", "leaders")).data[0], {
-        name: "Player a",
+        name: "Player_a",
         avatar: "orbit",
         score: 22,
       });
       assert.equal(
         (
           await call("a", "profile", {
-            name: "Player a",
+            name: "Player_a",
             score: 10,
             avatar: "invalid",
           })
@@ -75,12 +75,12 @@ for (const [game, moves] of [
         400,
       );
       await call("a", "profile", {
-        name: "Player a",
+        name: "Player_a",
         score: 10,
         avatar: "fox",
       });
       assert.equal((await call("a", "leaders")).data[0].avatar, "fox");
-      await call("a", "profile", { name: "Player a", score: 6 });
+      await call("a", "profile", { name: "Player_a", score: 6 });
       assert.equal((await call("b", "leaders")).data[0].score, 30);
       await call("b", path + "/leave", {});
       assert.equal((await call("a", path)).status, 404);
@@ -118,7 +118,7 @@ for (const game of roomGames.filter((g) => g.mode === "challenge"))
     async () => {
       const f = fixture();
       for (const p of ["a", "b", "c"])
-        await f.call(p, "profile", { name: "Player " + p, score: 0 });
+        await f.call(p, "profile", { name: "Player_" + p, score: 0 });
       const created = await f.call("a", "rooms", { game: game.id });
       assert.equal(created.status, 200);
       const path = "rooms/" + created.data.code;
@@ -159,9 +159,9 @@ for (const game of roomGames.filter((g) => g.mode === "challenge"))
 test("challenge deadline finalizes when one player disconnects", async () => {
   const f = fixture();
   for (const p of ["a", "b"])
-    await f.call(p, "profile", { name: "Player " + p, score: 0 });
+    await f.call(p, "profile", { name: "Player_" + p, score: 0 });
   const path =
-    "rooms/" + (await f.call("a", "rooms", { game: "snake" })).data.code;
+    "rooms/" + (await f.call("a", "rooms", { game: "memory" })).data.code;
   await f.call("b", path + "/join", {});
   await f.call("a", path + "/ready", {});
   await f.call("b", path + "/ready", {});
@@ -175,7 +175,7 @@ test("challenge deadline finalizes when one player disconnects", async () => {
 test("online chess enforces legal turns and persists checkmate", async () => {
   const f = fixture();
   for (const p of ["a", "b"])
-    await f.call(p, "profile", { name: "Player " + p, score: 0 });
+    await f.call(p, "profile", { name: "Player_" + p, score: 0 });
   const path =
     "rooms/" + (await f.call("a", "rooms", { game: "chess" })).data.code;
   let state = (await f.call("b", path + "/join", {})).data;
@@ -225,4 +225,50 @@ test("online chess enforces legal turns and persists checkmate", async () => {
     ).status,
     409,
   );
+});
+
+test('usernames validate, reserve atomically and compare without case',async()=>{
+ const f=fixture();
+ for(const name of ['', 'ab', 'a'.repeat(16),'Bad Name','bad-name','éclair'])assert.equal((await f.call('a','profile',{name,score:0})).status,400,name);
+ const results=await Promise.all([f.call('a','profile',{name:'Ali',score:5}),f.call('b','profile',{name:'aLI',score:9})]);
+ assert.deepEqual(results.map(r=>r.status).sort(),[200,409]);assert.equal(results.find(r=>r.status===409).data.error,'Username already taken. Try another.');
+ const owner=results[0].status===200?'a':'b',other=owner==='a'?'b':'a';
+ assert.equal((await f.call(other,'usernames?name=ALI')).data.available,false);assert.equal((await f.call(owner,'usernames?name=ALI')).data.available,true);
+ assert.equal((await f.call(owner,'profile',{name:'ALI',score:1})).status,200);assert((await f.call(owner,'leaders')).data[0].score>=5);
+ assert.equal((await f.call('c','rooms',{game:'snake'})).status,401);
+});
+test('legacy profiles retain scores and their owner can reserve the legacy name',async()=>{
+ const f=fixture();await f.call('a','profile',{name:'Legacy',score:77});await f.call('b','profile',{name:'Legacy2',score:6});
+ await f.db.prepare("UPDATE arcade_players SET username_key=NULL WHERE name='Legacy'").run();
+ assert.equal((await f.call('c','profile',{name:'legacy',score:0})).status,409);
+ assert.equal((await f.call('a','profile',{name:'Legacy',score:10})).status,200);assert.equal((await f.call('a','leaders')).data[0].score,77);
+});
+test('quick-match pairs two players, isolates games and expires abandoned searches',async()=>{
+ const f=fixture();for(const p of ['a','b','c'])await f.call(p,'profile',{name:'Match_'+p,score:0});
+ const a=await f.call('a','quick-match',{game:'snake'});assert.equal((await f.call('a','quick-match',{game:'snake'})).data.code,a.data.code);
+ assert.equal((await f.call('a','quick-match',{game:'gravity-flip'})).status,409);
+ const b=await f.call('b','quick-match',{game:'snake'});assert.equal(b.data.code,a.data.code);assert.equal((await f.call('b','rooms/'+b.data.code)).data.guest,'Match_b');
+ const c=await f.call('c','quick-match',{game:'snake'});assert.notEqual(c.data.code,a.data.code);f.advance(46000);assert.equal((await f.call('c','rooms/'+c.data.code)).status,404);
+ assert.equal((await f.call('c','quick-match',{game:'snake'})).status,200);
+});
+for(const game of ['snake','gravity-flip'])test(game+': authoritative live input, shared snapshots, disconnect and one award',async()=>{
+ const f=fixture();for(const p of ['a','b','c'])await f.call(p,'profile',{name:'Live_'+p,score:0});
+ const path='rooms/'+(await f.call('a','rooms',{game})).data.code;
+ await f.call('b',path+'/join',{});assert.equal((await f.call('a',path+'/start',{})).status,409);
+ await f.call('a',path+'/ready',{});await f.call('b',path+'/ready',{});await f.call('a',path+'/start',{});
+ f.advance(3100);assert.equal((await f.call('c',path+'/live',{commands:[]})).status,403);assert.equal((await f.call('a',path+'/progress',{score:999,done:true})).status,409);
+ const command=game==='snake'?{seq:1,turn:[0,-1]}:{seq:1,flip:true};
+ const [a,b]=await Promise.all([f.call('a',path+'/live',{commands:[command]}),f.call('b',path+'/live',{commands:[]})]);assert.equal(a.status,200);assert.equal(b.status,200);
+ f.advance(240);const shared=(await f.call('b',path+'/live',{commands:[]})).data;
+ assert.equal(shared.live.players[0].seq,1);if(game==='snake')assert.equal(shared.live.players[0].direction[1],-1);else assert(shared.live.players[0].y<shared.live.players[1].y);
+ assert.deepEqual((await f.call('a',path)).data.live,shared.live);
+ f.advance(11000);const ended=(await f.call('a',path+'/live',{commands:[]})).data;assert.equal(ended.result,'X');assert.equal(ended.live.reason,'disconnect');
+ await f.call('a',path+'/live',{commands:[command]});assert.equal((await f.call('a','leaders')).data[0].score,20);
+});
+test('simultaneous quick-match arrivals converge on one shared room',async()=>{
+ const f=fixture();for(const p of ['a','b'])await f.call(p,'profile',{name:'Queue_'+p,score:0});
+ await Promise.all(['a','b'].map(p=>f.call(p,'quick-match',{game:'snake'})));
+ let rooms=(await f.db.prepare('SELECT * FROM arcade_rooms').all()).results;
+ for(const p of ['a','b'])if(rooms.filter(r=>r.guest===null).length===2){await f.call(p,'quick-match',{game:'snake'});rooms=(await f.db.prepare('SELECT * FROM arcade_rooms').all()).results;}
+ assert.equal(rooms.length,1);assert(rooms[0].guest);assert.notEqual(rooms[0].host,rooms[0].guest);
 });

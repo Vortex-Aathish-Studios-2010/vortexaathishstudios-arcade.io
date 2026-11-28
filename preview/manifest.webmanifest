@@ -1,1 +1,23 @@
-{"id": "./", "name": "Arcade.io Mini Games", "short_name": "Arcade.io", "start_url": "./", "scope": "./", "display": "standalone", "background_color": "#101116", "theme_color": "#101116", "icons": [{"src": "./arcade-icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "./arcade-icon.png", "sizes": "512x512", "type": "image/png"}]}
+{
+  "id": "./",
+  "name": "Arcade.io Mini Games",
+  "short_name": "Arcade.io",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111713",
+  "theme_color": "#111713",
+  "icons": [
+    {
+      "src": "./arcade-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./arcade-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "orientation": "any"
+}

@@ -9,7 +9,9 @@ import {
 } from "lucide-react";
 import { addPoints, updateStreak } from "@/lib/streaks";
 import { sfx } from "@/lib/sounds";
-import { advanceSnake, SnakeCell } from "@/lib/snakePhysics";
+import { createCanvasResolution } from "@/lib/canvasResolution";
+import { drawSnake,drawBomb } from "@/lib/snakeArtwork";
+import { advanceSnake,safeBombCell, SnakeCell } from "@/lib/snakePhysics";
 import { useGameRandom, useMatchProgress } from "@/lib/matchPlay";
 export const SnakeGame = ({
   onComplete,
@@ -19,7 +21,8 @@ export const SnakeGame = ({
 }) => {
   const [round, setRound] = useState(0),
     [phase, setPhase] = useState<"ready" | "playing" | "over">("ready"),
-    [score, setScore] = useState(0);
+    [score, setScore] = useState(0),
+    [best,setBest] = useState(()=>Number(localStorage.getItem("snakeBest"))||0);
   const canvas = useRef<HTMLCanvasElement>(null),
     queue = useRef<SnakeCell[]>([]),
     dir = useRef<SnakeCell>([1, 0]),
@@ -63,14 +66,13 @@ export const SnakeGame = ({
     return () => window.removeEventListener("keydown", key);
   }, [phase]);
   useEffect(() => {
-    const el = canvas.current,
-      ctx = el?.getContext("2d");
-    if (!el || !ctx) return;
+    const el=canvas.current;if(!el)return;
+    const surface=createCanvasResolution(el,672,504);if(!surface)return;
+    const ctx=surface.context;
     const cols = 24,
       rows = 18,
       cell = 28;
-    el.width = cols * cell;
-    el.height = rows * cell;
+
     let snake: SnakeCell[] = [
         [7, 9],
         [6, 9],
@@ -78,7 +80,8 @@ export const SnakeGame = ({
         [4, 9],
       ],
       previous = snake,
-      rocks: SnakeCell[] = [],
+      bombs:{cell:SnakeCell,armed:number,expires:number}[] = [],
+      nextBomb=4500,death=0,
       points = 0,
       t = 0,
       last = 0,
@@ -96,7 +99,7 @@ export const SnakeGame = ({
       const empty: SnakeCell[] = [];
       for (let y = 0; y < rows; y++)
         for (let x = 0; x < cols; x++)
-          if (![...snake, ...rocks].some((p) => p[0] === x && p[1] === y))
+          if (![...snake, ...bombs.map(b=>b.cell)].some((p) => p[0] === x && p[1] === y))
             empty.push([x, y]);
       return empty[Math.floor(random() * empty.length)] || [-1, -1];
     }
@@ -104,21 +107,24 @@ export const SnakeGame = ({
     const speed = () => Math.max(65, 155 - (snake.length - 4) * 4);
     const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)")
       .matches;
-    function finish() {
+    function finish(hit=snake[0]) {
       if (finished) return;
       finished = true;
-      setPhase("over");
+      death=650;
+      const record=Math.max(points,Number(localStorage.getItem("snakeBest"))||0);
+      localStorage.setItem("snakeBest",String(record));setBest(record);
       setScore(points);
       addPoints(points);
       updateStreak("snake");
       callback.current?.(points);
-      sfx.gameOver();
+      sfx.explosion();
+      for(let i=0;i<28;i++)sparks.push({x:(hit[0]+.5)*cell,y:(hit[1]+.5)*cell,vx:(Math.random()-.5)*360,vy:(Math.random()-.5)*360,life:1});
     }
     function step() {
       if (queue.current.length) dir.current = queue.current.shift()!;
-      const result = advanceSnake(snake, dir.current, food, cols, rows, rocks);
+      const result = advanceSnake(snake, dir.current, food, cols, rows, bombs.filter(b=>b.armed<=t).map(b=>b.cell));
       if (result.collision) {
-        finish();
+        finish(result.head);
         return;
       }
       previous = snake;
@@ -141,7 +147,7 @@ export const SnakeGame = ({
     }
     function draw() {
       ctx.fillStyle = "#13231f";
-      ctx.fillRect(0, 0, el.width, el.height);
+      ctx.fillRect(0, 0, cols*cell, rows*cell);
       ctx.fillStyle = "#20342a";
       for (let y = 0; y < rows; y++)
         for (let x = 0; x < cols; x++) {
@@ -161,51 +167,8 @@ export const SnakeGame = ({
       ctx.fillRect(1, -13, 3, 6);
       ctx.restore();
       const alpha = smooth ? Math.min(1, elapsed / speed()) : 1;
-      const positions = snake.map((p, i) => {
-        const old = previous[i] || previous.at(-1)!;
-        return [
-          (old[0] + (p[0] - old[0]) * alpha + 0.5) * cell,
-          (old[1] + (p[1] - old[1]) * alpha + 0.5) * cell,
-        ];
-      });
-      ctx.strokeStyle = "#1b3f2e";
-      ctx.lineWidth = 24;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.beginPath();
-      positions.forEach((p, i) =>
-        i ? ctx.lineTo(p[0], p[1] + 3) : ctx.moveTo(p[0], p[1] + 3),
-      );
-      ctx.stroke();
-      ctx.strokeStyle = "#b4ce7d";
-      ctx.lineWidth = 20;
-      ctx.beginPath();
-      positions.forEach((p, i) =>
-        i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]),
-      );
-      ctx.stroke();
-      positions.forEach((p, i) => {
-        if (i % 2 && i > 0) {
-          ctx.fillStyle = "#94b56a";
-          ctx.beginPath();
-          ctx.arc(p[0], p[1], 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      });
-      const head = positions[0];
-      ctx.save();
-      ctx.translate(head[0], head[1]);
-      ctx.rotate(Math.atan2(dir.current[1], dir.current[0]));
-      ctx.fillStyle = "#d9e99f";
-      ctx.beginPath();
-      ctx.roundRect(-12, -12, 26, 24, 9);
-      ctx.fill();
-      ctx.fillStyle = "#112d25";
-      ctx.beginPath();
-      ctx.arc(5, -6, 3, 0, Math.PI * 2);
-      ctx.arc(5, 6, 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      drawSnake(ctx,snake,previous,dir.current,alpha,cols,rows,cell,'#b4ce7d');
+      for(const bomb of bombs)drawBomb(ctx,(bomb.cell[0]+.5)*cell,(bomb.cell[1]+.5)*cell,cell*.38,bomb.armed<=t,t);
       sparks.forEach((p) => {
         ctx.globalAlpha = p.life;
         ctx.fillStyle = "#f8bc81";
@@ -218,6 +181,8 @@ export const SnakeGame = ({
       last = now;
       t += dt;
       if (phase === "playing" && !finished) {
+        bombs=bombs.filter(b=>b.expires>t);
+        if(t>=nextBomb&&bombs.length<7){const cell=safeBombCell(snake,food,bombs.map(b=>b.cell),cols,rows,random);if(cell)bombs.push({cell,armed:t+900,expires:t+16000});nextBomb=t+Math.max(2400,5000-points*4);}
         elapsed += dt;
         while (elapsed >= speed() && !finished) {
           elapsed -= speed();
@@ -231,10 +196,11 @@ export const SnakeGame = ({
       });
       sparks = sparks.filter((p) => p.life > 0);
       draw();
-      if (!finished) raf = requestAnimationFrame(frame);
+      if(finished){death-=dt;if(death<=0){setPhase("over");return;}}
+      raf = requestAnimationFrame(frame);
     }
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    return () => {cancelAnimationFrame(raf);surface.dispose();};
   }, [round, phase, random]);
   return (
     <section className="snake-game">
@@ -244,8 +210,8 @@ export const SnakeGame = ({
           <strong>{score}</strong>
         </div>
         <div>
-          <span>THE GREEN ROOM</span>
-          <strong>Snake</strong>
+          <span>BEST</span>
+          <strong>{best}</strong>
         </div>
       </div>
       <div className="snake-stage">
@@ -276,7 +242,7 @@ export const SnakeGame = ({
               {phase === "over" ? "RUN COMPLETE" : "SNAKE"}
             </span>
             <h2>{phase === "over" ? `${score} points` : "Keep growing."}</h2>
-            <p>Eat, weave, and leave yourself a way out.</p>
+            <p>Wrap through the edges. Eat food. Dodge the bombs.</p>
             <button className="solid-button" onClick={start}>
               {phase === "over" ? <RotateCcw size={18} /> : <Play size={18} />}{" "}
               {phase === "over" ? "Play again" : "Start snake"}
@@ -305,7 +271,7 @@ export const SnakeGame = ({
       </div>
       <p className="club-help">
         Arrow keys, WASD, swipe, or the buttons. Your snake gets faster as it
-        grows.
+        grows. All four edges wrap. Glowing bombs are deadly.
       </p>
     </section>
   );
